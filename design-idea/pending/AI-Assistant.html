@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant - EduSaaS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest' };</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous"
+        referrerpolicy="no-referrer"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .ai-assistant-container {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message-user {
+            animation: slideInRight 0.3s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .message-ai {
+            animation: slideInLeft 0.3s ease-out;
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .typing-indicator {
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: #9CA3AF;
+            margin: 0 2px;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes typing {
+
+            0%,
+            80%,
+            100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .suggestion-chip {
+            transition: all 0.2s ease;
+        }
+
+        .suggestion-chip:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+        }
+
+        .feature-card {
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .pulse-glow {
+            animation: pulseGlow 2s infinite;
+        }
+
+        @keyframes pulseGlow {
+
+            0%,
+            100% {
+                box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+            }
+
+            50% {
+                box-shadow: 0 0 30px rgba(99, 102, 241, 0.6);
+            }
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366F1',
+                        secondary: '#0F172A',
+                        accent: '#10B981',
+                        background: '#F5F6FA',
+                        sidebar: '#111827',
+                        card: '#FFFFFF'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-background">
+
+    <!-- Main Content -->
+    <main class="ai-assistant-container min-h-screen p-6">
+        <div class="max-w-7xl mx-auto">
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h1 class="text-3xl font-bold text-secondary mb-2">AI Assistant</h1>
+                    <p class="text-gray-600">Your intelligent companion for aviation training and platform guidance</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="bg-card rounded-xl p-4 shadow-sm border border-gray-100">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                                <i class="fa-solid fa-brain text-primary"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-secondary">AI Status</p>
+                                <p class="text-xs text-accent">Online & Ready</p>
+                            </div>
+                        </div>
+                    </div>
+                    <button
+                        class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors flex items-center space-x-2">
+                        <i class="fa-solid fa-history"></i>
+                        <span>Chat History</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                <!-- Left Sidebar - Features & Tools -->
+                <div class="lg:col-span-1 space-y-6">
+                    <!-- AI Capabilities -->
+                    <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                        <h3 class="font-semibold text-secondary mb-4">AI Capabilities</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center space-x-3 p-3 bg-primary/5 rounded-lg">
+                                <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                                    <i class="fa-solid fa-book text-white text-sm"></i>
+                                </div>
+                                <span class="text-sm font-medium text-secondary">Course Guidance</span>
+                            </div>
+                            <div class="flex items-center space-x-3 p-3 bg-accent/5 rounded-lg">
+                                <div class="w-8 h-8 bg-accent rounded-lg flex items-center justify-center">
+                                    <i class="fa-solid fa-plane text-white text-sm"></i>
+                                </div>
+                                <span class="text-sm font-medium text-secondary">Aircraft Knowledge</span>
+                            </div>
+                            <div class="flex items-center space-x-3 p-3 bg-purple-100 rounded-lg">
+                                <div class="w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
+                                    <i class="fa-solid fa-chart-line text-white text-sm"></i>
+                                </div>
+                                <span class="text-sm font-medium text-secondary">Progress Analysis</span>
+                            </div>
+                            <div class="flex items-center space-x-3 p-3 bg-yellow-100 rounded-lg">
+                                <div class="w-8 h-8 bg-yellow-500 rounded-lg flex items-center justify-center">
+                                    <i class="fa-solid fa-question-circle text-white text-sm"></i>
+                                </div>
+                                <span class="text-sm font-medium text-secondary">Technical Support</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                        <h3 class="font-semibold text-secondary mb-4">Quick Actions</h3>
+                        <div class="space-y-2">
+                            <button
+                                class="w-full text-left p-3 bg-gray-50 hover:bg-primary/5 rounded-lg transition-colors text-sm font-medium text-secondary">
+                                <i class="fa-solid fa-robot mr-2 text-primary"></i>
+                                Explain Training Module
+                            </button>
+                            <button
+                                class="w-full text-left p-3 bg-gray-50 hover:bg-primary/5 rounded-lg transition-colors text-sm font-medium text-secondary">
+                                <i class="fa-solid fa-search mr-2 text-primary"></i>
+                                Find Aircraft Specifications
+                            </button>
+                            <button
+                                class="w-full text-left p-3 bg-gray-50 hover:bg-primary/5 rounded-lg transition-colors text-sm font-medium text-secondary">
+                                <i class="fa-solid fa-chart-bar mr-2 text-primary"></i>
+                                Analyze Progress Report
+                            </button>
+                            <button
+                                class="w-full text-left p-3 bg-gray-50 hover:bg-primary/5 rounded-lg transition-colors text-sm font-medium text-secondary">
+                                <i class="fa-solid fa-tools mr-2 text-primary"></i>
+                                Platform Help
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Recent Conversations -->
+                    <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                        <h3 class="font-semibold text-secondary mb-4">Recent Conversations</h3>
+                        <div class="space-y-3">
+                            <div class="p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-primary/5 transition-colors">
+                                <p class="text-sm font-medium text-secondary truncate">Cessna 172 Maintenance Schedule
+                                </p>
+                                <p class="text-xs text-gray-500">Today, 10:30 AM</p>
+                            </div>
+                            <div class="p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-primary/5 transition-colors">
+                                <p class="text-sm font-medium text-secondary truncate">Commercial Pilot Requirements</p>
+                                <p class="text-xs text-gray-500">Yesterday, 15:45</p>
+                            </div>
+                            <div class="p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-primary/5 transition-colors">
+                                <p class="text-sm font-medium text-secondary truncate">Instrument Rating Study Plan</p>
+                                <p class="text-xs text-gray-500">Oct 14, 2023</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Chat Area -->
+                <div class="lg:col-span-2">
+                    <div class="bg-card rounded-xl shadow-sm border border-gray-100 h-[600px] flex flex-col">
+                        <!-- Chat Header -->
+                        <div class="border-b border-gray-200 p-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="relative">
+                                    <div
+                                        class="w-12 h-12 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center">
+                                        <i class="fa-solid fa-robot text-white text-lg"></i>
+                                    </div>
+                                    <div
+                                        class="absolute -bottom-1 -right-1 w-4 h-4 bg-accent rounded-full border-2 border-white">
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-secondary">EduSaaS AI Assistant</h3>
+                                    <p class="text-sm text-gray-600">Always learning, always helping</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Messages Container -->
+                        <div class="flex-1 p-6 overflow-y-auto bg-gray-50" id="messages-container">
+                            <!-- Welcome Message -->
+                            <div class="message-ai mb-6">
+                                <div class="flex space-x-3">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                                            <i class="fa-solid fa-robot text-white text-sm"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                                            <p class="text-gray-800">Hello! I'm your EduSaaS AI Assistant. I can help
+                                                you with:</p>
+                                            <ul class="mt-2 space-y-1 text-sm text-gray-700">
+                                                <li>• Course recommendations and explanations</li>
+                                                <li>• Aircraft specifications and maintenance</li>
+                                                <li>• Training progress analysis</li>
+                                                <li>• Platform navigation and features</li>
+                                                <li>• Aviation regulations and requirements</li>
+                                            </ul>
+                                            <p class="mt-3 text-gray-800">What would you like to know today?</p>
+                                        </div>
+                                        <p class="text-xs text-gray-500 mt-1">Just now</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sample Conversation -->
+                            <div class="message-user mb-6">
+                                <div class="flex space-x-3 justify-end">
+                                    <div class="flex-1 max-w-md">
+                                        <div class="bg-primary text-white rounded-lg p-4">
+                                            <p>Can you explain the differences between piston and turbine aircraft for
+                                                training purposes?</p>
+                                        </div>
+                                        <p class="text-xs text-gray-500 mt-1 text-right">You • Just now</p>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <div class="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
+                                            <i class="fa-solid fa-user text-white text-sm"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- AI Response with Typing Indicator -->
+                            <div class="message-ai mb-6">
+                                <div class="flex space-x-3">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                                            <i class="fa-solid fa-robot text-white text-sm"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                                            <div class="typing-indicator">
+                                                <span class="typing-dot"></span>
+                                                <span class="typing-dot"></span>
+                                                <span class="typing-dot"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Suggestions -->
+                        <div class="border-t border-gray-200 p-4 bg-white">
+                            <div class="flex flex-wrap gap-2">
+                                <button
+                                    class="suggestion-chip bg-primary/10 text-primary px-3 py-2 rounded-lg text-sm hover:bg-primary/20 transition-colors">
+                                    Piston vs Turbine aircraft
+                                </button>
+                                <button
+                                    class="suggestion-chip bg-primary/10 text-primary px-3 py-2 rounded-lg text-sm hover:bg-primary/20 transition-colors">
+                                    Training requirements for CPL
+                                </button>
+                                <button
+                                    class="suggestion-chip bg-primary/10 text-primary px-3 py-2 rounded-lg text-sm hover:bg-primary/20 transition-colors">
+                                    Aircraft maintenance schedule
+                                </button>
+                                <button
+                                    class="suggestion-chip bg-primary/10 text-primary px-3 py-2 rounded-lg text-sm hover:bg-primary/20 transition-colors">
+                                    Weather minimums for VFR
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Input Area -->
+                        <div class="border-t border-gray-200 p-4 bg-white rounded-b-xl">
+                            <div class="flex space-x-3">
+                                <div class="flex-1 relative">
+                                    <input type="text" id="message-input"
+                                        placeholder="Ask me anything about aviation training, aircraft, or platform features..."
+                                        class="w-full pl-4 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors">
+                                    <div class="absolute right-3 top-1/2 transform -translate-y-1/2 flex space-x-2">
+                                        <button class="text-gray-400 hover:text-primary transition-colors">
+                                            <i class="fa-solid fa-paperclip"></i>
+                                        </button>
+                                        <button class="text-gray-400 hover:text-primary transition-colors">
+                                            <i class="fa-solid fa-microphone"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <button id="send-message"
+                                    class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90 transition-colors flex items-center space-x-2">
+                                    <i class="fa-solid fa-paper-plane"></i>
+                                    <span>Send</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Sidebar - Analytics & Tools -->
+                <div class="lg:col-span-1 space-y-6">
+                    <!-- AI Performance -->
+                    <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                        <h3 class="font-semibold text-secondary mb-4">AI Performance</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-gray-600">Response Accuracy</span>
+                                    <span class="font-medium text-secondary">94%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-accent h-2 rounded-full" style="width: 94%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-gray-600">Response Time</span>
+                                    <span class="font-medium text-secondary">1.2s avg</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-primary h-2 rounded-full" style="width: 88%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-gray-600">User Satisfaction</span>
+                                    <span class="font-medium text-secondary">96%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-green-500 h-2 rounded-full" style="width: 96%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Learning Resources -->
+                    <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                        <h3 class="font-semibold text-secondary mb-4">Learning Resources</h3>
+                        <div class="space-y-3">
+                            <div
+                                class="p-3 bg-blue-50 rounded-lg border border-blue-200 cursor-pointer hover:bg-blue-100 transition-colors">
+                                <p class="text-sm font-medium text-secondary">Aviation Regulations Guide</p>
+                                <p class="text-xs text-gray-600">FAA & EASA compliance</p>
+                            </div>
+                            <div
+                                class="p-3 bg-green-50 rounded-lg border border-green-200 cursor-pointer hover:bg-green-100 transition-colors">
+                                <p class="text-sm font-medium text-secondary">Training Manuals</p>
+                                <p class="text-xs text-gray-600">Complete course materials</p>
+                            </div>
+                            <div
+                                class="p-3 bg-purple-50 rounded-lg border border-purple-200 cursor-pointer hover:bg-purple-100 transition-colors">
+                                <p class="text-sm font-medium text-secondary">Aircraft Databases</p>
+                                <p class="text-xs text-gray-600">Specifications & manuals</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Voice Control -->
+                    <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                        <h3 class="font-semibold text-secondary mb-4">Voice Control</h3>
+                        <div class="text-center">
+                            <button
+                                class="pulse-glow w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fa-solid fa-microphone text-white text-xl"></i>
+                            </button>
+                            <p class="text-sm text-gray-600">Click to speak with AI Assistant</p>
+                            <p class="text-xs text-gray-500 mt-1">Supports natural language queries</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Advanced Features Section -->
+            <div class="mt-12">
+                <h3 class="text-xl font-semibold text-secondary mb-6">Advanced AI Features</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="feature-card bg-card rounded-xl p-6 shadow-sm border border-gray-100 text-center">
+                        <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto mb-4">
+                            <i class="fa-solid fa-chart-network text-primary text-xl"></i>
+                        </div>
+                        <h4 class="font-semibold text-secondary mb-2">Smart Analysis</h4>
+                        <p class="text-sm text-gray-600">Analyze training progress and suggest improvements</p>
+                    </div>
+                    <div class="feature-card bg-card rounded-xl p-6 shadow-sm border border-gray-100 text-center">
+                        <div class="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center mx-auto mb-4">
+                            <i class="fa-solid fa-lightbulb text-accent text-xl"></i>
+                        </div>
+                        <h4 class="font-semibold text-secondary mb-2">Personalized Recommendations</h4>
+                        <p class="text-sm text-gray-600">Get custom course and career suggestions</p>
+                    </div>
+                    <div class="feature-card bg-card rounded-xl p-6 shadow-sm border border-gray-100 text-center">
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                            <i class="fa-solid fa-database text-purple-600 text-xl"></i>
+                        </div>
+                        <h4 class="font-semibold text-secondary mb-2">Knowledge Base</h4>
+                        <p class="text-sm text-gray-600">Access vast aviation database instantly</p>
+                    </div>
+                    <div class="feature-card bg-card rounded-xl p-6 shadow-sm border border-gray-100 text-center">
+                        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mx-auto mb-4">
+                            <i class="fa-solid fa-shield-alt text-yellow-600 text-xl"></i>
+                        </div>
+                        <h4 class="font-semibold text-secondary mb-2">Safety Compliance</h4>
+                        <p class="text-sm text-gray-600">Ensure regulatory compliance in training</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const messagesContainer = document.getElementById('messages-container');
+            const messageInput = document.getElementById('message-input');
+            const sendButton = document.getElementById('send-button');
+            const suggestionChips = document.querySelectorAll('.suggestion-chip');
+            const quickActions = document.querySelectorAll('.bg-gray-50 button');
+
+            // Auto-scroll to bottom
+            function scrollToBottom() {
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            }
+
+            // Send message function
+            function sendMessage() {
+                const message = messageInput.value.trim();
+                if (message) {
+                    // Add user message
+                    addUserMessage(message);
+
+                    // Clear input
+                    messageInput.value = '';
+
+                    // Show typing indicator
+                    showTypingIndicator();
+
+                    // Simulate AI response
+                    setTimeout(() => {
+                        removeTypingIndicator();
+                        addAiResponse(message);
+                    }, 2000);
+                }
+            }
+
+            // Add user message to chat
+            function addUserMessage(message) {
+                const messageHTML = `
+                    <div class="message-user mb-6">
+                        <div class="flex space-x-3 justify-end">
+                            <div class="flex-1 max-w-md">
+                                <div class="bg-primary text-white rounded-lg p-4">
+                                    <p>${message}</p>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1 text-right">You • Just now</p>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
+                                    <i class="fa-solid fa-user text-white text-sm"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                messagesContainer.insertAdjacentHTML('beforeend', messageHTML);
+                scrollToBottom();
+            }
+
+            // Show typing indicator
+            function showTypingIndicator() {
+                const typingHTML = `
+                    <div class="message-ai mb-6" id="typing-indicator">
+                        <div class="flex space-x-3">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                                    <i class="fa-solid fa-robot text-white text-sm"></i>
+                                </div>
+                            </div>
+                            <div class="flex-1">
+                                <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                                    <div class="typing-indicator">
+                                        <span class="typing-dot"></span>
+                                        <span class="typing-dot"></span>
+                                        <span class="typing-dot"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                messagesContainer.insertAdjacentHTML('beforeend', typingHTML);
+                scrollToBottom();
+            }
+
+            // Remove typing indicator
+            function removeTypingIndicator() {
+                const typingIndicator = document.getElementById('typing-indicator');
+                if (typingIndicator) {
+                    typingIndicator.remove();
+                }
+            }
+
+            // Add AI response
+            function addAiResponse(userMessage) {
+                const responses = {
+                    'piston': `Piston aircraft are typically used for initial flight training due to their lower operating costs and simpler systems. They use reciprocating engines and are ideal for:
+• Private Pilot License training
+• Basic instrument training
+• Cost-effective flight hours
+
+Common training piston aircraft include Cessna 172, Piper PA-28, and Diamond DA40.`,
+                    'turbine': `Turbine aircraft (turboprops and jets) are used for advanced training:
+• Commercial Pilot License
+• Type ratings
+• Advanced instrument training
+• Multi-engine training
+
+They offer higher performance but require more complex systems knowledge. Examples include King Air 350 for turboprop and various jet trainers.`,
+                    'default': `I understand you're asking about "${userMessage}". Based on my aviation knowledge base, I can provide detailed information about training requirements, aircraft specifications, regulatory compliance, and career guidance. Could you please specify which aspect you'd like me to focus on?`
+                };
+
+                let response = responses.default;
+                const lowerMessage = userMessage.toLowerCase();
+
+                if (lowerMessage.includes('piston') || lowerMessage.includes('turbine')) {
+                    if (lowerMessage.includes('piston')) {
+                        response = responses.piston;
+                    } else if (lowerMessage.includes('turbine')) {
+                        response = responses.turbine;
+                    }
+                }
+
+                const aiMessageHTML = `
+                    <div class="message-ai mb-6">
+                        <div class="flex space-x-3">
+                            <div class="flex-shrink-0">
+                                <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                                    <i class="fa-solid fa-robot text-white text-sm"></i>
+                                </div>
+                            </div>
+                            <div class="flex-1">
+                                <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-200">
+                                    <p class="text-gray-800">${response}</p>
+                                    <div class="mt-3 flex space-x-2">
+                                        <button class="text-xs bg-primary/10 text-primary px-2 py-1 rounded hover:bg-primary/20 transition-colors">
+                                            Learn More
+                                        </button>
+                                        <button class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded hover:bg-gray-200 transition-colors">
+                                            Related Courses
+                                        </button>
+                                        <button class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded hover:bg-gray-200 transition-colors">
+                                            Save Response
+                                        </button>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">EduSaaS AI • Just now</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                messagesContainer.insertAdjacentHTML('beforeend', aiMessageHTML);
+                scrollToBottom();
+            }
+
+            // Event listeners
+            document.getElementById('send-message').addEventListener('click', sendMessage);
+
+            messageInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+
+            // Suggestion chips
+            suggestionChips.forEach(chip => {
+                chip.addEventListener('click', function () {
+                    messageInput.value = this.textContent.trim();
+                    messageInput.focus();
+                });
+            });
+
+            // Quick actions
+            quickActions.forEach(action => {
+                action.addEventListener('click', function () {
+                    const text = this.textContent.trim();
+                    messageInput.value = text;
+                    messageInput.focus();
+                });
+            });
+
+            // Voice control simulation
+            document.querySelector('.pulse-glow').addEventListener('click', function () {
+                this.classList.toggle('pulse-glow');
+                const icon = this.querySelector('i');
+                if (icon.classList.contains('fa-microphone')) {
+                    icon.className = 'fa-solid fa-stop text-white text-xl';
+                    messageInput.placeholder = "Listening... Speak now";
+                    // Simulate voice input after delay
+                    setTimeout(() => {
+                        messageInput.value = "What are the requirements for commercial pilot training?";
+                        icon.className = 'fa-solid fa-microphone text-white text-xl';
+                        this.classList.add('pulse-glow');
+                        messageInput.placeholder = "Ask me anything about aviation training, aircraft, or platform features...";
+                    }, 3000);
+                } else {
+                    icon.className = 'fa-solid fa-microphone text-white text-xl';
+                    this.classList.add('pulse-glow');
+                    messageInput.placeholder = "Ask me anything about aviation training, aircraft, or platform features...";
+                }
+            });
+
+            // Auto-focus input
+            messageInput.focus();
+        });
+    </script>
+</body>
+
+</html>

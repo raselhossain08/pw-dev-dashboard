@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payments - EduSaaS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest' };</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous"
+        referrerpolicy="no-referrer"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .payment-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .status-completed {
+            background-color: #10B981;
+            color: white;
+        }
+
+        .status-pending {
+            background-color: #F59E0B;
+            color: white;
+        }
+
+        .status-failed {
+            background-color: #EF4444;
+            color: white;
+        }
+
+        .status-refunded {
+            background-color: #8B5CF6;
+            color: white;
+        }
+
+        .method-card {
+            background-color: #F8FAFC;
+        }
+
+        .method-card:hover {
+            background-color: #F1F5F9;
+        }
+
+        /* Custom scrollbar for table */
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        /* Animation for status changes */
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .status-update {
+            animation: pulse 0.5s ease-in-out;
+        }
+
+        /* Payment method icons */
+        .payment-method {
+            transition: all 0.2s ease;
+        }
+
+        .payment-method:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366F1',
+                        secondary: '#0F172A',
+                        accent: '#10B981',
+                        background: '#F5F6FA',
+                        sidebar: '#111827',
+                        card: '#FFFFFF'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-background">
+
+    <!-- Header -->
+    <header id="header" class="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-b border-gray-200 z-50">
+        <div class="flex items-center justify-between px-6 py-4">
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                        <i class="fa-solid fa-graduation-cap text-white text-sm"></i>
+                    </div>
+                    <h1 class="text-xl font-bold text-secondary">EduSaaS</h1>
+                </div>
+            </div>
+
+            <div class="flex-1 max-w-md mx-8">
+                <div class="relative">
+                    <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    <input type="text" placeholder="Search payments... (Cmd+K)"
+                        class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <button class="p-2 text-gray-600 hover:text-primary transition-colors relative">
+                    <i class="fa-solid fa-bell text-lg"></i>
+                    <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+                </button>
+                <button class="p-2 text-gray-600 hover:text-primary transition-colors">
+                    <i class="fa-solid fa-robot text-lg"></i>
+                </button>
+                <div class="flex items-center space-x-2">
+                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" alt="User"
+                        class="w-8 h-8 rounded-full">
+                    <i class="fa-solid fa-chevron-down text-gray-400 text-sm"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed left-0 top-16 bottom-0 w-64 bg-sidebar text-white overflow-y-auto">
+        <nav class="p-6">
+            <div class="space-y-2">
+                <div class="mb-6">
+                    <a href="dashboard.html"
+                        class="flex items-center space-x-3 px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <span class="font-medium">Dashboard</span>
+                    </a>
+                </div>
+
+                <div class="space-y-1">
+                    <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 py-2">Learning
+                        Management</div>
+                    <a href="courses.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-book"></i>
+                        <span>Courses</span>
+                    </a>
+                    <a href="modules.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-layer-group"></i>
+                        <span>Modules</span>
+                    </a>
+                    <a href="lessons.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-play-circle"></i>
+                        <span>Lessons</span>
+                    </a>
+                    <a href="quizzes.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-question-circle"></i>
+                        <span>Quiz & Exams</span>
+                    </a>
+                    <a href="assignments.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-tasks"></i>
+                        <span>Assignments</span>
+                    </a>
+                    <a href="certificates.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-certificate"></i>
+                        <span>Certificates</span>
+                    </a>
+                </div>
+
+                <div class="space-y-1 mt-6">
+                    <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 py-2">User Management
+                    </div>
+                    <a href="students.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-users"></i>
+                        <span>Students</span>
+                    </a>
+                    <a href="instructors.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-chalkboard-teacher"></i>
+                        <span>Instructors</span>
+                    </a>
+                    <a href="payments.html" class="flex items-center space-x-3 px-4 py-2 bg-primary rounded-lg">
+                        <i class="fa-solid fa-credit-card"></i>
+                        <span>Payments</span>
+                    </a>
+                    <a href="enrollments.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span>Enrollments</span>
+                    </a>
+                </div>
+
+                <div class="space-y-1 mt-6">
+                    <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 py-2">Communication
+                    </div>
+                    <a href="chat.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-comments"></i>
+                        <span>Live Chat</span>
+                    </a>
+                    <a href="ai-agents.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-robot"></i>
+                        <span>AI Agents</span>
+                    </a>
+                    <a href="support.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-headset"></i>
+                        <span>Support Tickets</span>
+                    </a>
+                </div>
+
+                <div class="space-y-1 mt-6">
+                    <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 py-2">Content & Media
+                    </div>
+                    <a href="cms.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-file-alt"></i>
+                        <span>CMS</span>
+                    </a>
+                    <a href="media.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-photo-video"></i>
+                        <span>Media Library</span>
+                    </a>
+                </div>
+
+                <div class="space-y-1 mt-6">
+                    <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 py-2">System</div>
+                    <a href="roles.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-user-shield"></i>
+                        <span>Roles & Permissions</span>
+                    </a>
+                    <a href="integrations.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-plug"></i>
+                        <span>Integrations</span>
+                    </a>
+                    <a href="settings.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-cog"></i>
+                        <span>Settings</span>
+                    </a>
+                    <a href="logs.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-history"></i>
+                        <span>Activity Logs</span>
+                    </a>
+                </div>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main id="main-content" class="ml-64 pt-16">
+        <div class="p-6">
+            <!-- Page Header -->
+            <div id="page-header" class="mb-8">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-3xl font-bold text-secondary mb-2">Payments</h2>
+                        <p class="text-gray-600">Manage payment transactions, invoices, and revenue tracking</p>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button
+                            class="bg-white hover:bg-gray-50 text-secondary border border-gray-300 px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors">
+                            <i class="fa-solid fa-download"></i>
+                            <span>Export Reports</span>
+                        </button>
+                        <button id="create-invoice-btn"
+                            class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors">
+                            <i class="fa-solid fa-file-invoice"></i>
+                            <span>Create Invoice</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div id="stats-section" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Total Revenue</p>
+                            <p class="text-2xl font-bold text-secondary mt-1">$84,329</p>
+                            <p class="text-accent text-sm mt-1">
+                                <i class="fa-solid fa-arrow-up text-xs"></i> +24% from last month
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-dollar-sign text-primary text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Pending Payments</p>
+                            <p class="text-2xl font-bold text-secondary mt-1">$3,847</p>
+                            <p class="text-accent text-sm mt-1">
+                                <i class="fa-solid fa-clock text-xs"></i> 28 transactions
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-clock text-yellow-600 text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Successful Transactions</p>
+                            <p class="text-2xl font-bold text-secondary mt-1">1,247</p>
+                            <p class="text-accent text-sm mt-1">
+                                <i class="fa-solid fa-arrow-up text-xs"></i> +18% from last month
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-check-circle text-accent text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Avg. Transaction</p>
+                            <p class="text-2xl font-bold text-secondary mt-1">$89.50</p>
+                            <p class="text-accent text-sm mt-1">
+                                <i class="fa-solid fa-arrow-up text-xs"></i> +12% from last month
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-chart-line text-purple-600 text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Revenue Chart -->
+            <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100 mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-semibold text-secondary">Revenue Overview</h3>
+                    <div class="flex space-x-2">
+                        <select
+                            class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20">
+                            <option>Last 7 days</option>
+                            <option>Last 30 days</option>
+                            <option>Last 90 days</option>
+                            <option>This year</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
+                    <div class="text-center text-gray-500">
+                        <i class="fa-solid fa-chart-bar text-4xl mb-2"></i>
+                        <p>Revenue chart visualization would appear here</p>
+                        <p class="text-sm">Showing monthly revenue trends and projections</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters and Search -->
+            <div class="bg-card rounded-xl p-4 shadow-sm border border-gray-100 mb-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0">
+                    <div class="flex flex-wrap gap-2">
+                        <select
+                            class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20">
+                            <option>All Status</option>
+                            <option>Completed</option>
+                            <option>Pending</option>
+                            <option>Failed</option>
+                            <option>Refunded</option>
+                        </select>
+                        <select
+                            class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20">
+                            <option>All Payment Methods</option>
+                            <option>Credit Card</option>
+                            <option>PayPal</option>
+                            <option>Bank Transfer</option>
+                            <option>Stripe</option>
+                        </select>
+                        <select
+                            class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20">
+                            <option>All Courses</option>
+                            <option>Web Development</option>
+                            <option>Data Science</option>
+                            <option>Digital Marketing</option>
+                            <option>UI/UX Design</option>
+                        </select>
+                        <select
+                            class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20">
+                            <option>Sort by: Date (Newest)</option>
+                            <option>Sort by: Date (Oldest)</option>
+                            <option>Sort by: Amount (High to Low)</option>
+                            <option>Sort by: Amount (Low to High)</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button class="p-2 text-gray-600 hover:text-primary transition-colors">
+                            <i class="fa-solid fa-filter"></i>
+                        </button>
+                        <button class="p-2 text-gray-600 hover:text-primary transition-colors">
+                            <i class="fa-solid fa-download"></i>
+                        </button>
+                        <button class="p-2 text-gray-600 hover:text-primary transition-colors">
+                            <i class="fa-solid fa-grid-2"></i>
+                        </button>
+                        <button class="p-2 text-gray-600 hover:text-primary transition-colors">
+                            <i class="fa-solid fa-list"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Methods Overview -->
+            <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100 mb-8">
+                <h3 class="text-lg font-semibold text-secondary mb-4">Payment Methods</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="payment-method method-card p-4 rounded-lg border border-gray-200 text-center">
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                            <i class="fa-solid fa-credit-card text-blue-600 text-xl"></i>
+                        </div>
+                        <h4 class="font-medium text-secondary">Credit Card</h4>
+                        <p class="text-sm text-gray-600">1,024 transactions</p>
+                        <p class="text-lg font-bold text-secondary mt-1">$68,420</p>
+                    </div>
+
+                    <div class="payment-method method-card p-4 rounded-lg border border-gray-200 text-center">
+                        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                            <i class="fa-brands fa-paypal text-yellow-600 text-xl"></i>
+                        </div>
+                        <h4 class="font-medium text-secondary">PayPal</h4>
+                        <p class="text-sm text-gray-600">342 transactions</p>
+                        <p class="text-lg font-bold text-secondary mt-1">$12,580</p>
+                    </div>
+
+                    <div class="payment-method method-card p-4 rounded-lg border border-gray-200 text-center">
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                            <i class="fa-solid fa-building text-green-600 text-xl"></i>
+                        </div>
+                        <h4 class="font-medium text-secondary">Bank Transfer</h4>
+                        <p class="text-sm text-gray-600">87 transactions</p>
+                        <p class="text-lg font-bold text-secondary mt-1">$2,847</p>
+                    </div>
+
+                    <div class="payment-method method-card p-4 rounded-lg border border-gray-200 text-center">
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+                            <i class="fa-brands fa-stripe text-purple-600 text-xl"></i>
+                        </div>
+                        <h4 class="font-medium text-secondary">Stripe</h4>
+                        <p class="text-sm text-gray-600">215 transactions</p>
+                        <p class="text-lg font-bold text-secondary mt-1">$8,482</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Transactions Table -->
+            <div class="bg-card rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8">
+                <div class="p-6 border-b border-gray-200">
+                    <h3 class="text-lg font-semibold text-secondary">Recent Transactions</h3>
+                    <p class="text-gray-600 text-sm">Latest payment transactions and invoices</p>
+                </div>
+
+                <div class="table-container">
+                    <table class="w-full">
+                        <thead class="bg-gray-50 sticky top-0">
+                            <tr>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Transaction ID</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Student</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Course</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Amount</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Payment Method</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Date</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Status</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">TXN-2023-0012
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <img class="h-8 w-8 rounded-full"
+                                            src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg"
+                                            alt="">
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">Sarah Johnson</div>
+                                            <div class="text-sm text-gray-500">sarah.j@example.com</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">Web Development</div>
+                                    <div class="text-sm text-gray-500">Complete Bootcamp</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">$89.99</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <i class="fa-solid fa-credit-card text-blue-500 mr-2"></i>
+                                        <span class="text-sm text-gray-900">Credit Card</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Oct 15, 2023</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="status-completed px-2 inline-flex text-xs leading-5 font-semibold rounded-full">Completed</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button class="text-primary hover:text-primary/80 mr-3">View</button>
+                                    <button class="text-gray-600 hover:text-primary">Invoice</button>
+                                </td>
+                            </tr>
+
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">TXN-2023-0011
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <img class="h-8 w-8 rounded-full"
+                                            src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg"
+                                            alt="">
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">Michael Chen</div>
+                                            <div class="text-sm text-gray-500">michael.c@example.com</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">Data Science</div>
+                                    <div class="text-sm text-gray-500">ML Specialization</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">$99.99</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <i class="fa-brands fa-paypal text-yellow-500 mr-2"></i>
+                                        <span class="text-sm text-gray-900">PayPal</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Oct 14, 2023</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="status-completed px-2 inline-flex text-xs leading-5 font-semibold rounded-full">Completed</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button class="text-primary hover:text-primary/80 mr-3">View</button>
+                                    <button class="text-gray-600 hover:text-primary">Invoice</button>
+                                </td>
+                            </tr>
+
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">TXN-2023-0010
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <img class="h-8 w-8 rounded-full"
+                                            src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg"
+                                            alt="">
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">Emma Wilson</div>
+                                            <div class="text-sm text-gray-500">emma.w@example.com</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">UI/UX Design</div>
+                                    <div class="text-sm text-gray-500">Advanced Course</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">$79.99</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <i class="fa-brands fa-stripe text-purple-500 mr-2"></i>
+                                        <span class="text-sm text-gray-900">Stripe</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Oct 13, 2023</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="status-pending px-2 inline-flex text-xs leading-5 font-semibold rounded-full">Pending</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button class="text-primary hover:text-primary/80 mr-3">Approve</button>
+                                    <button class="text-gray-600 hover:text-primary">Remind</button>
+                                </td>
+                            </tr>
+
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">TXN-2023-0009
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <img class="h-8 w-8 rounded-full"
+                                            src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-8.jpg"
+                                            alt="">
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">Alex Thompson</div>
+                                            <div class="text-sm text-gray-500">alex.t@example.com</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">Digital Marketing</div>
+                                    <div class="text-sm text-gray-500">Master Course</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">$129.99</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <i class="fa-solid fa-building text-green-500 mr-2"></i>
+                                        <span class="text-sm text-gray-900">Bank Transfer</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Oct 12, 2023</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="status-failed px-2 inline-flex text-xs leading-5 font-semibold rounded-full">Failed</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button class="text-primary hover:text-primary/80 mr-3">Retry</button>
+                                    <button class="text-gray-600 hover:text-primary">Contact</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
+                    <div class="text-sm text-gray-600">
+                        Showing <span class="font-medium">1-10</span> of <span class="font-medium">1,247</span>
+                        transactions
+                    </div>
+                    <div class="flex space-x-2">
+                        <button
+                            class="px-3 py-1 border border-gray-300 rounded text-sm text-gray-600 hover:bg-gray-50">Previous</button>
+                        <button class="px-3 py-1 bg-primary text-white rounded text-sm">1</button>
+                        <button
+                            class="px-3 py-1 border border-gray-300 rounded text-sm text-gray-600 hover:bg-gray-50">2</button>
+                        <button
+                            class="px-3 py-1 border border-gray-300 rounded text-sm text-gray-600 hover:bg-gray-50">3</button>
+                        <button
+                            class="px-3 py-1 border border-gray-300 rounded text-sm text-gray-600 hover:bg-gray-50">Next</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payouts to Instructors -->
+            <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100 mb-8">
+                <h3 class="text-lg font-semibold text-secondary mb-4">Instructor Payouts</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Instructor</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Course</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Revenue Share</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Payout Amount</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Next Payout</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Status</th>
+                                <th
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <img class="h-8 w-8 rounded-full"
+                                            src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg"
+                                            alt="">
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">Dr. James Wilson</div>
+                                            <div class="text-sm text-gray-500">Web Development</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Complete Bootcamp</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">70%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">$2,847</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Nov 1, 2023</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="status-completed px-2 inline-flex text-xs leading-5 font-semibold rounded-full">Processed</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button class="text-primary hover:text-primary/80 mr-3">View</button>
+                                    <button class="text-gray-600 hover:text-primary">Pay Now</button>
+                                </td>
+                            </tr>
+
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="flex items-center">
+                                        <img class="h-8 w-8 rounded-full"
+                                            src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-6.jpg"
+                                            alt="">
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">Dr. Maria Rodriguez</div>
+                                            <div class="text-sm text-gray-500">Data Science</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">ML Specialization</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">65%</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">$1,928</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Nov 1, 2023</td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span
+                                        class="status-pending px-2 inline-flex text-xs leading-5 font-semibold rounded-full">Pending</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <button class="text-primary hover:text-primary/80 mr-3">View</button>
+                                    <button class="text-gray-600 hover:text-primary">Pay Now</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div id="quick-actions" class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                <h3 class="text-lg font-semibold text-secondary mb-4">Quick Actions</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <button
+                        class="flex items-center space-x-3 p-4 bg-primary/5 hover:bg-primary/10 rounded-lg transition-colors">
+                        <div class="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-file-invoice text-white"></i>
+                        </div>
+                        <div class="text-left">
+                            <p class="font-medium text-secondary">Create Invoice</p>
+                            <p class="text-sm text-gray-600">New billing</p>
+                        </div>
+                    </button>
+
+                    <button
+                        class="flex items-center space-x-3 p-4 bg-accent/5 hover:bg-accent/10 rounded-lg transition-colors">
+                        <div class="w-10 h-10 bg-accent rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-download text-white"></i>
+                        </div>
+                        <div class="text-left">
+                            <p class="font-medium text-secondary">Export Reports</p>
+                            <p class="text-sm text-gray-600">Financial data</p>
+                        </div>
+                    </button>
+
+                    <button
+                        class="flex items-center space-x-3 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
+                        <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-money-bill-transfer text-white"></i>
+                        </div>
+                        <div class="text-left">
+                            <p class="font-medium text-secondary">Process Payouts</p>
+                            <p class="text-sm text-gray-600">Instructor payments</p>
+                        </div>
+                    </button>
+
+                    <button
+                        class="flex items-center space-x-3 p-4 bg-yellow-50 hover:bg-yellow-100 rounded-lg transition-colors">
+                        <div class="w-10 h-10 bg-yellow-500 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-chart-simple text-white"></i>
+                        </div>
+                        <div class="text-left">
+                            <p class="font-medium text-secondary">View Analytics</p>
+                            <p class="text-sm text-gray-600">Revenue insights</p>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Create Invoice Modal -->
+            <div id="create-invoice-modal"
+                class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+                <div class="bg-white rounded-xl shadow-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+                    <div class="p-6 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-secondary">Create New Invoice</h3>
+                    </div>
+                    <div class="p-6">
+                        <form id="invoice-form">
+                            <div class="space-y-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Student</label>
+                                        <select
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                            required>
+                                            <option value="">Select student</option>
+                                            <option value="1">Sarah Johnson</option>
+                                            <option value="2">Michael Chen</option>
+                                            <option value="3">Emma Wilson</option>
+                                            <option value="4">Alex Thompson</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Course</label>
+                                        <select
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                            required>
+                                            <option value="">Select course</option>
+                                            <option value="web">Web Development</option>
+                                            <option value="data">Data Science</option>
+                                            <option value="marketing">Digital Marketing</option>
+                                            <option value="design">UI/UX Design</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                                        <div class="relative">
+                                            <div
+                                                class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <span class="text-gray-500 sm:text-sm">$</span>
+                                            </div>
+                                            <input type="number"
+                                                class="pl-7 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                                placeholder="0.00" min="0" step="0.01" required>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                                        <input type="date"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                            required>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                    <textarea
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                        rows="3" placeholder="Invoice description and terms"></textarea>
+                                </div>
+
+                                <div class="space-y-3">
+                                    <label class="block text-sm font-medium text-gray-700">Invoice Settings</label>
+                                    <div class="flex items-center">
+                                        <input type="checkbox"
+                                            class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                                            checked>
+                                        <label class="ml-2 block text-sm text-gray-700">Send invoice via email</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox"
+                                            class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                                            checked>
+                                        <label class="ml-2 block text-sm text-gray-700">Allow online payment</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox"
+                                            class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded">
+                                        <label class="ml-2 block text-sm text-gray-700">Set up payment reminders</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="p-6 border-t border-gray-200 flex justify-end space-x-3">
+                        <button id="cancel-invoice-btn"
+                            class="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">Cancel</button>
+                        <button id="save-invoice-btn"
+                            class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg transition-colors">Create
+                            Invoice</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Create invoice modal
+            const createInvoiceBtn = document.getElementById('create-invoice-btn');
+            const createInvoiceModal = document.getElementById('create-invoice-modal');
+            const cancelInvoiceBtn = document.getElementById('cancel-invoice-btn');
+            const saveInvoiceBtn = document.getElementById('save-invoice-btn');
+
+            createInvoiceBtn.addEventListener('click', function () {
+                createInvoiceModal.classList.remove('hidden');
+            });
+
+            cancelInvoiceBtn.addEventListener('click', function () {
+                createInvoiceModal.classList.add('hidden');
+            });
+
+            saveInvoiceBtn.addEventListener('click', function () {
+                // In a real app, you would save the invoice data here
+                alert('Invoice created successfully!');
+                createInvoiceModal.classList.add('hidden');
+                document.getElementById('invoice-form').reset();
+            });
+
+            // Close modal when clicking outside
+            createInvoiceModal.addEventListener('click', function (e) {
+                if (e.target === createInvoiceModal) {
+                    createInvoiceModal.classList.add('hidden');
+                }
+            });
+
+            // Search functionality
+            const searchInput = document.querySelector('input[placeholder="Search payments... (Cmd+K)"]');
+            searchInput.addEventListener('input', function () {
+                const searchTerm = this.value.toLowerCase();
+                const tableRows = document.querySelectorAll('tbody tr');
+
+                tableRows.forEach(row => {
+                    const studentName = row.querySelector('.text-sm.font-medium').textContent.toLowerCase();
+                    const transactionId = row.querySelector('.font-mono').textContent.toLowerCase();
+                    const courseName = row.querySelector('.text-sm.text-gray-900').textContent.toLowerCase();
+
+                    if (studentName.includes(searchTerm) || transactionId.includes(searchTerm) || courseName.includes(searchTerm)) {
+                        row.style.display = 'table-row';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+
+            // Keyboard shortcut for search (Cmd+K)
+            document.addEventListener('keydown', function (e) {
+                if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                    e.preventDefault();
+                    searchInput.focus();
+                }
+            });
+
+            // Status update animation
+            const statusElements = document.querySelectorAll('[class*="status-"]');
+            statusElements.forEach(element => {
+                element.addEventListener('click', function () {
+                    this.classList.add('status-update');
+                    setTimeout(() => {
+                        this.classList.remove('status-update');
+                    }, 500);
+                });
+            });
+
+            // Payment method hover effects
+            const paymentMethods = document.querySelectorAll('.payment-method');
+            paymentMethods.forEach(method => {
+                method.addEventListener('mouseenter', function () {
+                    this.style.transform = 'translateY(-2px)';
+                    this.style.boxShadow = '0 8px 25px rgba(0,0,0,0.1)';
+                });
+
+                method.addEventListener('mouseleave', function () {
+                    this.style.transform = 'translateY(0)';
+                    this.style.boxShadow = 'none';
+                });
+            });
+        });
+    </script>
+
+</body>
+
+</html>

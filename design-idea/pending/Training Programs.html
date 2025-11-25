@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Training Programs - EduSaaS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest' };</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous"
+        referrerpolicy="no-referrer"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .training-card {
+            transition: all 0.3s ease;
+        }
+
+        .training-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .schedule-slot {
+            transition: all 0.2s ease;
+        }
+
+        .schedule-slot:hover {
+            background-color: #f8fafc;
+        }
+
+        .aircraft-model {
+            transition: all 0.3s ease;
+        }
+
+        .aircraft-model:hover {
+            transform: scale(1.02);
+        }
+
+        .calendar-day {
+            transition: all 0.2s ease;
+        }
+
+        .calendar-day:hover {
+            background-color: #f1f5f9;
+        }
+
+        .calendar-day.selected {
+            background-color: #6366F1;
+            color: white;
+        }
+
+        .tab-active {
+            border-bottom: 2px solid #6366F1;
+            color: #6366F1;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366F1',
+                        secondary: '#0F172A',
+                        accent: '#10B981',
+                        background: '#F5F6FA',
+                        sidebar: '#111827',
+                        card: '#FFFFFF'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-background">
+
+    <!-- Main Content -->
+    <main id="main-content" class="pt-6">
+        <div class="p-6">
+            <!-- Page Header -->
+            <div id="page-header" class="mb-8">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-3xl font-bold text-secondary mb-2">Training Programs</h2>
+                        <p class="text-gray-600">Manage aviation training programs, schedules, and aircraft models.</p>
+                    </div>
+                    <button
+                        class="bg-primary text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-primary/90 transition-colors">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Create Program</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div id="stats-section" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Active Programs</p>
+                            <p class="text-2xl font-bold text-secondary mt-1">24</p>
+                            <p class="text-accent text-sm mt-1">
+                                <i class="fa-solid fa-arrow-up text-xs"></i> +3 this month
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-calendar-check text-primary text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Upcoming Sessions</p>
+                            <p class="text-2xl font-bold text-secondary mt-1">47</p>
+                            <p class="text-accent text-sm mt-1">
+                                <i class="fa-solid fa-clock text-xs"></i> Next 30 days
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-plane text-accent text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Aircraft Models</p>
+                            <p class="text-2xl font-bold text-secondary mt-1">12</p>
+                            <p class="text-accent text-sm mt-1">
+                                <i class="fa-solid fa-check text-xs"></i> All operational
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-jet-fighter text-purple-600 text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Instructors</p>
+                            <p class="text-2xl font-bold text-secondary mt-1">18</p>
+                            <p class="text-accent text-sm mt-1">
+                                <i class="fa-solid fa-user-check text-xs"></i> 15 available
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-user-tie text-yellow-600 text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabs Navigation -->
+            <div class="border-b border-gray-200 mb-8">
+                <nav class="flex space-x-8">
+                    <button class="tab-active py-4 px-1 font-medium text-sm">Programs List</button>
+                    <button class="py-4 px-1 font-medium text-sm text-gray-500 hover:text-gray-700">Schedule
+                        Editor</button>
+                    <button class="py-4 px-1 font-medium text-sm text-gray-500 hover:text-gray-700">Aircraft
+                        Models</button>
+                    <button class="py-4 px-1 font-medium text-sm text-gray-500 hover:text-gray-700">Instructors</button>
+                    <button class="py-4 px-1 font-medium text-sm text-gray-500 hover:text-gray-700">Reports</button>
+                </nav>
+            </div>
+
+            <!-- Training Programs List -->
+            <div id="programs-list" class="mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-semibold text-secondary">Training Programs</h3>
+
+                    <div class="flex items-center space-x-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-600">Filter:</span>
+                            <select class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                                <option>All Programs</option>
+                                <option>Private Pilot</option>
+                                <option>Commercial Pilot</option>
+                                <option>Instrument Rating</option>
+                                <option>Type Ratings</option>
+                                <option>Recurrent Training</option>
+                            </select>
+                        </div>
+
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-600">Status:</span>
+                            <select class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                                <option>All Status</option>
+                                <option>Active</option>
+                                <option>Upcoming</option>
+                                <option>Completed</option>
+                                <option>Draft</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Programs Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Program Card 1 -->
+                    <div class="training-card bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <span class="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full">Private
+                                    Pilot</span>
+                                <h4 class="font-semibold text-secondary mt-2">Private Pilot License (PPL)</h4>
+                                <p class="text-sm text-gray-600">Basic flight training for private aircraft operation
+                                </p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-2xl font-bold text-secondary">$8,500</p>
+                                <p class="text-sm text-gray-600">Full course</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3 mb-4">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Duration</span>
+                                <span class="font-medium">6-8 months</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Flight Hours</span>
+                                <span class="font-medium">40 minimum</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Students</span>
+                                <span class="font-medium text-accent">24 enrolled</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between text-sm text-gray-600 mb-4">
+                            <div class="flex items-center space-x-1">
+                                <i class="fa-solid fa-calendar"></i>
+                                <span>Starts: Oct 15, 2023</span>
+                            </div>
+                            <div class="flex items-center space-x-1">
+                                <i class="fa-solid fa-user-tie"></i>
+                                <span>3 instructors</span>
+                            </div>
+                        </div>
+
+                        <div class="flex space-x-2">
+                            <button
+                                class="flex-1 bg-primary text-white py-2 px-3 rounded-lg hover:bg-primary/90 transition-colors text-sm">
+                                View Details
+                            </button>
+                            <button
+                                class="flex-1 border border-gray-300 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                                Edit
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Program Card 2 -->
+                    <div class="training-card bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <span class="bg-accent/10 text-accent text-xs px-2 py-1 rounded-full">Commercial</span>
+                                <h4 class="font-semibold text-secondary mt-2">Commercial Pilot License (CPL)</h4>
+                                <p class="text-sm text-gray-600">Advanced training for commercial aircraft operation</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-2xl font-bold text-secondary">$25,000</p>
+                                <p class="text-sm text-gray-600">Full course</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3 mb-4">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Duration</span>
+                                <span class="font-medium">12-18 months</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Flight Hours</span>
+                                <span class="font-medium">250 minimum</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Students</span>
+                                <span class="font-medium text-accent">18 enrolled</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between text-sm text-gray-600 mb-4">
+                            <div class="flex items-center space-x-1">
+                                <i class="fa-solid fa-calendar"></i>
+                                <span>Starts: Nov 1, 2023</span>
+                            </div>
+                            <div class="flex items-center space-x-1">
+                                <i class="fa-solid fa-user-tie"></i>
+                                <span>5 instructors</span>
+                            </div>
+                        </div>
+
+                        <div class="flex space-x-2">
+                            <button
+                                class="flex-1 bg-primary text-white py-2 px-3 rounded-lg hover:bg-primary/90 transition-colors text-sm">
+                                View Details
+                            </button>
+                            <button
+                                class="flex-1 border border-gray-300 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                                Edit
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Program Card 3 -->
+                    <div class="training-card bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <span class="bg-purple-100 text-purple-600 text-xs px-2 py-1 rounded-full">Type
+                                    Rating</span>
+                                <h4 class="font-semibold text-secondary mt-2">Boeing 737 Type Rating</h4>
+                                <p class="text-sm text-gray-600">Specific aircraft type certification training</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-2xl font-bold text-secondary">$32,000</p>
+                                <p class="text-sm text-gray-600">Full course</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-3 mb-4">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Duration</span>
+                                <span class="font-medium">3-4 months</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Simulator Hours</span>
+                                <span class="font-medium">60 hours</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Students</span>
+                                <span class="font-medium text-accent">8 enrolled</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between text-sm text-gray-600 mb-4">
+                            <div class="flex items-center space-x-1">
+                                <i class="fa-solid fa-calendar"></i>
+                                <span>Starts: Dec 5, 2023</span>
+                            </div>
+                            <div class="flex items-center space-x-1">
+                                <i class="fa-solid fa-user-tie"></i>
+                                <span>2 instructors</span>
+                            </div>
+                        </div>
+
+                        <div class="flex space-x-2">
+                            <button
+                                class="flex-1 bg-primary text-white py-2 px-3 rounded-lg hover:bg-primary/90 transition-colors text-sm">
+                                View Details
+                            </button>
+                            <button
+                                class="flex-1 border border-gray-300 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                                Edit
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Training Details CMS -->
+            <div id="training-details" class="bg-card rounded-xl p-6 shadow-sm border border-gray-100 mb-8">
+                <h3 class="text-xl font-semibold text-secondary mb-6">Training Program Details</h3>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Program Information -->
+                    <div class="lg:col-span-2">
+                        <div class="space-y-6">
+                            <!-- Basic Information -->
+                            <div>
+                                <h4 class="font-medium text-secondary mb-4">Basic Information</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Program Name</label>
+                                        <input type="text" value="Private Pilot License (PPL)"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Program Code</label>
+                                        <input type="text" value="PPL-2023"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
+                                    </div>
+                                </div>
+
+                                <div class="mt-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                                    <textarea
+                                        class="w-full h-24 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">The Private Pilot License course provides comprehensive training for individuals seeking to fly aircraft for personal use. This program covers all necessary theoretical knowledge and practical flight skills required for private aircraft operation.</textarea>
+                                </div>
+                            </div>
+
+                            <!-- Requirements -->
+                            <div>
+                                <h4 class="font-medium text-secondary mb-4">Requirements & Prerequisites</h4>
+                                <div class="space-y-3">
+                                    <div class="flex items-center">
+                                        <input type="checkbox"
+                                            class="rounded border-gray-300 text-primary focus:ring-primary" checked>
+                                        <span class="ml-2 text-sm text-gray-700">Minimum age: 17 years</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox"
+                                            class="rounded border-gray-300 text-primary focus:ring-primary" checked>
+                                        <span class="ml-2 text-sm text-gray-700">Medical certificate: Class 3</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox"
+                                            class="rounded border-gray-300 text-primary focus:ring-primary">
+                                        <span class="ml-2 text-sm text-gray-700">High school diploma or
+                                            equivalent</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input type="checkbox"
+                                            class="rounded border-gray-300 text-primary focus:ring-primary" checked>
+                                        <span class="ml-2 text-sm text-gray-700">English language proficiency</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Curriculum -->
+                            <div>
+                                <h4 class="font-medium text-secondary mb-4">Curriculum & Modules</h4>
+                                <div class="space-y-3">
+                                    <div
+                                        class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                                        <div class="flex items-center space-x-3">
+                                            <div
+                                                class="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                                                <span class="text-primary font-medium">1</span>
+                                            </div>
+                                            <div>
+                                                <p class="font-medium text-secondary">Aerodynamics & Principles of
+                                                    Flight</p>
+                                                <p class="text-sm text-gray-600">10 lessons • 15 hours</p>
+                                            </div>
+                                        </div>
+                                        <button class="text-gray-400 hover:text-primary">
+                                            <i class="fa-solid fa-ellipsis-v"></i>
+                                        </button>
+                                    </div>
+
+                                    <div
+                                        class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                                        <div class="flex items-center space-x-3">
+                                            <div
+                                                class="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                                                <span class="text-primary font-medium">2</span>
+                                            </div>
+                                            <div>
+                                                <p class="font-medium text-secondary">Aircraft Systems & Instruments</p>
+                                                <p class="text-sm text-gray-600">8 lessons • 12 hours</p>
+                                            </div>
+                                        </div>
+                                        <button class="text-gray-400 hover:text-primary">
+                                            <i class="fa-solid fa-ellipsis-v"></i>
+                                        </button>
+                                    </div>
+
+                                    <div
+                                        class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                                        <div class="flex items-center space-x-3">
+                                            <div
+                                                class="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                                                <span class="text-primary font-medium">3</span>
+                                            </div>
+                                            <div>
+                                                <p class="font-medium text-secondary">Meteorology & Weather Planning</p>
+                                                <p class="text-sm text-gray-600">6 lessons • 10 hours</p>
+                                            </div>
+                                        </div>
+                                        <button class="text-gray-400 hover:text-primary">
+                                            <i class="fa-solid fa-ellipsis-v"></i>
+                                        </button>
+                                    </div>
+
+                                    <button
+                                        class="w-full border-2 border-dashed border-gray-300 rounded-lg py-3 text-gray-500 hover:text-gray-700 hover:border-gray-400 transition-colors">
+                                        <i class="fa-solid fa-plus mr-2"></i>
+                                        Add New Module
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Program Settings -->
+                    <div class="space-y-6">
+                        <!-- Pricing & Duration -->
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <h4 class="font-medium text-secondary mb-4">Pricing & Duration</h4>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Course Fee</label>
+                                    <input type="text" value="$8,500"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Duration</label>
+                                    <input type="text" value="6-8 months"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Flight Hours
+                                        Required</label>
+                                    <input type="text" value="40"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Status & Visibility -->
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <h4 class="font-medium text-secondary mb-4">Status & Visibility</h4>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Program Status</label>
+                                    <select
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
+                                        <option>Active</option>
+                                        <option>Upcoming</option>
+                                        <option>Draft</option>
+                                        <option>Archived</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Visibility</label>
+                                    <select
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
+                                        <option>Public</option>
+                                        <option>Private</option>
+                                        <option>Hidden</option>
+                                    </select>
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="checkbox"
+                                        class="rounded border-gray-300 text-primary focus:ring-primary" checked>
+                                    <span class="ml-2 text-sm text-gray-700">Featured program</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Associated Aircraft -->
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <h4 class="font-medium text-secondary mb-4">Associated Aircraft</h4>
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-2">
+                                        <i class="fa-solid fa-plane text-gray-400"></i>
+                                        <span class="text-sm">Cessna 172</span>
+                                    </div>
+                                    <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">Primary</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-2">
+                                        <i class="fa-solid fa-plane text-gray-400"></i>
+                                        <span class="text-sm">Piper PA-28</span>
+                                    </div>
+                                    <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">Secondary</span>
+                                </div>
+                                <button class="w-full text-sm text-primary hover:text-primary/80 mt-2">
+                                    <i class="fa-solid fa-plus mr-1"></i>
+                                    Add Aircraft
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Schedule Editor -->
+            <div id="schedule-editor" class="bg-card rounded-xl p-6 shadow-sm border border-gray-100 mb-8">
+                <h3 class="text-xl font-semibold text-secondary mb-6">Schedule Editor</h3>
+
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                    <!-- Calendar -->
+                    <div class="lg:col-span-3">
+                        <div class="flex justify-between items-center mb-6">
+                            <h4 class="font-medium text-secondary">October 2023</h4>
+                            <div class="flex items-center space-x-2">
+                                <button class="p-2 hover:bg-gray-100 rounded-lg">
+                                    <i class="fa-solid fa-chevron-left"></i>
+                                </button>
+                                <button class="p-2 hover:bg-gray-100 rounded-lg">
+                                    <i class="fa-solid fa-chevron-right"></i>
+                                </button>
+                                <button
+                                    class="bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary/90 transition-colors text-sm">
+                                    Today
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Calendar Grid -->
+                        <div class="border border-gray-200 rounded-lg overflow-hidden">
+                            <!-- Calendar Header -->
+                            <div class="grid grid-cols-7 bg-gray-50 border-b border-gray-200">
+                                <div class="p-3 text-center text-sm font-medium text-gray-600">Sun</div>
+                                <div class="p-3 text-center text-sm font-medium text-gray-600">Mon</div>
+                                <div class="p-3 text-center text-sm font-medium text-gray-600">Tue</div>
+                                <div class="p-3 text-center text-sm font-medium text-gray-600">Wed</div>
+                                <div class="p-3 text-center text-sm font-medium text-gray-600">Thu</div>
+                                <div class="p-3 text-center text-sm font-medium text-gray-600">Fri</div>
+                                <div class="p-3 text-center text-sm font-medium text-gray-600">Sat</div>
+                            </div>
+
+                            <!-- Calendar Body -->
+                            <div class="grid grid-cols-7">
+                                <!-- Week 1 -->
+                                <div class="calendar-day p-3 border-r border-b border-gray-200 h-24">
+                                    <div class="text-sm text-gray-400">1</div>
+                                </div>
+                                <div class="calendar-day p-3 border-r border-b border-gray-200 h-24">
+                                    <div class="text-sm text-gray-400">2</div>
+                                </div>
+                                <div class="calendar-day p-3 border-r border-b border-gray-200 h-24">
+                                    <div class="text-sm text-gray-400">3</div>
+                                </div>
+                                <div class="calendar-day p-3 border-r border-b border-gray-200 h-24">
+                                    <div class="text-sm text-gray-400">4</div>
+                                </div>
+                                <div class="calendar-day p-3 border-r border-b border-gray-200 h-24">
+                                    <div class="text-sm text-gray-400">5</div>
+                                </div>
+                                <div class="calendar-day p-3 border-r border-b border-gray-200 h-24">
+                                    <div class="text-sm text-gray-400">6</div>
+                                </div>
+                                <div class="calendar-day p-3 border-b border-gray-200 h-24">
+                                    <div class="text-sm text-gray-400">7</div>
+                                </div>
+
+                                <!-- Week 2 -->
+                                <div class="calendar-day p-3 border-r border-b border-gray-200 h-24">
+                                    <div class="text-sm text-gray-400">8</div>
+                                </div>
+                                <div class="calendar-day p-3 border-r border-b border-gray-200 h-24">
+                                    <div class="text-sm text-gray-400">9</div>
+                                </div>
+                                <div class="calendar-day p-3 border-r border-b border-gray-200 h-24">
+                                    <div class="text-sm text-gray-400">10</div>
+                                </div>
+                                <div class="calendar-day p-3 border-r border-b border-gray-200 h-24">
+                                    <div class="text-sm">11</div>
+                                    <div class="mt-1 space-y-1">
+                                        <div class="bg-primary/10 text-primary text-xs p-1 rounded">PPL Ground School
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="calendar-day p-3 border-r border-b border-gray-200 h-24">
+                                    <div class="text-sm">12</div>
+                                    <div class="mt-1 space-y-1">
+                                        <div class="bg-accent/10 text-accent text-xs p-1 rounded">Flight Session</div>
+                                    </div>
+                                </div>
+                                <div class="calendar-day p-3 border-r border-b border-gray-200 h-24">
+                                    <div class="text-sm">13</div>
+                                </div>
+                                <div class="calendar-day p-3 border-b border-gray-200 h-24">
+                                    <div class="text-sm">14</div>
+                                </div>
+
+                                <!-- Week 3 - Selected Date -->
+                                <div class="calendar-day p-3 border-r border-b border-gray-200 h-24">
+                                    <div class="text-sm">15</div>
+                                    <div class="mt-1 space-y-1">
+                                        <div class="bg-purple-100 text-purple-600 text-xs p-1 rounded">CPL Theory</div>
+                                    </div>
+                                </div>
+                                <div class="calendar-day selected p-3 border-r border-b border-gray-200 h-24">
+                                    <div class="text-sm">16</div>
+                                    <div class="mt-1 space-y-1">
+                                        <div class="bg-white/20 text-white text-xs p-1 rounded">PPL Flight Test</div>
+                                        <div class="bg-white/20 text-white text-xs p-1 rounded">B737 Simulator</div>
+                                    </div>
+                                </div>
+                                <div class="calendar-day p-3 border-r border-b border-gray-200 h-24">
+                                    <div class="text-sm">17</div>
+                                </div>
+                                <div class="calendar-day p-3 border-r border-b border-gray-200 h-24">
+                                    <div class="text-sm">18</div>
+                                </div>
+                                <div class="calendar-day p-3 border-r border-b border-gray-200 h-24">
+                                    <div class="text-sm">19</div>
+                                </div>
+                                <div class="calendar-day p-3 border-r border-b border-gray-200 h-24">
+                                    <div class="text-sm">20</div>
+                                </div>
+                                <div class="calendar-day p-3 border-b border-gray-200 h-24">
+                                    <div class="text-sm">21</div>
+                                </div>
+
+                                <!-- Week 4 -->
+                                <div class="calendar-day p-3 border-r border-b border-gray-200 h-24">
+                                    <div class="text-sm">22</div>
+                                </div>
+                                <div class="calendar-day p-3 border-r border-b border-gray-200 h-24">
+                                    <div class="text-sm">23</div>
+                                </div>
+                                <div class="calendar-day p-3 border-r border-b border-gray-200 h-24">
+                                    <div class="text-sm">24</div>
+                                </div>
+                                <div class="calendar-day p-3 border-r border-b border-gray-200 h-24">
+                                    <div class="text-sm">25</div>
+                                </div>
+                                <div class="calendar-day p-3 border-r border-b border-gray-200 h-24">
+                                    <div class="text-sm">26</div>
+                                </div>
+                                <div class="calendar-day p-3 border-r border-b border-gray-200 h-24">
+                                    <div class="text-sm">27</div>
+                                </div>
+                                <div class="calendar-day p-3 border-b border-gray-200 h-24">
+                                    <div class="text-sm">28</div>
+                                </div>
+
+                                <!-- Week 5 -->
+                                <div class="calendar-day p-3 border-r border-gray-200 h-24">
+                                    <div class="text-sm">29</div>
+                                </div>
+                                <div class="calendar-day p-3 border-r border-gray-200 h-24">
+                                    <div class="text-sm">30</div>
+                                </div>
+                                <div class="calendar-day p-3 border-r border-gray-200 h-24">
+                                    <div class="text-sm">31</div>
+                                </div>
+                                <div class="p-3 border-r border-gray-200 h-24"></div>
+                                <div class="p-3 border-r border-gray-200 h-24"></div>
+                                <div class="p-3 border-r border-gray-200 h-24"></div>
+                                <div class="p-3 h-24"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Schedule Details -->
+                    <div>
+                        <h4 class="font-medium text-secondary mb-4">October 16, 2023</h4>
+
+                        <div class="space-y-4">
+                            <!-- Schedule Slot 1 -->
+                            <div class="schedule-slot border border-gray-200 rounded-lg p-4">
+                                <div class="flex justify-between items-start mb-2">
+                                    <span class="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full">PPL</span>
+                                    <span class="text-xs text-gray-500">9:00 AM - 11:00 AM</span>
+                                </div>
+                                <p class="font-medium text-secondary">Private Pilot Flight Test</p>
+                                <p class="text-sm text-gray-600 mb-2">Student: John Smith</p>
+                                <div class="flex justify-between text-xs text-gray-500">
+                                    <span>Instructor: M. Johnson</span>
+                                    <span>Aircraft: C172</span>
+                                </div>
+                            </div>
+
+                            <!-- Schedule Slot 2 -->
+                            <div class="schedule-slot border border-gray-200 rounded-lg p-4">
+                                <div class="flex justify-between items-start mb-2">
+                                    <span class="bg-purple-100 text-purple-600 text-xs px-2 py-1 rounded-full">Type
+                                        Rating</span>
+                                    <span class="text-xs text-gray-500">2:00 PM - 5:00 PM</span>
+                                </div>
+                                <p class="font-medium text-secondary">B737 Simulator Session</p>
+                                <p class="text-sm text-gray-600 mb-2">Student: Sarah Wilson</p>
+                                <div class="flex justify-between text-xs text-gray-500">
+                                    <span>Instructor: R. Davis</span>
+                                    <span>Simulator: B737NG</span>
+                                </div>
+                            </div>
+
+                            <button
+                                class="w-full border-2 border-dashed border-gray-300 rounded-lg py-3 text-gray-500 hover:text-gray-700 hover:border-gray-400 transition-colors">
+                                <i class="fa-solid fa-plus mr-2"></i>
+                                Add Schedule Slot
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aircraft Model Data -->
+            <div id="aircraft-models" class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-semibold text-secondary">Aircraft Models</h3>
+                    <button
+                        class="bg-primary text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-primary/90 transition-colors">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Add Aircraft</span>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Aircraft Model 1 -->
+                    <div class="aircraft-model border border-gray-200 rounded-lg p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h4 class="font-semibold text-secondary">Cessna 172</h4>
+                                <p class="text-sm text-gray-600">Single-engine, fixed-wing</p>
+                            </div>
+                            <span class="bg-accent/10 text-accent text-xs px-2 py-1 rounded-full">Active</span>
+                        </div>
+
+                        <div class="space-y-3 mb-4">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Registration</span>
+                                <span class="font-medium">N172SA</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Year</span>
+                                <span class="font-medium">2018</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Engine</span>
+                                <span class="font-medium">Lycoming IO-360</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Status</span>
+                                <span class="font-medium text-accent">Available</span>
+                            </div>
+                        </div>
+
+                        <div class="flex space-x-2">
+                            <button
+                                class="flex-1 bg-primary text-white py-2 px-3 rounded-lg hover:bg-primary/90 transition-colors text-sm">
+                                View Details
+                            </button>
+                            <button
+                                class="flex-1 border border-gray-300 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                                Maintenance
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Aircraft Model 2 -->
+                    <div class="aircraft-model border border-gray-200 rounded-lg p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h4 class="font-semibold text-secondary">Piper PA-28</h4>
+                                <p class="text-sm text-gray-600">Single-engine, low-wing</p>
+                            </div>
+                            <span class="bg-accent/10 text-accent text-xs px-2 py-1 rounded-full">Active</span>
+                        </div>
+
+                        <div class="space-y-3 mb-4">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Registration</span>
+                                <span class="font-medium">N281PB</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Year</span>
+                                <span class="font-medium">2015</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Engine</span>
+                                <span class="font-medium">Lycoming O-320</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Status</span>
+                                <span class="font-medium text-yellow-600">Maintenance</span>
+                            </div>
+                        </div>
+
+                        <div class="flex space-x-2">
+                            <button
+                                class="flex-1 bg-primary text-white py-2 px-3 rounded-lg hover:bg-primary/90 transition-colors text-sm">
+                                View Details
+                            </button>
+                            <button
+                                class="flex-1 border border-gray-300 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                                Maintenance
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Aircraft Model 3 -->
+                    <div class="aircraft-model border border-gray-200 rounded-lg p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h4 class="font-semibold text-secondary">Boeing 737 Simulator</h4>
+                                <p class="text-sm text-gray-600">Full-flight simulator</p>
+                            </div>
+                            <span class="bg-accent/10 text-accent text-xs px-2 py-1 rounded-full">Active</span>
+                        </div>
+
+                        <div class="space-y-3 mb-4">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Model</span>
+                                <span class="font-medium">B737-800NG</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Manufacturer</span>
+                                <span class="font-medium">CAE</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Level</span>
+                                <span class="font-medium">D</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Status</span>
+                                <span class="font-medium text-accent">Available</span>
+                            </div>
+                        </div>
+
+                        <div class="flex space-x-2">
+                            <button
+                                class="flex-1 bg-primary text-white py-2 px-3 rounded-lg hover:bg-primary/90 transition-colors text-sm">
+                                View Details
+                            </button>
+                            <button
+                                class="flex-1 border border-gray-300 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                                Schedule
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Create Program Modal -->
+    <div id="create-program-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-secondary">Create New Training Program</h3>
+                <button id="close-create-program-modal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Program Name</label>
+                    <input type="text"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        placeholder="Enter program name">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Program Type</label>
+                    <select
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
+                        <option>Private Pilot</option>
+                        <option>Commercial Pilot</option>
+                        <option>Instrument Rating</option>
+                        <option>Type Rating</option>
+                        <option>Recurrent Training</option>
+                        <option>Other</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Duration (months)</label>
+                        <input type="number"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            placeholder="6">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Flight Hours</label>
+                        <input type="number"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            placeholder="40">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                    <textarea
+                        class="w-full h-24 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        placeholder="Enter program description"></textarea>
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-3 mt-6">
+                <button id="cancel-create-program"
+                    class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+                <button class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">Create Program</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Training Programs functionality
+        document.addEventListener('DOMContentLoaded', function () {
+            // Tab functionality
+            const tabs = document.querySelectorAll('nav button');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function () {
+                    // Remove active class from all tabs
+                    tabs.forEach(t => {
+                        t.classList.remove('tab-active');
+                        t.classList.add('text-gray-500', 'hover:text-gray-700');
+                    });
+                    // Add active class to clicked tab
+                    this.classList.add('tab-active');
+                    this.classList.remove('text-gray-500', 'hover:text-gray-700');
+                });
+            });
+
+            // Create Program modal functionality
+            const createProgramBtn = document.querySelector('button.bg-primary');
+            const createProgramModal = document.getElementById('create-program-modal');
+            const closeCreateProgramModal = document.getElementById('close-create-program-modal');
+            const cancelCreateProgram = document.getElementById('cancel-create-program');
+
+            createProgramBtn.addEventListener('click', function () {
+                createProgramModal.classList.remove('hidden');
+            });
+
+            closeCreateProgramModal.addEventListener('click', function () {
+                createProgramModal.classList.add('hidden');
+            });
+
+            cancelCreateProgram.addEventListener('click', function () {
+                createProgramModal.classList.add('hidden');
+            });
+
+            // Calendar day selection
+            const calendarDays = document.querySelectorAll('.calendar-day');
+            calendarDays.forEach(day => {
+                day.addEventListener('click', function () {
+                    // Remove selected class from all days
+                    calendarDays.forEach(d => d.classList.remove('selected'));
+                    // Add selected class to clicked day
+                    this.classList.add('selected');
+                });
+            });
+
+            // Training card interactions
+            const trainingCards = document.querySelectorAll('.training-card');
+            trainingCards.forEach(card => {
+                card.addEventListener('click', function (e) {
+                    // Don't trigger selection if clicking buttons
+                    if (e.target.closest('button')) return;
+
+                    // For demo purposes, toggle a selected state
+                    this.classList.toggle('border-primary');
+                    this.classList.toggle('border-gray-100');
+                });
+            });
+
+            // Close modal when clicking outside
+            window.addEventListener('click', function (e) {
+                if (e.target === createProgramModal) {
+                    createProgramModal.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+
+</body>
+
+</html>

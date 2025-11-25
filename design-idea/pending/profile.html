@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - EduSaaS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest' };</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous"
+        referrerpolicy="no-referrer"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-2px);
+        }
+
+        .tab-active {
+            background-color: #6366F1;
+            color: white;
+        }
+
+        .tab-inactive {
+            background-color: #F3F4F6;
+            color: #4B5563;
+        }
+
+        .profile-section {
+            border-left: 4px solid #6366F1;
+        }
+
+        .skill-level {
+            background: linear-gradient(90deg, #6366F1 0%, #6366F1 var(--skill-level), #E5E7EB var(--skill-level), #E5E7EB 100%);
+        }
+
+        .status-online {
+            background-color: #10B981;
+        }
+
+        .status-away {
+            background-color: #F59E0B;
+        }
+
+        .status-offline {
+            background-color: #6B7280;
+        }
+
+        .avatar-upload {
+            transition: all 0.3s ease;
+        }
+
+        .avatar-upload:hover {
+            transform: scale(1.05);
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366F1',
+                        secondary: '#0F172A',
+                        accent: '#10B981',
+                        background: '#F5F6FA',
+                        sidebar: '#111827',
+                        card: '#FFFFFF'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-background">
+
+    <!-- Main Content -->
+    <main id="main-content" class="pt-6">
+        <div class="p-6">
+            <!-- Page Header -->
+            <div id="page-header" class="mb-8">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-3xl font-bold text-secondary mb-2">My Profile</h2>
+                        <p class="text-gray-600">Manage your personal information, preferences, and account settings.
+                        </p>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button
+                            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center space-x-2">
+                            <i class="fa-solid fa-download"></i>
+                            <span>Export Data</span>
+                        </button>
+                        <button
+                            class="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg flex items-center space-x-2 transition-colors">
+                            <i class="fa-solid fa-floppy-disk"></i>
+                            <span>Save Changes</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Navigation Tabs -->
+            <div class="bg-card rounded-xl p-1 shadow-sm border border-gray-100 mb-8 inline-flex">
+                <button class="tab-active px-6 py-2 rounded-lg text-sm font-medium transition-colors">Profile</button>
+                <button
+                    class="tab-inactive px-6 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-gray-200">Security</button>
+                <button
+                    class="tab-inactive px-6 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-gray-200">Preferences</button>
+                <button
+                    class="tab-inactive px-6 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-gray-200">Billing</button>
+                <button
+                    class="tab-inactive px-6 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-gray-200">Notifications</button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Left Column - Profile Overview -->
+                <div class="lg:col-span-1 space-y-6">
+                    <!-- Profile Card -->
+                    <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                        <div class="text-center">
+                            <!-- Avatar Section -->
+                            <div class="relative inline-block mb-4">
+                                <div class="relative">
+                                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg"
+                                        alt="Profile"
+                                        class="w-24 h-24 rounded-full mx-auto border-4 border-white shadow-lg">
+                                    <div
+                                        class="absolute bottom-2 right-2 w-6 h-6 status-online rounded-full border-2 border-white">
+                                    </div>
+                                </div>
+                                <label for="avatar-upload"
+                                    class="avatar-upload absolute bottom-0 right-0 w-8 h-8 bg-primary rounded-full flex items-center justify-center cursor-pointer shadow-lg">
+                                    <i class="fa-solid fa-camera text-white text-sm"></i>
+                                    <input type="file" id="avatar-upload" class="hidden" accept="image/*">
+                                </label>
+                            </div>
+
+                            <h3 class="text-xl font-bold text-secondary mb-1">Alex Johnson</h3>
+                            <p class="text-gray-600 mb-2">Administrator</p>
+                            <div class="flex items-center justify-center space-x-1 text-sm text-gray-500 mb-4">
+                                <i class="fa-solid fa-location-dot"></i>
+                                <span>San Francisco, CA</span>
+                            </div>
+
+                            <!-- Status Badge -->
+                            <div
+                                class="inline-flex items-center space-x-2 px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm mb-4">
+                                <div class="w-2 h-2 status-online rounded-full"></div>
+                                <span>Active now</span>
+                            </div>
+
+                            <!-- Quick Stats -->
+                            <div class="grid grid-cols-3 gap-4 mt-6">
+                                <div class="text-center">
+                                    <div class="text-lg font-bold text-secondary">142</div>
+                                    <div class="text-xs text-gray-500">Courses</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="text-lg font-bold text-secondary">2.8K</div>
+                                    <div class="text-xs text-gray-500">Students</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="text-lg font-bold text-secondary">98%</div>
+                                    <div class="text-xs text-gray-500">Satisfaction</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact Information -->
+                    <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                        <h4 class="text-lg font-semibold text-secondary mb-4">Contact Information</h4>
+                        <div class="space-y-3">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <i class="fa-solid fa-envelope text-blue-600 text-sm"></i>
+                                </div>
+                                <div>
+                                    <div class="text-sm text-gray-500">Email</div>
+                                    <div class="text-sm font-medium">alex.johnson@edusaas.com</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                                    <i class="fa-solid fa-phone text-green-600 text-sm"></i>
+                                </div>
+                                <div>
+                                    <div class="text-sm text-gray-500">Phone</div>
+                                    <div class="text-sm font-medium">+1 (555) 123-4567</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                                    <i class="fa-solid fa-calendar text-purple-600 text-sm"></i>
+                                </div>
+                                <div>
+                                    <div class="text-sm text-gray-500">Joined</div>
+                                    <div class="text-sm font-medium">January 15, 2022</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Skills & Expertise -->
+                    <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                        <h4 class="text-lg font-semibold text-secondary mb-4">Skills & Expertise</h4>
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span>Educational Technology</span>
+                                    <span class="font-medium">95%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="skill-level rounded-full h-2" style="--skill-level: 95%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span>Curriculum Development</span>
+                                    <span class="font-medium">88%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="skill-level rounded-full h-2" style="--skill-level: 88%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span>Online Teaching</span>
+                                    <span class="font-medium">92%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="skill-level rounded-full h-2" style="--skill-level: 92%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span>Student Assessment</span>
+                                    <span class="font-medium">85%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="skill-level rounded-full h-2" style="--skill-level: 85%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column - Detailed Information -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Personal Information -->
+                    <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-center mb-6">
+                            <h4 class="text-lg font-semibold text-secondary">Personal Information</h4>
+                            <button
+                                class="text-primary hover:text-primary/80 text-sm font-medium flex items-center space-x-1">
+                                <i class="fa-solid fa-pen text-xs"></i>
+                                <span>Edit</span>
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">First Name</label>
+                                <input type="text" value="Alex"
+                                    class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 bg-gray-50">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Last Name</label>
+                                <input type="text" value="Johnson"
+                                    class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 bg-gray-50">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                                <input type="email" value="alex.johnson@edusaas.com"
+                                    class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 bg-gray-50">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                                <input type="tel" value="+1 (555) 123-4567"
+                                    class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 bg-gray-50">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Bio</label>
+                                <textarea
+                                    class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 bg-gray-50"
+                                    rows="4">Experienced educational administrator with over 8 years in the EdTech industry. Passionate about creating engaging learning experiences and driving educational innovation through technology.</textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Professional Details -->
+                    <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-center mb-6">
+                            <h4 class="text-lg font-semibold text-secondary">Professional Details</h4>
+                            <button
+                                class="text-primary hover:text-primary/80 text-sm font-medium flex items-center space-x-1">
+                                <i class="fa-solid fa-pen text-xs"></i>
+                                <span>Edit</span>
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Position</label>
+                                <select
+                                    class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 bg-gray-50">
+                                    <option>Administrator</option>
+                                    <option>Instructor</option>
+                                    <option>Content Manager</option>
+                                    <option>Support Staff</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                                <select
+                                    class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 bg-gray-50">
+                                    <option>Academic Operations</option>
+                                    <option>Curriculum Development</option>
+                                    <option>Student Success</option>
+                                    <option>Technology</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Employee ID</label>
+                                <input type="text" value="EMP-2022-001"
+                                    class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 bg-gray-50"
+                                    readonly>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Join Date</label>
+                                <input type="text" value="January 15, 2022"
+                                    class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 bg-gray-50"
+                                    readonly>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                        <h4 class="text-lg font-semibold text-secondary mb-4">Recent Activity</h4>
+                        <div class="space-y-4">
+                            <div class="flex items-start space-x-4 p-3 bg-gray-50 rounded-lg">
+                                <div
+                                    class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fa-solid fa-user-check text-green-600 text-sm"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-sm text-secondary">
+                                        <span class="font-medium">Profile updated</span> - Updated personal information
+                                    </p>
+                                    <p class="text-xs text-gray-500 mt-1">2 hours ago</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start space-x-4 p-3 bg-gray-50 rounded-lg">
+                                <div
+                                    class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fa-solid fa-lock text-blue-600 text-sm"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-sm text-secondary">
+                                        <span class="font-medium">Password changed</span> - Updated account security
+                                    </p>
+                                    <p class="text-xs text-gray-500 mt-1">1 day ago</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start space-x-4 p-3 bg-gray-50 rounded-lg">
+                                <div
+                                    class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fa-solid fa-chart-line text-purple-600 text-sm"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-sm text-secondary">
+                                        <span class="font-medium">Report generated</span> - Monthly analytics report
+                                    </p>
+                                    <p class="text-xs text-gray-500 mt-1">3 days ago</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start space-x-4 p-3 bg-gray-50 rounded-lg">
+                                <div
+                                    class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fa-solid fa-users text-yellow-600 text-sm"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="text-sm text-secondary">
+                                        <span class="font-medium">Team management</span> - Added new team member
+                                    </p>
+                                    <p class="text-xs text-gray-500 mt-1">1 week ago</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Connected Accounts -->
+                    <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                        <h4 class="text-lg font-semibold text-secondary mb-4">Connected Accounts</h4>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                                        <i class="fa-brands fa-google text-white"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium text-sm">Google Account</div>
+                                        <div class="text-xs text-gray-500">alex.johnson@gmail.com</div>
+                                    </div>
+                                </div>
+                                <span
+                                    class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">Connected</span>
+                            </div>
+
+                            <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center">
+                                        <i class="fa-brands fa-github text-white"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium text-sm">GitHub</div>
+                                        <div class="text-xs text-gray-500">@alexjohnson</div>
+                                    </div>
+                                </div>
+                                <span
+                                    class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">Connected</span>
+                            </div>
+
+                            <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-blue-400 rounded-lg flex items-center justify-center">
+                                        <i class="fa-brands fa-linkedin text-white"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium text-sm">LinkedIn</div>
+                                        <div class="text-xs text-gray-500">Not connected</div>
+                                    </div>
+                                </div>
+                                <button
+                                    class="px-3 py-1 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm transition-colors">
+                                    Connect
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="bg-card rounded-xl p-6 shadow-sm border border-red-200">
+                <h4 class="text-lg font-semibold text-red-700 mb-4">Danger Zone</h4>
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+                    <div>
+                        <div class="font-medium text-secondary mb-1">Delete Account</div>
+                        <div class="text-sm text-gray-600">Permanently delete your account and all associated data</div>
+                    </div>
+                    <button
+                        class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center space-x-2 w-fit">
+                        <i class="fa-solid fa-trash"></i>
+                        <span>Delete Account</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Avatar upload functionality
+            const avatarUpload = document.getElementById('avatar-upload');
+            const avatarImage = document.querySelector('img[alt="Profile"]');
+
+            avatarUpload.addEventListener('change', function (event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        avatarImage.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // Tab functionality
+            const tabs = document.querySelectorAll('.tab-inactive, .tab-active');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function () {
+                    tabs.forEach(t => {
+                        t.classList.remove('tab-active');
+                        t.classList.add('tab-inactive');
+                    });
+                    this.classList.remove('tab-inactive');
+                    this.classList.add('tab-active');
+                });
+            });
+
+            // Edit button functionality
+            const editButtons = document.querySelectorAll('button:contains("Edit")');
+            editButtons.forEach(button => {
+                button.addEventListener('click', function () {
+                    const section = this.closest('.bg-card');
+                    const inputs = section.querySelectorAll('input, select, textarea');
+                    inputs.forEach(input => {
+                        input.readOnly = !input.readOnly;
+                        input.classList.toggle('bg-gray-50');
+                        input.classList.toggle('bg-white');
+                    });
+
+                    if (this.querySelector('span').textContent === 'Edit') {
+                        this.querySelector('span').textContent = 'Save';
+                        this.querySelector('i').className = 'fa-solid fa-check text-xs';
+                    } else {
+                        this.querySelector('span').textContent = 'Edit';
+                        this.querySelector('i').className = 'fa-solid fa-pen text-xs';
+                    }
+                });
+            });
+
+            // Save changes button
+            const saveButton = document.querySelector('button:contains("Save Changes")');
+            saveButton.addEventListener('click', function () {
+                // In a real application, this would save all changes to the server
+                alert('All changes have been saved successfully!');
+            });
+
+            // Delete account confirmation
+            const deleteButton = document.querySelector('button:contains("Delete Account")');
+            deleteButton.addEventListener('click', function () {
+                if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+                    alert('Account deletion process initiated. You will receive a confirmation email.');
+                }
+            });
+        });
+    </script>
+
+</body>
+
+</html>

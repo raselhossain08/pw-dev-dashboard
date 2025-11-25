@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Chat - EduSaaS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest' };</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous"
+        referrerpolicy="no-referrer"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .chat-container {
+            height: calc(100vh - 200px);
+        }
+
+        .messages-container {
+            height: calc(100% - 80px);
+        }
+
+        .online-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #10B981;
+            border-radius: 50%;
+        }
+
+        .typing-indicator {
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background-color: #9CA3AF;
+            border-radius: 50%;
+            margin: 0 1px;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes typing {
+
+            0%,
+            80%,
+            100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .message-bubble {
+            max-width: 70%;
+            position: relative;
+        }
+
+        .message-bubble.sent {
+            margin-left: auto;
+            background: #6366F1;
+            color: white;
+            border-radius: 18px 18px 4px 18px;
+        }
+
+        .message-bubble.received {
+            background: #F3F4F6;
+            color: #374151;
+            border-radius: 18px 18px 18px 4px;
+        }
+
+        .chat-sidebar {
+            border-right: 1px solid #E5E7EB;
+        }
+
+        .chat-item:hover {
+            background-color: #F9FAFB;
+        }
+
+        .chat-item.active {
+            background-color: #EEF2FF;
+            border-right: 3px solid #6366F1;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366F1',
+                        secondary: '#0F172A',
+                        accent: '#10B981',
+                        background: '#F5F6FA',
+                        sidebar: '#111827',
+                        card: '#FFFFFF'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-background">
+
+    <!-- Header -->
+    <header id="header" class="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-b border-gray-200 z-50">
+        <div class="flex items-center justify-between px-6 py-4">
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                        <i class="fa-solid fa-graduation-cap text-white text-sm"></i>
+                    </div>
+                    <h1 class="text-xl font-bold text-secondary">EduSaaS</h1>
+                </div>
+            </div>
+
+            <div class="flex-1 max-w-md mx-8">
+                <div class="relative">
+                    <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    <input type="text" placeholder="Search chats... (Cmd+K)"
+                        class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <button class="p-2 text-gray-600 hover:text-primary transition-colors relative">
+                    <i class="fa-solid fa-bell text-lg"></i>
+                    <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+                </button>
+                <button class="p-2 text-gray-600 hover:text-primary transition-colors">
+                    <i class="fa-solid fa-robot text-lg"></i>
+                </button>
+                <div class="flex items-center space-x-2">
+                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" alt="User"
+                        class="w-8 h-8 rounded-full">
+                    <i class="fa-solid fa-chevron-down text-gray-400 text-sm"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed left-0 top-16 bottom-0 w-64 bg-sidebar text-white overflow-y-auto">
+        <nav class="p-6">
+            <div class="space-y-2">
+                <div class="mb-6">
+                    <a href="dashboard.html"
+                        class="flex items-center space-x-3 px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <span class="font-medium">Dashboard</span>
+                    </a>
+                </div>
+
+                <div class="space-y-1">
+                    <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 py-2">Learning
+                        Management</div>
+                    <a href="courses.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-book"></i>
+                        <span>Courses</span>
+                    </a>
+                    <a href="modules.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-layer-group"></i>
+                        <span>Modules</span>
+                    </a>
+                    <a href="lessons.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-play-circle"></i>
+                        <span>Lessons</span>
+                    </a>
+                    <a href="quizzes.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-question-circle"></i>
+                        <span>Quiz & Exams</span>
+                    </a>
+                    <a href="assignments.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-tasks"></i>
+                        <span>Assignments</span>
+                    </a>
+                    <a href="certificates.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-certificate"></i>
+                        <span>Certificates</span>
+                    </a>
+                </div>
+
+                <div class="space-y-1 mt-6">
+                    <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 py-2">User Management
+                    </div>
+                    <a href="students.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-users"></i>
+                        <span>Students</span>
+                    </a>
+                    <a href="instructors.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-chalkboard-teacher"></i>
+                        <span>Instructors</span>
+                    </a>
+                    <a href="payments.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-credit-card"></i>
+                        <span>Payments</span>
+                    </a>
+                    <a href="enrollments.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span>Enrollments</span>
+                    </a>
+                </div>
+
+                <div class="space-y-1 mt-6">
+                    <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 py-2">Communication
+                    </div>
+                    <a href="chat.html" class="flex items-center space-x-3 px-4 py-2 bg-primary rounded-lg">
+                        <i class="fa-solid fa-comments"></i>
+                        <span>Live Chat</span>
+                    </a>
+                    <a href="ai-agents.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-robot"></i>
+                        <span>AI Agents</span>
+                    </a>
+                    <a href="support.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-headset"></i>
+                        <span>Support Tickets</span>
+                    </a>
+                </div>
+
+                <div class="space-y-1 mt-6">
+                    <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 py-2">Content & Media
+                    </div>
+                    <a href="cms.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-file-alt"></i>
+                        <span>CMS</span>
+                    </a>
+                    <a href="media.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-photo-video"></i>
+                        <span>Media Library</span>
+                    </a>
+                </div>
+
+                <div class="space-y-1 mt-6">
+                    <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 py-2">System</div>
+                    <a href="roles.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-user-shield"></i>
+                        <span>Roles & Permissions</span>
+                    </a>
+                    <a href="integrations.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-plug"></i>
+                        <span>Integrations</span>
+                    </a>
+                    <a href="settings.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-cog"></i>
+                        <span>Settings</span>
+                    </a>
+                    <a href="logs.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-history"></i>
+                        <span>Activity Logs</span>
+                    </a>
+                </div>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main id="main-content" class="ml-64 pt-16">
+        <div class="p-6 h-screen flex flex-col">
+            <!-- Page Header -->
+            <div id="page-header" class="mb-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-3xl font-bold text-secondary mb-2">Live Chat</h2>
+                        <p class="text-gray-600">Communicate with students and instructors in real-time</p>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button
+                            class="bg-white hover:bg-gray-50 text-secondary border border-gray-300 px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors">
+                            <i class="fa-solid fa-download"></i>
+                            <span>Export Chat</span>
+                        </button>
+                        <button id="new-chat-btn"
+                            class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>New Chat</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Interface -->
+            <div class="bg-card rounded-xl shadow-sm border border-gray-100 flex-1 flex overflow-hidden">
+                <!-- Chat Sidebar -->
+                <div class="chat-sidebar w-80 bg-white flex flex-col">
+                    <!-- Sidebar Header -->
+                    <div class="p-4 border-b border-gray-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-semibold text-secondary">Conversations</h3>
+                            <button class="p-1 text-gray-400 hover:text-primary">
+                                <i class="fa-solid fa-ellipsis-vertical"></i>
+                            </button>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button
+                                class="flex-1 bg-primary text-white py-2 px-3 rounded-lg text-sm font-medium">All</button>
+                            <button
+                                class="flex-1 bg-gray-100 text-gray-600 py-2 px-3 rounded-lg text-sm font-medium hover:bg-gray-200">Unread</button>
+                        </div>
+                    </div>
+
+                    <!-- Chat List -->
+                    <div class="flex-1 overflow-y-auto">
+                        <!-- Chat Item 1 -->
+                        <div class="chat-item active p-4 border-b border-gray-100 cursor-pointer">
+                            <div class="flex items-center space-x-3">
+                                <div class="relative">
+                                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg"
+                                        alt="Sarah Johnson" class="w-12 h-12 rounded-full">
+                                    <div class="online-dot absolute bottom-0 right-0 border-2 border-white"></div>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between">
+                                        <h4 class="font-medium text-secondary truncate">Sarah Johnson</h4>
+                                        <span class="text-xs text-gray-500">2 min ago</span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <p class="text-sm text-gray-600 truncate">Thanks for the help with the
+                                            assignment!</p>
+                                        <span class="w-2 h-2 bg-primary rounded-full"></span>
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-1">Web Development Course</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Chat Item 2 -->
+                        <div class="chat-item p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50">
+                            <div class="flex items-center space-x-3">
+                                <div class="relative">
+                                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg"
+                                        alt="Michael Chen" class="w-12 h-12 rounded-full">
+                                    <div class="online-dot absolute bottom-0 right-0 border-2 border-white"></div>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between">
+                                        <h4 class="font-medium text-secondary truncate">Michael Chen</h4>
+                                        <span class="text-xs text-gray-500">1 hour ago</span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <p class="text-sm text-gray-600 truncate">I have a question about the data
+                                            analysis project</p>
+                                        <span
+                                            class="text-xs bg-primary text-white rounded-full w-5 h-5 flex items-center justify-center">3</span>
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-1">Data Science Course</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Chat Item 3 -->
+                        <div class="chat-item p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50">
+                            <div class="flex items-center space-x-3">
+                                <div class="relative">
+                                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg"
+                                        alt="Emma Wilson" class="w-12 h-12 rounded-full">
+                                    <div
+                                        class="w-2 h-2 bg-gray-300 rounded-full absolute bottom-0 right-0 border-2 border-white">
+                                    </div>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between">
+                                        <h4 class="font-medium text-secondary truncate">Emma Wilson</h4>
+                                        <span class="text-xs text-gray-500">3 hours ago</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 truncate">When is the next design review session?
+                                    </p>
+                                    <div class="text-xs text-gray-500 mt-1">UI/UX Design Course</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Chat Item 4 -->
+                        <div class="chat-item p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50">
+                            <div class="flex items-center space-x-3">
+                                <div class="relative">
+                                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg"
+                                        alt="Dr. James Wilson" class="w-12 h-12 rounded-full">
+                                    <div class="online-dot absolute bottom-0 right-0 border-2 border-white"></div>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between">
+                                        <h4 class="font-medium text-secondary truncate">Dr. James Wilson</h4>
+                                        <span class="text-xs text-gray-500">Yesterday</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 truncate">Can we schedule a meeting about the new
+                                        curriculum?</p>
+                                    <div class="text-xs text-gray-500 mt-1">Instructor</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Online Users -->
+                    <div class="p-4 border-t border-gray-200">
+                        <h4 class="font-medium text-secondary mb-3">Online Now</h4>
+                        <div class="flex space-x-2">
+                            <div class="relative">
+                                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg"
+                                    alt="Sarah" class="w-8 h-8 rounded-full border-2 border-white">
+                                <div class="online-dot absolute bottom-0 right-0 border-2 border-white"></div>
+                            </div>
+                            <div class="relative">
+                                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg"
+                                    alt="Michael" class="w-8 h-8 rounded-full border-2 border-white">
+                                <div class="online-dot absolute bottom-0 right-0 border-2 border-white"></div>
+                            </div>
+                            <div class="relative">
+                                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg"
+                                    alt="James" class="w-8 h-8 rounded-full border-2 border-white">
+                                <div class="online-dot absolute bottom-0 right-0 border-2 border-white"></div>
+                            </div>
+                            <div
+                                class="w-8 h-8 bg-gray-100 rounded-full border-2 border-white flex items-center justify-center">
+                                <span class="text-xs text-gray-600">+5</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Main Area -->
+                <div class="flex-1 flex flex-col">
+                    <!-- Chat Header -->
+                    <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="relative">
+                                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg"
+                                    alt="Sarah Johnson" class="w-10 h-10 rounded-full">
+                                <div class="online-dot absolute bottom-0 right-0 border-2 border-white"></div>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-secondary">Sarah Johnson</h3>
+                                <div class="flex items-center space-x-1">
+                                    <span class="text-xs text-gray-500">Web Development Course</span>
+                                    <span class="text-xs text-gray-500">•</span>
+                                    <span class="text-xs text-accent">Online</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button class="p-2 text-gray-400 hover:text-primary">
+                                <i class="fa-solid fa-phone"></i>
+                            </button>
+                            <button class="p-2 text-gray-400 hover:text-primary">
+                                <i class="fa-solid fa-video"></i>
+                            </button>
+                            <button class="p-2 text-gray-400 hover:text-primary">
+                                <i class="fa-solid fa-info-circle"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Messages Area -->
+                    <div class="messages-container flex-1 p-4 overflow-y-auto bg-gray-50">
+                        <!-- Date Divider -->
+                        <div class="flex items-center justify-center my-6">
+                            <div class="bg-white px-3 py-1 rounded-full border border-gray-200">
+                                <span class="text-xs text-gray-500">Today</span>
+                            </div>
+                        </div>
+
+                        <!-- Received Message -->
+                        <div class="flex space-x-2 mb-4">
+                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg"
+                                alt="Sarah" class="w-8 h-8 rounded-full flex-shrink-0">
+                            <div class="message-bubble received p-3">
+                                <p class="text-sm">Hi! I'm having trouble with the CSS grid layout in the portfolio
+                                    project. Could you help me understand how to make it responsive?</p>
+                                <span class="text-xs text-gray-500 mt-1 block">10:30 AM</span>
+                            </div>
+                        </div>
+
+                        <!-- Sent Message -->
+                        <div class="flex space-x-2 mb-4 justify-end">
+                            <div class="message-bubble sent p-3">
+                                <p class="text-sm">Of course! CSS Grid can be tricky at first. Have you tried using the
+                                    fr units and media queries for responsiveness?</p>
+                                <span class="text-xs text-white/80 mt-1 block">10:32 AM</span>
+                            </div>
+                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg"
+                                alt="You" class="w-8 h-8 rounded-full flex-shrink-0">
+                        </div>
+
+                        <!-- Received Message -->
+                        <div class="flex space-x-2 mb-4">
+                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg"
+                                alt="Sarah" class="w-8 h-8 rounded-full flex-shrink-0">
+                            <div class="message-bubble received p-3">
+                                <p class="text-sm">I tried using fr units, but the columns aren't stacking properly on
+                                    mobile. Here's my code:</p>
+                                <div class="bg-gray-800 text-green-400 p-2 rounded mt-2 font-mono text-xs">
+                                    .container {<br>
+                                    &nbsp;&nbsp;display: grid;<br>
+                                    &nbsp;&nbsp;grid-template-columns: 1fr 1fr 1fr;<br>
+                                    &nbsp;&nbsp;gap: 20px;<br>
+                                    }
+                                </div>
+                                <span class="text-xs text-gray-500 mt-1 block">10:34 AM</span>
+                            </div>
+                        </div>
+
+                        <!-- Sent Message -->
+                        <div class="flex space-x-2 mb-4 justify-end">
+                            <div class="message-bubble sent p-3">
+                                <p class="text-sm">I see the issue! You need to add a media query for mobile devices.
+                                    Try this:</p>
+                                <div class="bg-blue-900 text-white p-2 rounded mt-2 font-mono text-xs">
+                                    @media (max-width: 768px) {<br>
+                                    &nbsp;&nbsp;.container {<br>
+                                    &nbsp;&nbsp;&nbsp;&nbsp;grid-template-columns: 1fr;<br>
+                                    &nbsp;&nbsp;}<br>
+                                    }
+                                </div>
+                                <span class="text-xs text-white/80 mt-1 block">10:35 AM</span>
+                            </div>
+                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg"
+                                alt="You" class="w-8 h-8 rounded-full flex-shrink-0">
+                        </div>
+
+                        <!-- Received Message -->
+                        <div class="flex space-x-2 mb-4">
+                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg"
+                                alt="Sarah" class="w-8 h-8 rounded-full flex-shrink-0">
+                            <div class="message-bubble received p-3">
+                                <p class="text-sm">That worked perfectly! Thank you so much! 😊</p>
+                                <span class="text-xs text-gray-500 mt-1 block">10:36 AM</span>
+                            </div>
+                        </div>
+
+                        <!-- Typing Indicator -->
+                        <div class="flex space-x-2 mb-4">
+                            <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg"
+                                alt="Sarah" class="w-8 h-8 rounded-full flex-shrink-0">
+                            <div class="message-bubble received p-3">
+                                <div class="typing-indicator">
+                                    <span class="text-sm text-gray-500 mr-2">Sarah is typing</span>
+                                    <div class="typing-dot"></div>
+                                    <div class="typing-dot"></div>
+                                    <div class="typing-dot"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Message Input -->
+                    <div class="p-4 border-t border-gray-200">
+                        <div class="flex items-center space-x-3">
+                            <button class="p-2 text-gray-400 hover:text-primary">
+                                <i class="fa-solid fa-paperclip"></i>
+                            </button>
+                            <button class="p-2 text-gray-400 hover:text-primary">
+                                <i class="fa-solid fa-image"></i>
+                            </button>
+                            <button class="p-2 text-gray-400 hover:text-primary">
+                                <i class="fa-solid fa-code"></i>
+                            </button>
+                            <div class="flex-1">
+                                <input type="text" placeholder="Type a message..."
+                                    class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+                            </div>
+                            <button
+                                class="p-3 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors">
+                                <i class="fa-solid fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Chat item selection
+            const chatItems = document.querySelectorAll('.chat-item');
+            chatItems.forEach(item => {
+                item.addEventListener('click', function () {
+                    chatItems.forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+
+                    // Simulate loading new chat
+                    const messagesContainer = document.querySelector('.messages-container');
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                });
+            });
+
+            // Auto-scroll to bottom of messages
+            const messagesContainer = document.querySelector('.messages-container');
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            // Simulate receiving a new message
+            setTimeout(() => {
+                const typingIndicator = document.querySelector('.typing-indicator');
+                if (typingIndicator) {
+                    typingIndicator.parentElement.parentElement.remove();
+
+                    // Add new received message
+                    const newMessage = document.createElement('div');
+                    newMessage.className = 'flex space-x-2 mb-4';
+                    newMessage.innerHTML = `
+                        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" alt="Sarah" class="w-8 h-8 rounded-full flex-shrink-0">
+                        <div class="message-bubble received p-3">
+                            <p class="text-sm">One more question - should I use CSS Grid or Flexbox for the navigation menu?</p>
+                            <span class="text-xs text-gray-500 mt-1 block">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                    `;
+                    messagesContainer.appendChild(newMessage);
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                }
+            }, 3000);
+
+            // Message input handling
+            const messageInput = document.querySelector('input[placeholder="Type a message..."]');
+            const sendButton = document.querySelector('.fa-paper-plane').parentElement;
+
+            sendButton.addEventListener('click', function () {
+                const message = messageInput.value.trim();
+                if (message) {
+                    // Add sent message
+                    const newMessage = document.createElement('div');
+                    newMessage.className = 'flex space-x-2 mb-4 justify-end';
+                    newMessage.innerHTML = `
+                        <div class="message-bubble sent p-3">
+                            <p class="text-sm">${message}</p>
+                            <span class="text-xs text-white/80 mt-1 block">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" alt="You" class="w-8 h-8 rounded-full flex-shrink-0">
+                    `;
+                    messagesContainer.appendChild(newMessage);
+                    messageInput.value = '';
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                }
+            });
+
+            messageInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    sendButton.click();
+                }
+            });
+
+            // Search functionality
+            const searchInput = document.querySelector('input[placeholder="Search chats... (Cmd+K)"]');
+            searchInput.addEventListener('input', function () {
+                const searchTerm = this.value.toLowerCase();
+                chatItems.forEach(item => {
+                    const name = item.querySelector('h4').textContent.toLowerCase();
+                    if (name.includes(searchTerm)) {
+                        item.style.display = 'flex';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+
+            // Keyboard shortcut for search (Cmd+K)
+            document.addEventListener('keydown', function (e) {
+                if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                    e.preventDefault();
+                    searchInput.focus();
+                }
+            });
+        });
+    </script>
+
+</body>
+
+</html>

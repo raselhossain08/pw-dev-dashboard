@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Integrations - EduSaaS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest' };</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous"
+        referrerpolicy="no-referrer"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .integration-card {
+            transition: all 0.3s ease;
+        }
+
+        .integration-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .status-connected {
+            background-color: #10B981;
+        }
+
+        .status-disconnected {
+            background-color: #EF4444;
+        }
+
+        .status-pending {
+            background-color: #F59E0B;
+        }
+
+        .integration-tab {
+            transition: all 0.2s ease;
+        }
+
+        .integration-tab.active {
+            border-bottom: 2px solid #6366F1;
+            color: #6366F1;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366F1',
+                        secondary: '#0F172A',
+                        accent: '#10B981',
+                        background: '#F5F6FA',
+                        sidebar: '#111827',
+                        card: '#FFFFFF'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-background">
+
+    <!-- Main Content -->
+    <main id="main-content" class="pt-6">
+        <div class="p-6">
+            <!-- Page Header -->
+            <div id="page-header" class="mb-8">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-3xl font-bold text-secondary mb-2">Integrations</h2>
+                        <p class="text-gray-600">Connect your EduSaaS platform with third-party services and tools.</p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <div class="relative">
+                            <i
+                                class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" placeholder="Search integrations..."
+                                class="w-64 pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
+                        </div>
+                        <button
+                            class="bg-primary text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-primary/90 transition-colors">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Add Integration</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Integration Stats -->
+            <div id="stats-section" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Active Integrations</p>
+                            <p class="text-2xl font-bold text-secondary mt-1">8</p>
+                            <p class="text-accent text-sm mt-1">
+                                <i class="fa-solid fa-arrow-up text-xs"></i> +2 this month
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-plug text-primary text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Connected Services</p>
+                            <p class="text-2xl font-bold text-secondary mt-1">12</p>
+                            <p class="text-accent text-sm mt-1">
+                                <i class="fa-solid fa-check text-xs"></i> All systems operational
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-link text-accent text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">API Calls Today</p>
+                            <p class="text-2xl font-bold text-secondary mt-1">2,847</p>
+                            <p class="text-accent text-sm mt-1">
+                                <i class="fa-solid fa-arrow-up text-xs"></i> 12% increase
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-code text-purple-600 text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Setup Required</p>
+                            <p class="text-2xl font-bold text-secondary mt-1">3</p>
+                            <p class="text-yellow-600 text-sm mt-1">
+                                <i class="fa-solid fa-exclamation text-xs"></i> Needs configuration
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-tools text-yellow-600 text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Integration Categories Tabs -->
+            <div class="border-b border-gray-200 mb-8">
+                <nav class="flex space-x-8">
+                    <button class="integration-tab active py-4 px-1 font-medium text-sm">All Integrations</button>
+                    <button
+                        class="integration-tab py-4 px-1 font-medium text-sm text-gray-500 hover:text-gray-700">Payment
+                        Gateways</button>
+                    <button
+                        class="integration-tab py-4 px-1 font-medium text-sm text-gray-500 hover:text-gray-700">Communication</button>
+                    <button
+                        class="integration-tab py-4 px-1 font-medium text-sm text-gray-500 hover:text-gray-700">Marketing</button>
+                    <button
+                        class="integration-tab py-4 px-1 font-medium text-sm text-gray-500 hover:text-gray-700">Analytics</button>
+                    <button
+                        class="integration-tab py-4 px-1 font-medium text-sm text-gray-500 hover:text-gray-700">Developer
+                        Tools</button>
+                </nav>
+            </div>
+
+            <!-- Payment Integrations -->
+            <div id="payment-integrations" class="mb-12">
+                <h3 class="text-xl font-semibold text-secondary mb-6">Payment Gateways</h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Stripe Integration -->
+                    <div class="integration-card bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                                    <i class="fab fa-stripe text-purple-600 text-xl"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-secondary">Stripe</h4>
+                                    <p class="text-sm text-gray-600">Payment processing</p>
+                                </div>
+                            </div>
+                            <span class="status-connected text-white text-xs px-2 py-1 rounded-full">Connected</span>
+                        </div>
+
+                        <p class="text-sm text-gray-600 mb-4">Secure payment processing for your courses and
+                            subscriptions with global coverage.</p>
+
+                        <div class="space-y-3 mb-6">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Transactions</span>
+                                <span class="font-medium">1,247 this month</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Revenue</span>
+                                <span class="font-medium text-accent">$84,329</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Success Rate</span>
+                                <span class="font-medium">99.2%</span>
+                            </div>
+                        </div>
+
+                        <div class="flex space-x-3">
+                            <button
+                                class="flex-1 bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary/90 transition-colors text-sm">
+                                Configure
+                            </button>
+                            <button
+                                class="flex-1 border border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                                View Analytics
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- PayPal Integration -->
+                    <div class="integration-card bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <i class="fab fa-paypal text-blue-600 text-xl"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-secondary">PayPal</h4>
+                                    <p class="text-sm text-gray-600">Alternative payments</p>
+                                </div>
+                            </div>
+                            <span class="status-connected text-white text-xs px-2 py-1 rounded-full">Connected</span>
+                        </div>
+
+                        <p class="text-sm text-gray-600 mb-4">Offer PayPal as a payment option for students who prefer
+                            this payment method.</p>
+
+                        <div class="space-y-3 mb-6">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Transactions</span>
+                                <span class="font-medium">428 this month</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Revenue</span>
+                                <span class="font-medium text-accent">$23,451</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Success Rate</span>
+                                <span class="font-medium">98.7%</span>
+                            </div>
+                        </div>
+
+                        <div class="flex space-x-3">
+                            <button
+                                class="flex-1 bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary/90 transition-colors text-sm">
+                                Configure
+                            </button>
+                            <button
+                                class="flex-1 border border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                                View Analytics
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Razorpay Integration -->
+                    <div class="integration-card bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
+                                    <i class="fa-solid fa-indian-rupee-sign text-blue-600 text-xl"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-secondary">Razorpay</h4>
+                                    <p class="text-sm text-gray-600">India payments</p>
+                                </div>
+                            </div>
+                            <span class="status-pending text-white text-xs px-2 py-1 rounded-full">Setup Required</span>
+                        </div>
+
+                        <p class="text-sm text-gray-600 mb-4">Payment gateway optimized for the Indian market with local
+                            payment methods.</p>
+
+                        <div class="space-y-3 mb-6">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Status</span>
+                                <span class="font-medium text-yellow-600">Not configured</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Setup</span>
+                                <span class="font-medium">API keys needed</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Region</span>
+                                <span class="font-medium">India</span>
+                            </div>
+                        </div>
+
+                        <div class="flex space-x-3">
+                            <button
+                                class="flex-1 bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary/90 transition-colors text-sm">
+                                Setup Now
+                            </button>
+                            <button
+                                class="flex-1 border border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                                Learn More
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Email & Communication Integrations -->
+            <div id="email-integrations" class="mb-12">
+                <h3 class="text-xl font-semibold text-secondary mb-6">Email & Communication</h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Email SMTP Integration -->
+                    <div class="integration-card bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                                    <i class="fa-solid fa-envelope text-red-600 text-xl"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-secondary">Email SMTP</h4>
+                                    <p class="text-sm text-gray-600">Transaction emails</p>
+                                </div>
+                            </div>
+                            <span class="status-connected text-white text-xs px-2 py-1 rounded-full">Connected</span>
+                        </div>
+
+                        <p class="text-sm text-gray-600 mb-4">Send transactional emails, notifications, and marketing
+                            campaigns to your users.</p>
+
+                        <div class="space-y-3 mb-6">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Emails Sent</span>
+                                <span class="font-medium">12,847 this month</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Delivery Rate</span>
+                                <span class="font-medium text-accent">99.8%</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Open Rate</span>
+                                <span class="font-medium">42.3%</span>
+                            </div>
+                        </div>
+
+                        <div class="flex space-x-3">
+                            <button
+                                class="flex-1 bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary/90 transition-colors text-sm">
+                                Configure
+                            </button>
+                            <button
+                                class="flex-1 border border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                                Test Email
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- SendGrid Integration -->
+                    <div class="integration-card bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <i class="fa-solid fa-paper-plane text-blue-600 text-xl"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-secondary">SendGrid</h4>
+                                    <p class="text-sm text-gray-600">Email API</p>
+                                </div>
+                            </div>
+                            <span class="status-connected text-white text-xs px-2 py-1 rounded-full">Connected</span>
+                        </div>
+
+                        <p class="text-sm text-gray-600 mb-4">Advanced email delivery service with analytics and
+                            template management.</p>
+
+                        <div class="space-y-3 mb-6">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Emails Sent</span>
+                                <span class="font-medium">8,429 this month</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Delivery Rate</span>
+                                <span class="font-medium text-accent">99.9%</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Open Rate</span>
+                                <span class="font-medium">38.7%</span>
+                            </div>
+                        </div>
+
+                        <div class="flex space-x-3">
+                            <button
+                                class="flex-1 bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary/90 transition-colors text-sm">
+                                Configure
+                            </button>
+                            <button
+                                class="flex-1 border border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                                Templates
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Twilio Integration -->
+                    <div class="integration-card bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                    <i class="fa-solid fa-sms text-green-600 text-xl"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-secondary">Twilio</h4>
+                                    <p class="text-sm text-gray-600">SMS & Voice</p>
+                                </div>
+                            </div>
+                            <span class="status-pending text-white text-xs px-2 py-1 rounded-full">Setup Required</span>
+                        </div>
+
+                        <p class="text-sm text-gray-600 mb-4">Send SMS notifications and make voice calls to your
+                            students and instructors.</p>
+
+                        <div class="space-y-3 mb-6">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Status</span>
+                                <span class="font-medium text-yellow-600">Not configured</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Setup</span>
+                                <span class="font-medium">API keys needed</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Features</span>
+                                <span class="font-medium">SMS, Voice</span>
+                            </div>
+                        </div>
+
+                        <div class="flex space-x-3">
+                            <button
+                                class="flex-1 bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary/90 transition-colors text-sm">
+                                Setup Now
+                            </button>
+                            <button
+                                class="flex-1 border border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                                Documentation
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Social Media Integrations -->
+            <div id="social-integrations" class="mb-12">
+                <h3 class="text-xl font-semibold text-secondary mb-6">Social Media & Marketing</h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Facebook Integration -->
+                    <div class="integration-card bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <i class="fab fa-facebook text-blue-600 text-xl"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-secondary">Facebook</h4>
+                                    <p class="text-sm text-gray-600">Social login & ads</p>
+                                </div>
+                            </div>
+                            <span class="status-connected text-white text-xs px-2 py-1 rounded-full">Connected</span>
+                        </div>
+
+                        <p class="text-sm text-gray-600 mb-4">Enable Facebook login and run targeted ads to reach
+                            potential students.</p>
+
+                        <div class="space-y-3 mb-6">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Logins</span>
+                                <span class="font-medium">428 this month</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Ad Conversions</span>
+                                <span class="font-medium text-accent">127</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">ROI</span>
+                                <span class="font-medium">3.2x</span>
+                            </div>
+                        </div>
+
+                        <div class="flex space-x-3">
+                            <button
+                                class="flex-1 bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary/90 transition-colors text-sm">
+                                Configure
+                            </button>
+                            <button
+                                class="flex-1 border border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                                Analytics
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Google Integration -->
+                    <div class="integration-card bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                                    <i class="fab fa-google text-red-600 text-xl"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-secondary">Google</h4>
+                                    <p class="text-sm text-gray-600">Login & Analytics</p>
+                                </div>
+                            </div>
+                            <span class="status-connected text-white text-xs px-2 py-1 rounded-full">Connected</span>
+                        </div>
+
+                        <p class="text-sm text-gray-600 mb-4">Google login, Analytics tracking, and Google Ads
+                            integration for your platform.</p>
+
+                        <div class="space-y-3 mb-6">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Logins</span>
+                                <span class="font-medium">842 this month</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Analytics Users</span>
+                                <span class="font-medium text-accent">2,847</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Ad Conversions</span>
+                                <span class="font-medium">84</span>
+                            </div>
+                        </div>
+
+                        <div class="flex space-x-3">
+                            <button
+                                class="flex-1 bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary/90 transition-colors text-sm">
+                                Configure
+                            </button>
+                            <button
+                                class="flex-1 border border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                                Analytics
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- LinkedIn Integration -->
+                    <div class="integration-card bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <i class="fab fa-linkedin text-blue-700 text-xl"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-secondary">LinkedIn</h4>
+                                    <p class="text-sm text-gray-600">Professional network</p>
+                                </div>
+                            </div>
+                            <span
+                                class="status-disconnected text-white text-xs px-2 py-1 rounded-full">Disconnected</span>
+                        </div>
+
+                        <p class="text-sm text-gray-600 mb-4">Connect with professionals and share course completion
+                            certificates on LinkedIn.</p>
+
+                        <div class="space-y-3 mb-6">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Status</span>
+                                <span class="font-medium text-red-600">Not connected</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Last Connected</span>
+                                <span class="font-medium">2 months ago</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">Features</span>
+                                <span class="font-medium">Login, Sharing</span>
+                            </div>
+                        </div>
+
+                        <div class="flex space-x-3">
+                            <button
+                                class="flex-1 bg-primary text-white py-2 px-4 rounded-lg hover:bg-primary/90 transition-colors text-sm">
+                                Connect
+                            </button>
+                            <button
+                                class="flex-1 border border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                                Learn More
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Documentation Section -->
+            <div id="api-documentation" class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-semibold text-secondary">API Documentation</h3>
+                    <button
+                        class="bg-primary text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-primary/90 transition-colors">
+                        <i class="fa-solid fa-key"></i>
+                        <span>Generate API Key</span>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex items-center space-x-3 mb-3">
+                            <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
+                                <i class="fa-solid fa-code text-primary"></i>
+                            </div>
+                            <h4 class="font-medium text-secondary">REST API</h4>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-4">Complete REST API documentation for developers to build
+                            custom integrations.</p>
+                        <button class="text-primary hover:text-primary/80 text-sm font-medium">View Documentation
+                            →</button>
+                    </div>
+
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex items-center space-x-3 mb-3">
+                            <div class="w-10 h-10 bg-accent/10 rounded-lg flex items-center justify-center">
+                                <i class="fa-solid fa-bolt text-accent"></i>
+                            </div>
+                            <h4 class="font-medium text-secondary">Webhooks</h4>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-4">Set up webhooks to receive real-time notifications about
+                            platform events.</p>
+                        <button class="text-primary hover:text-primary/80 text-sm font-medium">Configure Webhooks
+                            →</button>
+                    </div>
+
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex items-center space-x-3 mb-3">
+                            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                                <i class="fa-solid fa-shield-alt text-purple-600"></i>
+                            </div>
+                            <h4 class="font-medium text-secondary">Security</h4>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-4">Learn about API security, authentication, and best
+                            practices for integration.</p>
+                        <button class="text-primary hover:text-primary/80 text-sm font-medium">Security Guide →</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add Integration Modal -->
+    <div id="add-integration-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-secondary">Add New Integration</h3>
+                <button id="close-add-integration-modal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Search Integrations</label>
+                <div class="relative">
+                    <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    <input type="text" placeholder="Search available integrations..."
+                        class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div
+                    class="border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-colors">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <i class="fab fa-stripe text-purple-600"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-secondary">Stripe</h4>
+                            <p class="text-sm text-gray-600">Payment processing</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    class="border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-colors">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i class="fab fa-paypal text-blue-600"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-secondary">PayPal</h4>
+                            <p class="text-sm text-gray-600">Alternative payments</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    class="border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-colors">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-envelope text-red-600"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-secondary">Email SMTP</h4>
+                            <p class="text-sm text-gray-600">Transaction emails</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div
+                    class="border border-gray-200 rounded-lg p-4 cursor-pointer hover:border-primary transition-colors">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i class="fab fa-facebook text-blue-600"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-secondary">Facebook</h4>
+                            <p class="text-sm text-gray-600">Social login & ads</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-3">
+                <button id="cancel-add-integration"
+                    class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+                <button class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">Continue</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Integrations functionality
+        document.addEventListener('DOMContentLoaded', function () {
+            // Tab functionality
+            const integrationTabs = document.querySelectorAll('.integration-tab');
+            integrationTabs.forEach(tab => {
+                tab.addEventListener('click', function () {
+                    // Remove active class from all tabs
+                    integrationTabs.forEach(t => {
+                        t.classList.remove('active');
+                        t.classList.add('text-gray-500', 'hover:text-gray-700');
+                    });
+                    // Add active class to clicked tab
+                    this.classList.add('active');
+                    this.classList.remove('text-gray-500', 'hover:text-gray-700');
+                });
+            });
+
+            // Add Integration modal functionality
+            const addIntegrationBtn = document.querySelector('button.bg-primary');
+            const addIntegrationModal = document.getElementById('add-integration-modal');
+            const closeAddIntegrationModal = document.getElementById('close-add-integration-modal');
+            const cancelAddIntegration = document.getElementById('cancel-add-integration');
+
+            addIntegrationBtn.addEventListener('click', function () {
+                addIntegrationModal.classList.remove('hidden');
+            });
+
+            closeAddIntegrationModal.addEventListener('click', function () {
+                addIntegrationModal.classList.add('hidden');
+            });
+
+            cancelAddIntegration.addEventListener('click', function () {
+                addIntegrationModal.classList.add('hidden');
+            });
+
+            // Integration card selection
+            const integrationCards = document.querySelectorAll('.integration-card');
+            integrationCards.forEach(card => {
+                card.addEventListener('click', function (e) {
+                    // Don't trigger selection if clicking buttons
+                    if (e.target.closest('button')) return;
+
+                    // For demo purposes, toggle a selected state
+                    this.classList.toggle('border-primary');
+                    this.classList.toggle('border-gray-100');
+                });
+            });
+
+            // Close modal when clicking outside
+            window.addEventListener('click', function (e) {
+                if (e.target === addIntegrationModal) {
+                    addIntegrationModal.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+
+</body>
+
+</html>

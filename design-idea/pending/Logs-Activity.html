@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logs & Activity - EduSaaS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest' };</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous"
+        referrerpolicy="no-referrer"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .log-item {
+            transition: all 0.2s ease;
+        }
+
+        .log-item:hover {
+            background-color: #f8fafc;
+        }
+
+        .activity-timeline {
+            position: relative;
+        }
+
+        .activity-timeline::before {
+            content: '';
+            position: absolute;
+            left: 20px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #e5e7eb;
+        }
+
+        .timeline-item {
+            position: relative;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 16px;
+            top: 8px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid #6366F1;
+            background: white;
+            z-index: 1;
+        }
+
+        .log-level-info {
+            background-color: #6366F1;
+        }
+
+        .log-level-warning {
+            background-color: #F59E0B;
+        }
+
+        .log-level-error {
+            background-color: #EF4444;
+        }
+
+        .log-level-success {
+            background-color: #10B981;
+        }
+
+        .log-level-debug {
+            background-color: #6B7280;
+        }
+
+        .tab-active {
+            border-bottom: 2px solid #6366F1;
+            color: #6366F1;
+        }
+
+        .chat-bubble-user {
+            background-color: #6366F1;
+            color: white;
+            margin-left: auto;
+        }
+
+        .chat-bubble-ai {
+            background-color: #f3f4f6;
+            color: #374151;
+        }
+
+        .filter-active {
+            background-color: #6366F1;
+            color: white;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366F1',
+                        secondary: '#0F172A',
+                        accent: '#10B981',
+                        background: '#F5F6FA',
+                        sidebar: '#111827',
+                        card: '#FFFFFF'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-background">
+
+    <!-- Main Content -->
+    <main id="main-content" class="pt-6">
+        <div class="p-6">
+            <!-- Page Header -->
+            <div id="page-header" class="mb-8">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-3xl font-bold text-secondary mb-2">Logs & Activity</h2>
+                        <p class="text-gray-600">Monitor system activity, errors, AI interactions, and chat
+                            conversations.</p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <button
+                            class="border border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                            <i class="fa-solid fa-download mr-2"></i>
+                            Export Logs
+                        </button>
+                        <button
+                            class="bg-primary text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-primary/90 transition-colors">
+                            <i class="fa-solid fa-filter"></i>
+                            <span>Filter Logs</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div id="stats-section" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Total Logs Today</p>
+                            <p class="text-2xl font-bold text-secondary mt-1">2,847</p>
+                            <p class="text-accent text-sm mt-1">
+                                <i class="fa-solid fa-arrow-up text-xs"></i> +12% from yesterday
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-list text-primary text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Errors</p>
+                            <p class="text-2xl font-bold text-secondary mt-1">24</p>
+                            <p class="text-red-600 text-sm mt-1">
+                                <i class="fa-solid fa-exclamation-triangle text-xs"></i> 3 critical
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-bug text-red-600 text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">AI Interactions</p>
+                            <p class="text-2xl font-bold text-secondary mt-1">1,247</p>
+                            <p class="text-accent text-sm mt-1">
+                                <i class="fa-solid fa-robot text-xs"></i> 45% of total
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-brain text-purple-600 text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Active Chats</p>
+                            <p class="text-2xl font-bold text-secondary mt-1">47</p>
+                            <p class="text-accent text-sm mt-1">
+                                <i class="fa-solid fa-comments text-xs"></i> 12 unread
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-message text-blue-600 text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabs Navigation -->
+            <div class="border-b border-gray-200 mb-8">
+                <nav class="flex space-x-8">
+                    <button class="tab-active py-4 px-1 font-medium text-sm">Activity Timeline</button>
+                    <button class="py-4 px-1 font-medium text-sm text-gray-500 hover:text-gray-700">Error Logs</button>
+                    <button class="py-4 px-1 font-medium text-sm text-gray-500 hover:text-gray-700">AI Logs</button>
+                    <button class="py-4 px-1 font-medium text-sm text-gray-500 hover:text-gray-700">Chat Logs</button>
+                    <button class="py-4 px-1 font-medium text-sm text-gray-500 hover:text-gray-700">System Logs</button>
+                </nav>
+            </div>
+
+            <!-- Activity Timeline Section -->
+            <div id="activity-timeline" class="mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-semibold text-secondary">Activity Timeline</h3>
+
+                    <div class="flex items-center space-x-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-600">Time Range:</span>
+                            <select class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                                <option>Last 24 hours</option>
+                                <option>Last 7 days</option>
+                                <option>Last 30 days</option>
+                                <option>Custom range</option>
+                            </select>
+                        </div>
+
+                        <div class="flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
+                            <button class="filter-active px-3 py-1 rounded-md text-sm transition-colors">All</button>
+                            <button
+                                class="px-3 py-1 rounded-md text-sm text-gray-600 hover:text-gray-800 transition-colors">User</button>
+                            <button
+                                class="px-3 py-1 rounded-md text-sm text-gray-600 hover:text-gray-800 transition-colors">System</button>
+                            <button
+                                class="px-3 py-1 rounded-md text-sm text-gray-600 hover:text-gray-800 transition-colors">Admin</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Activity Timeline -->
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="activity-timeline">
+                        <!-- Timeline Item 1 -->
+                        <div class="timeline-item mb-6">
+                            <div class="flex space-x-4">
+                                <div class="w-10"></div>
+                                <div class="flex-1">
+                                    <div class="flex justify-between items-start mb-1">
+                                        <div class="flex items-center space-x-2">
+                                            <span
+                                                class="log-level-info text-white text-xs px-2 py-1 rounded-full">INFO</span>
+                                            <p class="font-medium text-secondary">User Registration</p>
+                                        </div>
+                                        <span class="text-sm text-gray-500">2 minutes ago</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mb-2">New user <span
+                                            class="font-medium">sarah.wilson@email.com</span> registered successfully
+                                    </p>
+                                    <div class="text-xs text-gray-500">
+                                        <span class="bg-gray-100 px-2 py-1 rounded">IP: 192.168.1.45</span>
+                                        <span class="bg-gray-100 px-2 py-1 rounded ml-2">Device: Chrome on
+                                            Windows</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Timeline Item 2 -->
+                        <div class="timeline-item mb-6">
+                            <div class="flex space-x-4">
+                                <div class="w-10"></div>
+                                <div class="flex-1">
+                                    <div class="flex justify-between items-start mb-1">
+                                        <div class="flex items-center space-x-2">
+                                            <span
+                                                class="log-level-success text-white text-xs px-2 py-1 rounded-full">SUCCESS</span>
+                                            <p class="font-medium text-secondary">Payment Processed</p>
+                                        </div>
+                                        <span class="text-sm text-gray-500">15 minutes ago</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mb-2">Payment of <span
+                                            class="font-medium">$325,000</span> processed for aircraft purchase (Cessna
+                                        172S)</p>
+                                    <div class="text-xs text-gray-500">
+                                        <span class="bg-gray-100 px-2 py-1 rounded">Transaction: TX-789456123</span>
+                                        <span class="bg-gray-100 px-2 py-1 rounded ml-2">Method: Bank Transfer</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Timeline Item 3 -->
+                        <div class="timeline-item mb-6">
+                            <div class="flex space-x-4">
+                                <div class="w-10"></div>
+                                <div class="flex-1">
+                                    <div class="flex justify-between items-start mb-1">
+                                        <div class="flex items-center space-x-2">
+                                            <span
+                                                class="log-level-warning text-white text-xs px-2 py-1 rounded-full">WARNING</span>
+                                            <p class="font-medium text-secondary">API Rate Limit</p>
+                                        </div>
+                                        <span class="text-sm text-gray-500">1 hour ago</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mb-2">API rate limit approaching for user <span
+                                            class="font-medium">michael.chen@flightacademy.com</span></p>
+                                    <div class="text-xs text-gray-500">
+                                        <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded">85% of limit
+                                            used</span>
+                                        <span class="bg-gray-100 px-2 py-1 rounded ml-2">Endpoint:
+                                            /api/v1/aircraft</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Timeline Item 4 -->
+                        <div class="timeline-item mb-6">
+                            <div class="flex space-x-4">
+                                <div class="w-10"></div>
+                                <div class="flex-1">
+                                    <div class="flex justify-between items-start mb-1">
+                                        <div class="flex items-center space-x-2">
+                                            <span
+                                                class="log-level-error text-white text-xs px-2 py-1 rounded-full">ERROR</span>
+                                            <p class="font-medium text-secondary">Database Connection</p>
+                                        </div>
+                                        <span class="text-sm text-gray-500">2 hours ago</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mb-2">Temporary database connection failure -
+                                        retrying automatically</p>
+                                    <div class="text-xs text-gray-500">
+                                        <span class="bg-red-100 text-red-800 px-2 py-1 rounded">Connection
+                                            timeout</span>
+                                        <span class="bg-gray-100 px-2 py-1 rounded ml-2">Server: db-primary-01</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Timeline Item 5 -->
+                        <div class="timeline-item">
+                            <div class="flex space-x-4">
+                                <div class="w-10"></div>
+                                <div class="flex-1">
+                                    <div class="flex justify-between items-start mb-1">
+                                        <div class="flex items-center space-x-2">
+                                            <span
+                                                class="log-level-info text-white text-xs px-2 py-1 rounded-full">INFO</span>
+                                            <p class="font-medium text-secondary">Aircraft Listing</p>
+                                        </div>
+                                        <span class="text-sm text-gray-500">3 hours ago</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mb-2">New aircraft listing created: <span
+                                            class="font-medium">Beechcraft King Air 350i</span></p>
+                                    <div class="text-xs text-gray-500">
+                                        <span class="bg-gray-100 px-2 py-1 rounded">Price: $4,200,000</span>
+                                        <span class="bg-gray-100 px-2 py-1 rounded ml-2">Seller: Aviation Partners
+                                            Inc.</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Logs Section -->
+            <div id="error-logs" class="bg-card rounded-xl p-6 shadow-sm border border-gray-100 mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-semibold text-secondary">Error Logs</h3>
+
+                    <div class="flex items-center space-x-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-600">Severity:</span>
+                            <select class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                                <option>All Errors</option>
+                                <option>Critical</option>
+                                <option>High</option>
+                                <option>Medium</option>
+                                <option>Low</option>
+                            </select>
+                        </div>
+
+                        <div class="flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
+                            <button class="filter-active px-3 py-1 rounded-md text-sm transition-colors">All</button>
+                            <button
+                                class="px-3 py-1 rounded-md text-sm text-gray-600 hover:text-gray-800 transition-colors">Unresolved</button>
+                            <button
+                                class="px-3 py-1 rounded-md text-sm text-gray-600 hover:text-gray-800 transition-colors">Resolved</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Error Logs Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-gray-200">
+                                <th class="text-left py-3 px-4 text-sm font-medium text-gray-600">Time</th>
+                                <th class="text-left py-3 px-4 text-sm font-medium text-gray-600">Error Type</th>
+                                <th class="text-left py-3 px-4 text-sm font-medium text-gray-600">Message</th>
+                                <th class="text-left py-3 px-4 text-sm font-medium text-gray-600">Severity</th>
+                                <th class="text-left py-3 px-4 text-sm font-medium text-gray-600">Source</th>
+                                <th class="text-left py-3 px-4 text-sm font-medium text-gray-600">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Error 1 -->
+                            <tr class="log-item border-b border-gray-100">
+                                <td class="py-4 px-4 text-sm text-gray-600">2023-10-16 14:23:45</td>
+                                <td class="py-4 px-4">
+                                    <p class="font-medium text-secondary">DatabaseConnectionError</p>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <p class="text-sm text-gray-600">Connection to primary database timed out after 30
+                                        seconds</p>
+                                    <p class="text-xs text-gray-500 mt-1">Failed to establish connection to
+                                        mysql://db-primary:3306</p>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <span
+                                        class="log-level-error text-white text-xs px-2 py-1 rounded-full">CRITICAL</span>
+                                </td>
+                                <td class="py-4 px-4 text-sm text-gray-600">api-server-02</td>
+                                <td class="py-4 px-4">
+                                    <div class="flex space-x-2">
+                                        <button class="text-primary hover:text-primary/80 text-sm">View Details</button>
+                                        <button class="text-accent hover:text-accent/80 text-sm">Resolve</button>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Error 2 -->
+                            <tr class="log-item border-b border-gray-100">
+                                <td class="py-4 px-4 text-sm text-gray-600">2023-10-16 13:45:12</td>
+                                <td class="py-4 px-4">
+                                    <p class="font-medium text-secondary">PaymentGatewayError</p>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <p class="text-sm text-gray-600">Stripe API returned 402 Payment Required for
+                                        transaction</p>
+                                    <p class="text-xs text-gray-500 mt-1">Card declined: insufficient_funds</p>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <span
+                                        class="log-level-warning text-white text-xs px-2 py-1 rounded-full">HIGH</span>
+                                </td>
+                                <td class="py-4 px-4 text-sm text-gray-600">payment-service</td>
+                                <td class="py-4 px-4">
+                                    <div class="flex space-x-2">
+                                        <button class="text-primary hover:text-primary/80 text-sm">View Details</button>
+                                        <button class="text-accent hover:text-accent/80 text-sm">Resolve</button>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Error 3 -->
+                            <tr class="log-item border-b border-gray-100">
+                                <td class="py-4 px-4 text-sm text-gray-600">2023-10-16 12:15:33</td>
+                                <td class="py-4 px-4">
+                                    <p class="font-medium text-secondary">FileUploadError</p>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <p class="text-sm text-gray-600">Failed to upload aircraft image: file size exceeds
+                                        limit</p>
+                                    <p class="text-xs text-gray-500 mt-1">File: aircraft_photo.jpg (15.2MB), Limit: 10MB
+                                    </p>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <span
+                                        class="log-level-warning text-white text-xs px-2 py-1 rounded-full">MEDIUM</span>
+                                </td>
+                                <td class="py-4 px-4 text-sm text-gray-600">web-server-01</td>
+                                <td class="py-4 px-4">
+                                    <div class="flex space-x-2">
+                                        <button class="text-primary hover:text-primary/80 text-sm">View Details</button>
+                                        <button class="text-gray-400 text-sm cursor-not-allowed"
+                                            disabled>Resolved</button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- AI Logs Section -->
+            <div id="ai-logs" class="bg-card rounded-xl p-6 shadow-sm border border-gray-100 mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-semibold text-secondary">AI Interaction Logs</h3>
+
+                    <div class="flex items-center space-x-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-600">AI Model:</span>
+                            <select class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                                <option>All Models</option>
+                                <option>GPT-4</option>
+                                <option>Claude-2</option>
+                                <option>Llama-2</option>
+                                <option>Custom Model</option>
+                            </select>
+                        </div>
+
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-600">Response Time:</span>
+                            <select class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                                <option>Any</option>
+                                <option>Fast (&lt;2s)</option>
+                                <option>Medium (2-5s)</option>
+                                <option>Slow (&gt;5s)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Logs Grid -->
+                <div class="space-y-4">
+                    <!-- AI Log 1 -->
+                    <div class="log-item border border-gray-200 rounded-lg p-4">
+                        <div class="flex justify-between items-start mb-3">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                                    <i class="fa-solid fa-robot text-purple-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-secondary">Course Recommendation</p>
+                                    <p class="text-sm text-gray-600">User: student@example.com • Model: GPT-4</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm font-medium text-secondary">1.2s</p>
+                                <p class="text-xs text-gray-600">Response time</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-3">
+                            <div>
+                                <p class="text-sm font-medium text-gray-700 mb-1">User Input:</p>
+                                <div class="bg-gray-50 rounded-lg p-3">
+                                    <p class="text-sm text-gray-800">"I'm a private pilot with 150 hours, looking to
+                                        advance my training. What commercial pilot courses would you recommend?"</p>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-700 mb-1">AI Response:</p>
+                                <div class="bg-purple-50 rounded-lg p-3">
+                                    <p class="text-sm text-gray-800">"Based on your experience, I recommend our
+                                        Commercial Pilot License program and Instrument Rating course. The CPL requires
+                                        250 total hours and focuses on advanced maneuvers, while the IR enhances your
+                                        instrument flying skills."</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-center text-sm text-gray-600">
+                            <div class="flex items-center space-x-4">
+                                <span>Tokens: 128/2048</span>
+                                <span>Cost: $0.0024</span>
+                                <span class="text-accent">Success</span>
+                            </div>
+                            <span>2023-10-16 15:30:22</span>
+                        </div>
+                    </div>
+
+                    <!-- AI Log 2 -->
+                    <div class="log-item border border-gray-200 rounded-lg p-4">
+                        <div class="flex justify-between items-start mb-3">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                                    <i class="fa-solid fa-robot text-purple-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-secondary">Aircraft Technical Query</p>
+                                    <p class="text-sm text-gray-600">User: mechanic@aviation.com • Model: Claude-2</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm font-medium text-secondary">3.8s</p>
+                                <p class="text-xs text-gray-600">Response time</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-3">
+                            <div>
+                                <p class="text-sm font-medium text-gray-700 mb-1">User Input:</p>
+                                <div class="bg-gray-50 rounded-lg p-3">
+                                    <p class="text-sm text-gray-800">"What are the common maintenance issues for Cessna
+                                        172 aircraft with over 5,000 flight hours?"</p>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-700 mb-1">AI Response:</p>
+                                <div class="bg-purple-50 rounded-lg p-3">
+                                    <p class="text-sm text-gray-800">"For high-time Cessna 172s, common issues include
+                                        engine overhaul requirements (typically needed around 2,000-hour TBO), corrosion
+                                        in wing spars, landing gear maintenance, and avionics upgrades. Regular
+                                        inspections should focus on these areas to ensure airworthiness."</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-center text-sm text-gray-600">
+                            <div class="flex items-center space-x-4">
+                                <span>Tokens: 96/2048</span>
+                                <span>Cost: $0.0018</span>
+                                <span class="text-accent">Success</span>
+                            </div>
+                            <span>2023-10-16 14:45:15</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Logs Section -->
+            <div id="chat-logs" class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-semibold text-secondary">Chat Logs</h3>
+
+                    <div class="flex items-center space-x-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-600">Chat Type:</span>
+                            <select class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                                <option>All Chats</option>
+                                <option>Student Support</option>
+                                <option>Sales Inquiry</option>
+                                <option>Technical Support</option>
+                                <option>Aircraft Brokerage</option>
+                            </select>
+                        </div>
+
+                        <div class="flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
+                            <button class="filter-active px-3 py-1 rounded-md text-sm transition-colors">All</button>
+                            <button
+                                class="px-3 py-1 rounded-md text-sm text-gray-600 hover:text-gray-800 transition-colors">Active</button>
+                            <button
+                                class="px-3 py-1 rounded-md text-sm text-gray-600 hover:text-gray-800 transition-colors">Closed</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Chat List -->
+                    <div class="lg:col-span-1 border border-gray-200 rounded-lg overflow-hidden">
+                        <div class="bg-gray-50 p-4 border-b border-gray-200">
+                            <h4 class="font-medium text-secondary">Recent Chats</h4>
+                        </div>
+                        <div class="max-h-96 overflow-y-auto">
+                            <!-- Chat 1 -->
+                            <div class="log-item border-b border-gray-100 p-4 cursor-pointer hover:bg-primary/5">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                                            <span class="text-white text-sm font-medium">RS</span>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-secondary">Robert Smith</p>
+                                            <p class="text-sm text-gray-600">Cessna 172 Inquiry</p>
+                                        </div>
+                                    </div>
+                                    <span class="text-xs text-gray-500">2h ago</span>
+                                </div>
+                                <p class="text-sm text-gray-600 truncate">I'm interested in the Cessna 172S. Could you
+                                    provide more details about the maintenance history?</p>
+                                <div class="flex items-center justify-between mt-2">
+                                    <span
+                                        class="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full">Active</span>
+                                    <span class="text-xs text-gray-500">12 messages</span>
+                                </div>
+                            </div>
+
+                            <!-- Chat 2 -->
+                            <div class="log-item border-b border-gray-100 p-4 cursor-pointer hover:bg-primary/5">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 bg-accent rounded-full flex items-center justify-center">
+                                            <span class="text-white text-sm font-medium">EJ</span>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-secondary">Emma Johnson</p>
+                                            <p class="text-sm text-gray-600">Training Program</p>
+                                        </div>
+                                    </div>
+                                    <span class="text-xs text-gray-500">1d ago</span>
+                                </div>
+                                <p class="text-sm text-gray-600 truncate">I have questions about the commercial pilot
+                                    program requirements and schedule.</p>
+                                <div class="flex items-center justify-between mt-2">
+                                    <span class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">Closed</span>
+                                    <span class="text-xs text-gray-500">8 messages</span>
+                                </div>
+                            </div>
+
+                            <!-- Chat 3 -->
+                            <div class="log-item border-b border-gray-100 p-4 cursor-pointer hover:bg-primary/5">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div class="flex items-center space-x-3">
+                                        <div
+                                            class="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center">
+                                            <span class="text-white text-sm font-medium">DL</span>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-secondary">David Lee</p>
+                                            <p class="text-sm text-gray-600">Aircraft Maintenance</p>
+                                        </div>
+                                    </div>
+                                    <span class="text-xs text-gray-500">3d ago</span>
+                                </div>
+                                <p class="text-sm text-gray-600 truncate">Need to schedule annual inspection for our
+                                    Piper PA-28 fleet.</p>
+                                <div class="flex items-center justify-between mt-2">
+                                    <span class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">Closed</span>
+                                    <span class="text-xs text-gray-500">15 messages</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chat Detail -->
+                    <div class="lg:col-span-2 border border-gray-200 rounded-lg">
+                        <div class="bg-gray-50 p-4 border-b border-gray-200">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <h4 class="font-medium text-secondary">Cessna 172 Inquiry</h4>
+                                    <p class="text-sm text-gray-600">Robert Smith • robert.smith@email.com</p>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full">Aircraft
+                                        Brokerage</span>
+                                    <span class="text-xs text-gray-500">Started: 2023-10-16 14:30</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-4 max-h-96 overflow-y-auto">
+                            <!-- Chat Messages -->
+                            <div class="space-y-4">
+                                <!-- User Message -->
+                                <div class="flex justify-start">
+                                    <div class="max-w-xs lg:max-w-md">
+                                        <div class="chat-bubble-user rounded-lg p-4">
+                                            <p class="text-sm">Hello, I'm interested in the Cessna 172S listed on your
+                                                platform. Could you provide more details about the maintenance history?
+                                            </p>
+                                        </div>
+                                        <p class="text-xs text-gray-500 mt-1">Robert Smith • 14:30</p>
+                                    </div>
+                                </div>
+
+                                <!-- Support Reply -->
+                                <div class="flex justify-end">
+                                    <div class="max-w-xs lg:max-w-md">
+                                        <div class="chat-bubble-ai rounded-lg p-4">
+                                            <p class="text-sm">Hello Robert, thank you for your inquiry. The Cessna 172S
+                                                has excellent maintenance records with all annuals completed on time.
+                                                Recent upgrades include new tires, Garmin GTX 345 transponder, and fresh
+                                                interior.</p>
+                                        </div>
+                                        <p class="text-xs text-gray-500 mt-1 text-right">Support Agent • 14:32</p>
+                                    </div>
+                                </div>
+
+                                <!-- User Follow-up -->
+                                <div class="flex justify-start">
+                                    <div class="max-w-xs lg:max-w-md">
+                                        <div class="chat-bubble-user rounded-lg p-4">
+                                            <p class="text-sm">Thanks for the information. Is the aircraft available for
+                                                a pre-purchase inspection? Also, what's the engine time and when was the
+                                                last overhaul?</p>
+                                        </div>
+                                        <p class="text-xs text-gray-500 mt-1">Robert Smith • 14:35</p>
+                                    </div>
+                                </div>
+
+                                <!-- Support Reply -->
+                                <div class="flex justify-end">
+                                    <div class="max-w-xs lg:max-w-md">
+                                        <div class="chat-bubble-ai rounded-lg p-4">
+                                            <p class="text-sm">Yes, we can arrange a pre-purchase inspection. The engine
+                                                has 1,200 hours total time and was last overhauled at 1,000 hours. The
+                                                aircraft is currently located at KAPA and available for viewing this
+                                                week.</p>
+                                        </div>
+                                        <p class="text-xs text-gray-500 mt-1 text-right">Support Agent • 14:38</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Chat Info -->
+                        <div class="border-t border-gray-200 p-4 bg-gray-50">
+                            <div class="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <p class="font-medium text-gray-700">Chat Duration</p>
+                                    <p class="text-gray-600">8 minutes</p>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-700">Messages</p>
+                                    <p class="text-gray-600">4 total</p>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-700">First Response Time</p>
+                                    <p class="text-gray-600">2 minutes</p>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-700">Satisfaction</p>
+                                    <p class="text-accent">Not rated</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Filter Logs Modal -->
+    <div id="filter-logs-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-secondary">Filter Logs</h3>
+                <button id="close-filter-logs-modal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Log Level</label>
+                    <div class="space-y-2">
+                        <div class="flex items-center">
+                            <input type="checkbox" class="rounded border-gray-300 text-primary focus:ring-primary"
+                                checked>
+                            <span class="ml-2 text-sm text-gray-700">Information</span>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" class="rounded border-gray-300 text-primary focus:ring-primary"
+                                checked>
+                            <span class="ml-2 text-sm text-gray-700">Warning</span>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" class="rounded border-gray-300 text-primary focus:ring-primary"
+                                checked>
+                            <span class="ml-2 text-sm text-gray-700">Error</span>
+                        </div>
+                        <div class="flex items-center">
+                            <input type="checkbox" class="rounded border-gray-300 text-primary focus:ring-primary">
+                            <span class="ml-2 text-sm text-gray-700">Debug</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Time Range</label>
+                    <select
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
+                        <option>Last 24 hours</option>
+                        <option>Last 7 days</option>
+                        <option>Last 30 days</option>
+                        <option>Custom range</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Source</label>
+                    <select
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
+                        <option>All Sources</option>
+                        <option>Web Application</option>
+                        <option>API Server</option>
+                        <option>Database</option>
+                        <option>Payment Gateway</option>
+                        <option>AI Service</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Contains Text</label>
+                    <input type="text"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        placeholder="Search in log messages...">
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-3 mt-6">
+                <button id="cancel-filter-logs"
+                    class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Reset</button>
+                <button class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">Apply Filters</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Logs functionality
+        document.addEventListener('DOMContentLoaded', function () {
+            // Tab functionality
+            const tabs = document.querySelectorAll('nav button');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function () {
+                    // Remove active class from all tabs
+                    tabs.forEach(t => {
+                        t.classList.remove('tab-active');
+                        t.classList.add('text-gray-500', 'hover:text-gray-700');
+                    });
+                    // Add active class to clicked tab
+                    this.classList.add('tab-active');
+                    this.classList.remove('text-gray-500', 'hover:text-gray-700');
+                });
+            });
+
+            // Filter modal functionality
+            const filterLogsBtn = document.querySelector('button.bg-primary');
+            const filterLogsModal = document.getElementById('filter-logs-modal');
+            const closeFilterLogsModal = document.getElementById('close-filter-logs-modal');
+            const cancelFilterLogs = document.getElementById('cancel-filter-logs');
+
+            filterLogsBtn.addEventListener('click', function () {
+                filterLogsModal.classList.remove('hidden');
+            });
+
+            closeFilterLogsModal.addEventListener('click', function () {
+                filterLogsModal.classList.add('hidden');
+            });
+
+            cancelFilterLogs.addEventListener('click', function () {
+                filterLogsModal.classList.add('hidden');
+            });
+
+            // Filter buttons functionality
+            const filterButtons = document.querySelectorAll('.bg-gray-100 button');
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function () {
+                    // Remove active class from all buttons in the same group
+                    const parent = this.parentElement;
+                    parent.querySelectorAll('button').forEach(btn => {
+                        btn.classList.remove('filter-active');
+                        btn.classList.add('text-gray-600', 'hover:text-gray-800');
+                    });
+                    // Add active class to clicked button
+                    this.classList.add('filter-active');
+                    this.classList.remove('text-gray-600', 'hover:text-gray-800');
+                });
+            });
+
+            // Log item selection
+            const logItems = document.querySelectorAll('.log-item');
+            logItems.forEach(item => {
+                item.addEventListener('click', function () {
+                    // Remove selection from all items
+                    logItems.forEach(i => i.classList.remove('bg-primary/5'));
+                    // Add selection to clicked item
+                    this.classList.add('bg-primary/5');
+                });
+            });
+
+            // Close modal when clicking outside
+            window.addEventListener('click', function (e) {
+                if (e.target === filterLogsModal) {
+                    filterLogsModal.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+
+</body>
+
+</html>

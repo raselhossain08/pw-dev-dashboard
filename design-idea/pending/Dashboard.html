@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Personal Wings</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest' };</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous"
+        referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.plot.ly/plotly-3.1.1.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-2px);
+        }
+
+        .metric-up {
+            color: #10B981;
+        }
+
+        .metric-down {
+            color: #EF4444;
+        }
+
+        .kpi-card {
+            border-left: 4px solid #6366F1;
+        }
+
+        .trend-indicator {
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+        }
+
+        .trend-up {
+            border-bottom: 8px solid #10B981;
+        }
+
+        .trend-down {
+            border-top: 8px solid #EF4444;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, #6366F1 0%, #6366F1 var(--progress), #E5E7EB var(--progress), #E5E7EB 100%);
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366F1',
+                        secondary: '#0F172A',
+                        accent: '#10B981',
+                        background: '#F5F6FA',
+                        sidebar: '#111827',
+                        card: '#FFFFFF'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-background">
+
+    <!-- Main Content -->
+    <main id="main-content" class="pt-6">
+        <div class="p-6">
+            <!-- Page Header -->
+            <div id="page-header" class="mb-8">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-3xl font-bold text-secondary mb-2">Dashboard Overview</h2>
+                        <p class="text-gray-600">Welcome back! Here's what's happening with Personal Wings today.</p>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button
+                            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center space-x-2">
+                            <i class="fa-solid fa-download"></i>
+                            <span>Export Report</span>
+                        </button>
+                        <button
+                            class="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg flex items-center space-x-2 transition-colors">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Quick Add</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <!-- Total Students -->
+                <div class="kpi-card bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="text-gray-600 text-sm font-medium">Total Students</div>
+                        <div class="flex items-center space-x-1 metric-up">
+                            <div class="trend-indicator trend-up"></div>
+                            <span class="text-sm font-medium">+12.4%</span>
+                        </div>
+                    </div>
+                    <div class="text-2xl font-bold text-secondary mb-2">2,847</div>
+                    <div class="text-sm text-gray-500">+312 this month</div>
+                </div>
+
+                <!-- Active Courses -->
+                <div class="kpi-card bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="text-gray-600 text-sm font-medium">Active Courses</div>
+                        <div class="flex items-center space-x-1 metric-up">
+                            <div class="trend-indicator trend-up"></div>
+                            <span class="text-sm font-medium">+8.2%</span>
+                        </div>
+                    </div>
+                    <div class="text-2xl font-bold text-secondary mb-2">142</div>
+                    <div class="text-sm text-gray-500">12 new this quarter</div>
+                </div>
+
+                <!-- Total Training Programs -->
+                <div class="kpi-card bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="text-gray-600 text-sm font-medium">Training Programs</div>
+                        <div class="flex items-center space-x-1 metric-up">
+                            <div class="trend-indicator trend-up"></div>
+                            <span class="text-sm font-medium">+15.7%</span>
+                        </div>
+                    </div>
+                    <div class="text-2xl font-bold text-secondary mb-2">67</div>
+                    <div class="text-sm text-gray-500">8 new programs</div>
+                </div>
+
+                <!-- Monthly Revenue -->
+                <div class="kpi-card bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="text-gray-600 text-sm font-medium">Monthly Revenue</div>
+                        <div class="flex items-center space-x-1 metric-up">
+                            <div class="trend-indicator trend-up"></div>
+                            <span class="text-sm font-medium">+24.3%</span>
+                        </div>
+                    </div>
+                    <div class="text-2xl font-bold text-secondary mb-2">$184,329</div>
+                    <div class="text-sm text-gray-500">Courses + Aircraft sales</div>
+                </div>
+
+                <!-- Shop Revenue -->
+                <div class="kpi-card bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="text-gray-600 text-sm font-medium">Shop Revenue</div>
+                        <div class="flex items-center space-x-1 metric-up">
+                            <div class="trend-indicator trend-up"></div>
+                            <span class="text-sm font-medium">+18.6%</span>
+                        </div>
+                    </div>
+                    <div class="text-2xl font-bold text-secondary mb-2">$42,150</div>
+                    <div class="text-sm text-gray-500">Shopify sync active</div>
+                </div>
+
+                <!-- Aircraft Listed -->
+                <div class="kpi-card bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="text-gray-600 text-sm font-medium">Aircraft for Sale</div>
+                        <div class="flex items-center space-x-1 metric-up">
+                            <div class="trend-indicator trend-up"></div>
+                            <span class="text-sm font-medium">+5.2%</span>
+                        </div>
+                    </div>
+                    <div class="text-2xl font-bold text-secondary mb-2">28</div>
+                    <div class="text-sm text-gray-500">12 premium listings</div>
+                </div>
+
+                <!-- AI Conversations -->
+                <div class="kpi-card bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="text-gray-600 text-sm font-medium">AI Conversations</div>
+                        <div class="flex items-center space-x-1 metric-up">
+                            <div class="trend-indicator trend-up"></div>
+                            <span class="text-sm font-medium">+45.8%</span>
+                        </div>
+                    </div>
+                    <div class="text-2xl font-bold text-secondary mb-2">1,247</div>
+                    <div class="text-sm text-gray-500">Today's interactions</div>
+                </div>
+
+                <!-- Live Chats -->
+                <div class="kpi-card bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="text-gray-600 text-sm font-medium">Live Chats</div>
+                        <div class="flex items-center space-x-1 metric-up">
+                            <div class="trend-indicator trend-up"></div>
+                            <span class="text-sm font-medium">+22.1%</span>
+                        </div>
+                    </div>
+                    <div class="text-2xl font-bold text-secondary mb-2">342</div>
+                    <div class="text-sm text-gray-500">Active support sessions</div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <!-- Enrollment Trends -->
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-secondary">Enrollment Trends</h3>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 bg-primary text-white rounded-lg text-sm">Monthly</button>
+                            <button class="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-sm">Quarterly</button>
+                        </div>
+                    </div>
+                    <div id="enrollment-chart" style="height: 300px;"></div>
+                </div>
+
+                <!-- Total Sales -->
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-secondary">Total Sales Performance</h3>
+                        <button class="text-primary hover:text-primary/80 text-sm font-medium">View Details</button>
+                    </div>
+                    <div id="sales-chart" style="height: 300px;"></div>
+                </div>
+            </div>
+
+            <!-- Secondary Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <!-- Aircraft Inquiries -->
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-secondary">Aircraft Inquiries</h3>
+                        <button class="text-primary hover:text-primary/80 text-sm font-medium">View Report</button>
+                    </div>
+                    <div id="aircraft-chart" style="height: 300px;"></div>
+                </div>
+
+                <!-- AI Agent Performance -->
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-secondary">AI Agent Performance</h3>
+                        <button class="text-primary hover:text-primary/80 text-sm font-medium">View Analytics</button>
+                    </div>
+                    <div id="ai-performance-chart" style="height: 300px;"></div>
+                </div>
+            </div>
+
+            <!-- Additional Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <!-- Student Progress Rate -->
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-secondary">Student Progress Rate</h3>
+                        <button class="text-primary hover:text-primary/80 text-sm font-medium">View Details</button>
+                    </div>
+                    <div id="progress-chart" style="height: 300px;"></div>
+                </div>
+
+                <!-- Traffic Analytics -->
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-secondary">Traffic Analytics</h3>
+                        <button class="text-primary hover:text-primary/80 text-sm font-medium">View Report</button>
+                    </div>
+                    <div id="traffic-chart" style="height: 300px;"></div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                <h3 class="text-lg font-semibold text-secondary mb-4">Quick Actions</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                    <button
+                        class="flex flex-col items-center space-y-3 p-4 bg-primary/5 hover:bg-primary/10 rounded-lg transition-colors">
+                        <div class="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-book text-white"></i>
+                        </div>
+                        <div class="text-center">
+                            <p class="font-medium text-secondary text-sm">Add New Course</p>
+                            <p class="text-xs text-gray-600">Create learning content</p>
+                        </div>
+                    </button>
+
+                    <button
+                        class="flex flex-col items-center space-y-3 p-4 bg-accent/5 hover:bg-accent/10 rounded-lg transition-colors">
+                        <div class="w-12 h-12 bg-accent rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-certificate text-white"></i>
+                        </div>
+                        <div class="text-center">
+                            <p class="font-medium text-secondary text-sm">Add Training Program</p>
+                            <p class="text-xs text-gray-600">Create certification</p>
+                        </div>
+                    </button>
+
+                    <button
+                        class="flex flex-col items-center space-y-3 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
+                        <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-blog text-white"></i>
+                        </div>
+                        <div class="text-center">
+                            <p class="font-medium text-secondary text-sm">Add Blog Post</p>
+                            <p class="text-xs text-gray-600">Publish content</p>
+                        </div>
+                    </button>
+
+                    <button
+                        class="flex flex-col items-center space-y-3 p-4 bg-yellow-50 hover:bg-yellow-100 rounded-lg transition-colors">
+                        <div class="w-12 h-12 bg-yellow-500 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-plane text-white"></i>
+                        </div>
+                        <div class="text-center">
+                            <p class="font-medium text-secondary text-sm">Add Aircraft Listing</p>
+                            <p class="text-xs text-gray-600">List for sale</p>
+                        </div>
+                    </button>
+
+                    <button
+                        class="flex flex-col items-center space-y-3 p-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors">
+                        <div class="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-cube text-white"></i>
+                        </div>
+                        <div class="text-center">
+                            <p class="font-medium text-secondary text-sm">Add Product</p>
+                            <p class="text-xs text-gray-600">Shopify store</p>
+                        </div>
+                    </button>
+
+                    <button
+                        class="flex flex-col items-center space-y-3 p-4 bg-red-50 hover:bg-red-100 rounded-lg transition-colors">
+                        <div class="w-12 h-12 bg-red-500 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-bullhorn text-white"></i>
+                        </div>
+                        <div class="text-center">
+                            <p class="font-medium text-secondary text-sm">Send Announcement</p>
+                            <p class="text-xs text-gray-600">Notify users</p>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-secondary">Recent Activity</h3>
+                    <button class="text-primary hover:text-primary/80 text-sm font-medium">View All</button>
+                </div>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                <i class="fa-solid fa-user-plus text-green-600"></i>
+                            </div>
+                            <div>
+                                <div class="font-medium text-secondary">New Student Enrollment</div>
+                                <div class="text-sm text-gray-500">Michael Chen enrolled in Private Pilot Course</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm text-gray-500">2 hours ago</div>
+                            <div class="text-sm metric-up">+1 student</div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <i class="fa-solid fa-plane text-blue-600"></i>
+                            </div>
+                            <div>
+                                <div class="font-medium text-secondary">Aircraft Inquiry</div>
+                                <div class="text-sm text-gray-500">New inquiry for Cessna 172 Skyhawk</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm text-gray-500">4 hours ago</div>
+                            <div class="text-sm metric-up">High priority</div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                                <i class="fa-solid fa-cart-shopping text-purple-600"></i>
+                            </div>
+                            <div>
+                                <div class="font-medium text-secondary">Shop Order</div>
+                                <div class="text-sm text-gray-500">New order for Pilot Headset Pro</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm text-gray-500">6 hours ago</div>
+                            <div class="text-sm metric-up">$249.99</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            try {
+                // Enrollment Trends Chart
+                const enrollmentData = [{
+                    type: 'scatter',
+                    mode: 'lines',
+                    x: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+                    y: [180, 220, 195, 280, 320, 380, 420, 390, 450, 512],
+                    line: { color: '#6366F1', width: 3 },
+                    fill: 'tozeroy',
+                    fillcolor: 'rgba(99, 102, 241, 0.1)'
+                }];
+
+                const enrollmentLayout = {
+                    margin: { t: 20, r: 20, b: 40, l: 40 },
+                    plot_bgcolor: '#FFFFFF',
+                    paper_bgcolor: '#FFFFFF',
+                    showlegend: false,
+                    xaxis: { showgrid: false },
+                    yaxis: { showgrid: true, gridcolor: '#f1f5f9', title: 'Enrollments' }
+                };
+
+                Plotly.newPlot('enrollment-chart', enrollmentData, enrollmentLayout, { responsive: true, displayModeBar: false });
+
+                // Total Sales Chart
+                const salesData = [
+                    {
+                        type: 'bar',
+                        x: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+                        y: [125000, 142000, 138000, 156000, 172000, 189000, 195000, 184000, 198000, 226479],
+                        name: 'Total Revenue',
+                        marker: { color: '#6366F1' }
+                    },
+                    {
+                        type: 'scatter',
+                        mode: 'lines',
+                        x: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+                        y: [45000, 52000, 48000, 61000, 73000, 84000, 92000, 88000, 95000, 112150],
+                        name: 'Shop Revenue',
+                        line: { color: '#10B981', width: 3 }
+                    }
+                ];
+
+                const salesLayout = {
+                    margin: { t: 20, r: 20, b: 40, l: 60 },
+                    plot_bgcolor: '#FFFFFF',
+                    paper_bgcolor: '#FFFFFF',
+                    showlegend: true,
+                    legend: { orientation: 'h', y: -0.2 },
+                    xaxis: { showgrid: false },
+                    yaxis: { showgrid: true, gridcolor: '#f1f5f9', title: 'Revenue ($)' }
+                };
+
+                Plotly.newPlot('sales-chart', salesData, salesLayout, { responsive: true, displayModeBar: false });
+
+                // Aircraft Inquiries Chart
+                const aircraftData = [{
+                    type: 'bar',
+                    x: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+                    y: [45, 52, 48, 67, 72, 85, 78, 82, 88, 94],
+                    marker: { color: '#F59E0B' }
+                }];
+
+                const aircraftLayout = {
+                    margin: { t: 20, r: 20, b: 40, l: 60 },
+                    plot_bgcolor: '#FFFFFF',
+                    paper_bgcolor: '#FFFFFF',
+                    showlegend: false,
+                    xaxis: { showgrid: false },
+                    yaxis: { showgrid: true, gridcolor: '#f1f5f9', title: 'Inquiries' }
+                };
+
+                Plotly.newPlot('aircraft-chart', aircraftData, aircraftLayout, { responsive: true, displayModeBar: false });
+
+                // AI Performance Chart
+                const aiData = [{
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    x: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+                    y: [78, 82, 85, 88, 86, 91, 89, 92, 94, 96],
+                    line: { color: '#8B5CF6', width: 3 },
+                    marker: { size: 6 }
+                }];
+
+                const aiLayout = {
+                    margin: { t: 20, r: 20, b: 40, l: 60 },
+                    plot_bgcolor: '#FFFFFF',
+                    paper_bgcolor: '#FFFFFF',
+                    showlegend: false,
+                    xaxis: { showgrid: false },
+                    yaxis: { showgrid: true, gridcolor: '#f1f5f9', title: 'Success Rate (%)', range: [70, 100] }
+                };
+
+                Plotly.newPlot('ai-performance-chart', aiData, aiLayout, { responsive: true, displayModeBar: false });
+
+                // Student Progress Chart
+                const progressData = [{
+                    type: 'pie',
+                    labels: ['Completed', 'In Progress', 'Not Started', 'Behind Schedule'],
+                    values: [45, 35, 12, 8],
+                    marker: {
+                        colors: ['#10B981', '#6366F1', '#6B7280', '#EF4444']
+                    },
+                    hole: 0.4
+                }];
+
+                const progressLayout = {
+                    margin: { t: 20, r: 20, b: 20, l: 20 },
+                    plot_bgcolor: '#FFFFFF',
+                    paper_bgcolor: '#FFFFFF',
+                    showlegend: true,
+                    legend: { orientation: 'h', y: -0.1 }
+                };
+
+                Plotly.newPlot('progress-chart', progressData, progressLayout, { responsive: true, displayModeBar: false });
+
+                // Traffic Analytics Chart
+                const trafficData = [
+                    {
+                        type: 'bar',
+                        x: ['Organic', 'Direct', 'Social', 'Email', 'Referral', 'Paid'],
+                        y: [1247, 845, 567, 423, 298, 156],
+                        name: 'Visitors',
+                        marker: { color: '#3B82F6' }
+                    },
+                    {
+                        type: 'bar',
+                        x: ['Organic', 'Direct', 'Social', 'Email', 'Referral', 'Paid'],
+                        y: [312, 245, 178, 156, 89, 67],
+                        name: 'Conversions',
+                        marker: { color: '#10B981' }
+                    }
+                ];
+
+                const trafficLayout = {
+                    margin: { t: 20, r: 20, b: 40, l: 60 },
+                    plot_bgcolor: '#FFFFFF',
+                    paper_bgcolor: '#FFFFFF',
+                    showlegend: true,
+                    legend: { orientation: 'h', y: -0.2 },
+                    xaxis: { showgrid: false },
+                    yaxis: { showgrid: true, gridcolor: '#f1f5f9', title: 'Count' },
+                    barmode: 'group'
+                };
+
+                Plotly.newPlot('traffic-chart', trafficData, trafficLayout, { responsive: true, displayModeBar: false });
+
+            } catch (e) {
+                console.error('Chart rendering failed:', e);
+            }
+
+            // Quick action buttons
+            const quickActions = document.querySelectorAll('.bg-card button');
+            quickActions.forEach(button => {
+                button.addEventListener('click', function () {
+                    const action = this.querySelector('.font-medium').textContent;
+                    alert(`Opening ${action} form...`);
+                });
+            });
+
+            // Export report button
+            const exportButton = document.querySelector('button:contains("Export Report")');
+            exportButton.addEventListener('click', function () {
+                alert('Exporting dashboard report...');
+            });
+
+            // Quick add button
+            const quickAddButton = document.querySelector('button:contains("Quick Add")');
+            quickAddButton.addEventListener('click', function () {
+                alert('Opening quick add menu...');
+            });
+        });
+    </script>
+
+</body>
+
+</html>

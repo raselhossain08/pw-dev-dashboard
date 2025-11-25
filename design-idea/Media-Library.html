@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Library - EduSaaS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest' };</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous"
+        referrerpolicy="no-referrer"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .media-item {
+            transition: all 0.2s ease;
+        }
+
+        .media-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .folder-item {
+            transition: all 0.2s ease;
+        }
+
+        .folder-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .selected-item {
+            border-color: #6366F1;
+            background-color: rgba(99, 102, 241, 0.05);
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366F1',
+                        secondary: '#0F172A',
+                        accent: '#10B981',
+                        background: '#F5F6FA',
+                        sidebar: '#111827',
+                        card: '#FFFFFF'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-background">
+
+    <!-- Header -->
+    <header id="header" class="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-b border-gray-200 z-50">
+        <div class="flex items-center justify-between px-6 py-4">
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                        <i class="fa-solid fa-graduation-cap text-white text-sm"></i>
+                    </div>
+                    <h1 class="text-xl font-bold text-secondary">EduSaaS</h1>
+                </div>
+            </div>
+
+            <div class="flex-1 max-w-md mx-8">
+                <div class="relative">
+                    <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    <input type="text" placeholder="Search... (Cmd+K)"
+                        class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <button class="p-2 text-gray-600 hover:text-primary transition-colors">
+                    <i class="fa-solid fa-bell text-lg"></i>
+                    <span class="absolute -mt-1 -mr-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                </button>
+                <button class="p-2 text-gray-600 hover:text-primary transition-colors">
+                    <i class="fa-solid fa-robot text-lg"></i>
+                </button>
+                <div class="flex items-center space-x-2">
+                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" alt="User"
+                        class="w-8 h-8 rounded-full">
+                    <i class="fa-solid fa-chevron-down text-gray-400 text-sm"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed left-0 top-16 bottom-0 w-64 bg-sidebar text-white overflow-y-auto">
+        <nav class="p-6">
+            <div class="space-y-2">
+                <div class="mb-6">
+                    <a href="dashboard.html"
+                        class="flex items-center space-x-3 px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <span class="font-medium">Dashboard</span>
+                    </a>
+                </div>
+
+                <div class="space-y-1">
+                    <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 py-2">Learning
+                        Management</div>
+                    <a href="#"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-book"></i>
+                        <span>Courses</span>
+                    </a>
+                    <a href="#"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-layer-group"></i>
+                        <span>Modules</span>
+                    </a>
+                    <a href="#"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-play-circle"></i>
+                        <span>Lessons</span>
+                    </a>
+                    <a href="#"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-question-circle"></i>
+                        <span>Quiz & Exams</span>
+                    </a>
+                    <a href="#"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-tasks"></i>
+                        <span>Assignments</span>
+                    </a>
+                    <a href="#"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-certificate"></i>
+                        <span>Certificates</span>
+                    </a>
+                </div>
+
+                <div class="space-y-1 mt-6">
+                    <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 py-2">User Management
+                    </div>
+                    <a href="#"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-users"></i>
+                        <span>Students</span>
+                    </a>
+                    <a href="#"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-chalkboard-teacher"></i>
+                        <span>Instructors</span>
+                    </a>
+                    <a href="#"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-credit-card"></i>
+                        <span>Payments</span>
+                    </a>
+                    <a href="#"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span>Enrollments</span>
+                    </a>
+                </div>
+
+                <div class="space-y-1 mt-6">
+                    <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 py-2">Communication
+                    </div>
+                    <a href="#"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-comments"></i>
+                        <span>Live Chat</span>
+                    </a>
+                    <a href="#"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-robot"></i>
+                        <span>AI Agents</span>
+                    </a>
+                    <a href="#"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-headset"></i>
+                        <span>Support Tickets</span>
+                    </a>
+                </div>
+
+                <div class="space-y-1 mt-6">
+                    <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 py-2">Content & Media
+                    </div>
+                    <a href="#"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-file-alt"></i>
+                        <span>CMS</span>
+                    </a>
+                    <a href="media-library.html" class="flex items-center space-x-3 px-4 py-2 bg-primary rounded-lg">
+                        <i class="fa-solid fa-photo-video"></i>
+                        <span>Media Library</span>
+                    </a>
+                </div>
+
+                <div class="space-y-1 mt-6">
+                    <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 py-2">System</div>
+                    <a href="#"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-user-shield"></i>
+                        <span>Roles & Permissions</span>
+                    </a>
+                    <a href="#"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-plug"></i>
+                        <span>Integrations</span>
+                    </a>
+                    <a href="#"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-cog"></i>
+                        <span>Settings</span>
+                    </a>
+                    <a href="#"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-history"></i>
+                        <span>Activity Logs</span>
+                    </a>
+                </div>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main id="main-content" class="ml-64 pt-16">
+        <div class="p-6">
+            <!-- Page Header -->
+            <div id="page-header" class="mb-8">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-3xl font-bold text-secondary mb-2">Media Library</h2>
+                        <p class="text-gray-600">Manage all your images, videos, documents and other media assets.</p>
+                    </div>
+                    <button id="upload-btn"
+                        class="bg-primary text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-primary/90 transition-colors">
+                        <i class="fa-solid fa-cloud-upload-alt"></i>
+                        <span>Upload Files</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div id="stats-section" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Total Files</p>
+                            <p class="text-2xl font-bold text-secondary mt-1">1,247</p>
+                            <p class="text-accent text-sm mt-1">
+                                <i class="fa-solid fa-arrow-up text-xs"></i> +24% from last month
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-file text-primary text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Images</p>
+                            <p class="text-2xl font-bold text-secondary mt-1">843</p>
+                            <p class="text-accent text-sm mt-1">
+                                <i class="fa-solid fa-arrow-up text-xs"></i> +18% from last month
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-image text-accent text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Videos</p>
+                            <p class="text-2xl font-bold text-secondary mt-1">324</p>
+                            <p class="text-accent text-sm mt-1">
+                                <i class="fa-solid fa-arrow-up text-xs"></i> +32% from last month
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-video text-yellow-600 text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Storage Used</p>
+                            <p class="text-2xl font-bold text-secondary mt-1">4.2 GB</p>
+                            <p class="text-gray-600 text-sm mt-1">
+                                <i class="fa-solid fa-database text-xs"></i> 42% of 10 GB
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-hard-drive text-purple-600 text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Folder Structure -->
+            <div id="folder-section" class="bg-card rounded-xl p-6 shadow-sm border border-gray-100 mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-semibold text-secondary">Folders</h3>
+                    <button id="create-folder-btn"
+                        class="text-primary hover:text-primary/80 flex items-center space-x-1">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>New Folder</span>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                    <!-- Folder Items -->
+                    <div class="folder-item bg-gray-50 rounded-lg p-4 border border-gray-200 cursor-pointer">
+                        <div class="flex flex-col items-center">
+                            <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mb-2">
+                                <i class="fa-solid fa-folder text-yellow-500 text-xl"></i>
+                            </div>
+                            <p class="font-medium text-secondary text-sm text-center">Course Images</p>
+                            <p class="text-xs text-gray-500 mt-1">124 files</p>
+                        </div>
+                    </div>
+
+                    <div class="folder-item bg-gray-50 rounded-lg p-4 border border-gray-200 cursor-pointer">
+                        <div class="flex flex-col items-center">
+                            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-2">
+                                <i class="fa-solid fa-folder text-blue-500 text-xl"></i>
+                            </div>
+                            <p class="font-medium text-secondary text-sm text-center">Lecture Videos</p>
+                            <p class="text-xs text-gray-500 mt-1">87 files</p>
+                        </div>
+                    </div>
+
+                    <div class="folder-item bg-gray-50 rounded-lg p-4 border border-gray-200 cursor-pointer">
+                        <div class="flex flex-col items-center">
+                            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-2">
+                                <i class="fa-solid fa-folder text-green-500 text-xl"></i>
+                            </div>
+                            <p class="font-medium text-secondary text-sm text-center">Documents</p>
+                            <p class="text-xs text-gray-500 mt-1">56 files</p>
+                        </div>
+                    </div>
+
+                    <div class="folder-item bg-gray-50 rounded-lg p-4 border border-gray-200 cursor-pointer">
+                        <div class="flex flex-col items-center">
+                            <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-2">
+                                <i class="fa-solid fa-folder text-purple-500 text-xl"></i>
+                            </div>
+                            <p class="font-medium text-secondary text-sm text-center">Certificates</p>
+                            <p class="text-xs text-gray-500 mt-1">42 files</p>
+                        </div>
+                    </div>
+
+                    <div class="folder-item bg-gray-50 rounded-lg p-4 border border-gray-200 cursor-pointer">
+                        <div class="flex flex-col items-center">
+                            <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-2">
+                                <i class="fa-solid fa-folder text-red-500 text-xl"></i>
+                            </div>
+                            <p class="font-medium text-secondary text-sm text-center">Marketing</p>
+                            <p class="text-xs text-gray-500 mt-1">68 files</p>
+                        </div>
+                    </div>
+
+                    <div class="folder-item bg-gray-50 rounded-lg p-4 border border-gray-200 cursor-pointer">
+                        <div class="flex flex-col items-center">
+                            <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-2">
+                                <i class="fa-solid fa-folder text-indigo-500 text-xl"></i>
+                            </div>
+                            <p class="font-medium text-secondary text-sm text-center">User Avatars</p>
+                            <p class="text-xs text-gray-500 mt-1">145 files</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Media Grid -->
+            <div id="media-section" class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-semibold text-secondary">All Media Files</h3>
+
+                    <div class="flex items-center space-x-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-600">View:</span>
+                            <div class="flex bg-gray-100 rounded-lg p-1">
+                                <button id="grid-view" class="p-1 px-2 rounded-md bg-primary text-white">
+                                    <i class="fa-solid fa-grip"></i>
+                                </button>
+                                <button id="list-view" class="p-1 px-2 rounded-md text-gray-600">
+                                    <i class="fa-solid fa-list"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-600">Sort by:</span>
+                            <select class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-1 text-sm">
+                                <option>Newest first</option>
+                                <option>Oldest first</option>
+                                <option>Name A-Z</option>
+                                <option>Name Z-A</option>
+                                <option>Largest size</option>
+                                <option>Smallest size</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Media Grid -->
+                <div id="media-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                    <!-- Media Items -->
+                    <div class="media-item bg-gray-50 rounded-lg overflow-hidden border border-gray-200 cursor-pointer">
+                        <div class="relative">
+                            <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80"
+                                alt="Course thumbnail" class="w-full h-32 object-cover">
+                            <div class="absolute top-2 right-2">
+                                <span class="bg-black/70 text-white text-xs px-2 py-1 rounded">JPG</span>
+                            </div>
+                            <div
+                                class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                                <p class="text-white text-xs truncate">course-thumbnail.jpg</p>
+                            </div>
+                        </div>
+                        <div class="p-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-gray-500">2.4 MB</span>
+                                <div class="flex space-x-1">
+                                    <button class="text-gray-400 hover:text-primary">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
+                                    <button class="text-gray-400 hover:text-primary">
+                                        <i class="fa-solid fa-download"></i>
+                                    </button>
+                                    <button class="text-gray-400 hover:text-red-500">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="media-item bg-gray-50 rounded-lg overflow-hidden border border-gray-200 cursor-pointer">
+                        <div class="relative">
+                            <div class="w-full h-32 bg-blue-100 flex items-center justify-center">
+                                <i class="fa-solid fa-video text-blue-500 text-3xl"></i>
+                            </div>
+                            <div class="absolute top-2 right-2">
+                                <span class="bg-black/70 text-white text-xs px-2 py-1 rounded">MP4</span>
+                            </div>
+                            <div
+                                class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                                <p class="text-white text-xs truncate">lecture-intro.mp4</p>
+                            </div>
+                        </div>
+                        <div class="p-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-gray-500">45.2 MB</span>
+                                <div class="flex space-x-1">
+                                    <button class="text-gray-400 hover:text-primary">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
+                                    <button class="text-gray-400 hover:text-primary">
+                                        <i class="fa-solid fa-download"></i>
+                                    </button>
+                                    <button class="text-gray-400 hover:text-red-500">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="media-item bg-gray-50 rounded-lg overflow-hidden border border-gray-200 cursor-pointer">
+                        <div class="relative">
+                            <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80"
+                                alt="Student avatar" class="w-full h-32 object-cover">
+                            <div class="absolute top-2 right-2">
+                                <span class="bg-black/70 text-white text-xs px-2 py-1 rounded">PNG</span>
+                            </div>
+                            <div
+                                class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                                <p class="text-white text-xs truncate">student-avatar.png</p>
+                            </div>
+                        </div>
+                        <div class="p-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-gray-500">1.2 MB</span>
+                                <div class="flex space-x-1">
+                                    <button class="text-gray-400 hover:text-primary">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
+                                    <button class="text-gray-400 hover:text-primary">
+                                        <i class="fa-solid fa-download"></i>
+                                    </button>
+                                    <button class="text-gray-400 hover:text-red-500">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="media-item bg-gray-50 rounded-lg overflow-hidden border border-gray-200 cursor-pointer">
+                        <div class="relative">
+                            <div class="w-full h-32 bg-green-100 flex items-center justify-center">
+                                <i class="fa-solid fa-file-pdf text-red-500 text-3xl"></i>
+                            </div>
+                            <div class="absolute top-2 right-2">
+                                <span class="bg-black/70 text-white text-xs px-2 py-1 rounded">PDF</span>
+                            </div>
+                            <div
+                                class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                                <p class="text-white text-xs truncate">course-syllabus.pdf</p>
+                            </div>
+                        </div>
+                        <div class="p-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-gray-500">3.7 MB</span>
+                                <div class="flex space-x-1">
+                                    <button class="text-gray-400 hover:text-primary">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
+                                    <button class="text-gray-400 hover:text-primary">
+                                        <i class="fa-solid fa-download"></i>
+                                    </button>
+                                    <button class="text-gray-400 hover:text-red-500">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="media-item bg-gray-50 rounded-lg overflow-hidden border border-gray-200 cursor-pointer">
+                        <div class="relative">
+                            <img src="https://images.unsplash.com/photo-1547658719-da2b51169166?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80"
+                                alt="Certificate template" class="w-full h-32 object-cover">
+                            <div class="absolute top-2 right-2">
+                                <span class="bg-black/70 text-white text-xs px-2 py-1 rounded">JPG</span>
+                            </div>
+                            <div
+                                class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                                <p class="text-white text-xs truncate">certificate-template.jpg</p>
+                            </div>
+                        </div>
+                        <div class="p-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-gray-500">4.1 MB</span>
+                                <div class="flex space-x-1">
+                                    <button class="text-gray-400 hover:text-primary">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
+                                    <button class="text-gray-400 hover:text-primary">
+                                        <i class="fa-solid fa-download"></i>
+                                    </button>
+                                    <button class="text-gray-400 hover:text-red-500">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="media-item bg-gray-50 rounded-lg overflow-hidden border border-gray-200 cursor-pointer">
+                        <div class="relative">
+                            <div class="w-full h-32 bg-purple-100 flex items-center justify-center">
+                                <i class="fa-solid fa-file-audio text-purple-500 text-3xl"></i>
+                            </div>
+                            <div class="absolute top-2 right-2">
+                                <span class="bg-black/70 text-white text-xs px-2 py-1 rounded">MP3</span>
+                            </div>
+                            <div
+                                class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                                <p class="text-white text-xs truncate">lecture-audio.mp3</p>
+                            </div>
+                        </div>
+                        <div class="p-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-gray-500">12.8 MB</span>
+                                <div class="flex space-x-1">
+                                    <button class="text-gray-400 hover:text-primary">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
+                                    <button class="text-gray-400 hover:text-primary">
+                                        <i class="fa-solid fa-download"></i>
+                                    </button>
+                                    <button class="text-gray-400 hover:text-red-500">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div class="flex justify-between items-center mt-8 pt-6 border-t border-gray-200">
+                    <p class="text-sm text-gray-600">Showing 1-6 of 1,247 files</p>
+                    <div class="flex space-x-2">
+                        <button
+                            class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50">
+                            <i class="fa-solid fa-chevron-left text-xs"></i>
+                        </button>
+                        <button
+                            class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary text-white">1</button>
+                        <button
+                            class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50">2</button>
+                        <button
+                            class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50">3</button>
+                        <button
+                            class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50">
+                            <i class="fa-solid fa-ellipsis text-xs"></i>
+                        </button>
+                        <button
+                            class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50">24</button>
+                        <button
+                            class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50">
+                            <i class="fa-solid fa-chevron-right text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Upload Modal -->
+    <div id="upload-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-secondary">Upload Files</h3>
+                <button id="close-upload-modal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center mb-4">
+                <i class="fa-solid fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                <p class="text-gray-600 mb-2">Drag and drop files here</p>
+                <p class="text-sm text-gray-500 mb-4">or</p>
+                <button class="bg-primary text-white px-4 py-2 rounded-lg">Browse Files</button>
+                <p class="text-xs text-gray-500 mt-4">Supports: JPG, PNG, GIF, MP4, PDF, DOC (Max: 50MB)</p>
+            </div>
+
+            <div class="flex justify-end space-x-3">
+                <button id="cancel-upload"
+                    class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+                <button class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">Upload</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Folder Modal -->
+    <div id="folder-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-secondary">Create New Folder</h3>
+                <button id="close-folder-modal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Folder Name</label>
+                <input type="text"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    placeholder="Enter folder name">
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Parent Folder</label>
+                <select
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
+                    <option>Root Directory</option>
+                    <option>Course Images</option>
+                    <option>Lecture Videos</option>
+                    <option>Documents</option>
+                    <option>Certificates</option>
+                    <option>Marketing</option>
+                    <option>User Avatars</option>
+                </select>
+            </div>
+
+            <div class="flex justify-end space-x-3">
+                <button id="cancel-folder"
+                    class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+                <button class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">Create Folder</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Media Library functionality
+        document.addEventListener('DOMContentLoaded', function () {
+            // Upload modal functionality
+            const uploadBtn = document.getElementById('upload-btn');
+            const uploadModal = document.getElementById('upload-modal');
+            const closeUploadModal = document.getElementById('close-upload-modal');
+            const cancelUpload = document.getElementById('cancel-upload');
+
+            uploadBtn.addEventListener('click', function () {
+                uploadModal.classList.remove('hidden');
+            });
+
+            closeUploadModal.addEventListener('click', function () {
+                uploadModal.classList.add('hidden');
+            });
+
+            cancelUpload.addEventListener('click', function () {
+                uploadModal.classList.add('hidden');
+            });
+
+            // Folder modal functionality
+            const createFolderBtn = document.getElementById('create-folder-btn');
+            const folderModal = document.getElementById('folder-modal');
+            const closeFolderModal = document.getElementById('close-folder-modal');
+            const cancelFolder = document.getElementById('cancel-folder');
+
+            createFolderBtn.addEventListener('click', function () {
+                folderModal.classList.remove('hidden');
+            });
+
+            closeFolderModal.addEventListener('click', function () {
+                folderModal.classList.add('hidden');
+            });
+
+            cancelFolder.addEventListener('click', function () {
+                folderModal.classList.add('hidden');
+            });
+
+            // View toggle functionality
+            const gridViewBtn = document.getElementById('grid-view');
+            const listViewBtn = document.getElementById('list-view');
+            const mediaGrid = document.getElementById('media-grid');
+
+            gridViewBtn.addEventListener('click', function () {
+                gridViewBtn.classList.add('bg-primary', 'text-white');
+                listViewBtn.classList.remove('bg-primary', 'text-white');
+                listViewBtn.classList.add('text-gray-600');
+                mediaGrid.classList.remove('grid-cols-1');
+                mediaGrid.classList.add('grid-cols-2', 'md:grid-cols-3', 'lg:grid-cols-4', 'xl:grid-cols-6');
+
+                // Update media items for grid view
+                const mediaItems = document.querySelectorAll('.media-item');
+                mediaItems.forEach(item => {
+                    item.classList.remove('flex', 'items-center');
+                    const imgContainer = item.querySelector('.relative');
+                    if (imgContainer) {
+                        imgContainer.classList.remove('w-20', 'h-20', 'flex-shrink-0');
+                        imgContainer.classList.add('w-full', 'h-32');
+                    }
+                });
+            });
+
+            listViewBtn.addEventListener('click', function () {
+                listViewBtn.classList.add('bg-primary', 'text-white');
+                gridViewBtn.classList.remove('bg-primary', 'text-white');
+                gridViewBtn.classList.add('text-gray-600');
+                mediaGrid.classList.remove('grid-cols-2', 'md:grid-cols-3', 'lg:grid-cols-4', 'xl:grid-cols-6');
+                mediaGrid.classList.add('grid-cols-1');
+
+                // Update media items for list view
+                const mediaItems = document.querySelectorAll('.media-item');
+                mediaItems.forEach(item => {
+                    item.classList.add('flex', 'items-center');
+                    const imgContainer = item.querySelector('.relative');
+                    if (imgContainer) {
+                        imgContainer.classList.remove('w-full', 'h-32');
+                        imgContainer.classList.add('w-20', 'h-20', 'flex-shrink-0');
+                    }
+                });
+            });
+
+            // Media item selection
+            const mediaItems = document.querySelectorAll('.media-item');
+            mediaItems.forEach(item => {
+                item.addEventListener('click', function (e) {
+                    // Don't trigger selection if clicking action buttons
+                    if (e.target.closest('button')) return;
+
+                    this.classList.toggle('selected-item');
+                });
+            });
+
+            // Folder selection
+            const folderItems = document.querySelectorAll('.folder-item');
+            folderItems.forEach(item => {
+                item.addEventListener('click', function () {
+                    // Remove selection from all folders
+                    folderItems.forEach(f => f.classList.remove('selected-item'));
+                    // Add selection to clicked folder
+                    this.classList.add('selected-item');
+                });
+            });
+
+            // Close modals when clicking outside
+            window.addEventListener('click', function (e) {
+                if (e.target === uploadModal) {
+                    uploadModal.classList.add('hidden');
+                }
+                if (e.target === folderModal) {
+                    folderModal.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+
+</body>
+
+</html>

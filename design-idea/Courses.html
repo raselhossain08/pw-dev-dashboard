@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Courses - EduSaaS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest' };</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous"
+        referrerpolicy="no-referrer"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .course-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.5s ease;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366F1',
+                        secondary: '#0F172A',
+                        accent: '#10B981',
+                        background: '#F5F6FA',
+                        sidebar: '#111827',
+                        card: '#FFFFFF'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-background">
+
+    <!-- Header -->
+    <header id="header" class="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-b border-gray-200 z-50">
+        <div class="flex items-center justify-between px-6 py-4">
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                        <i class="fa-solid fa-graduation-cap text-white text-sm"></i>
+                    </div>
+                    <h1 class="text-xl font-bold text-secondary">EduSaaS</h1>
+                </div>
+            </div>
+
+            <div class="flex-1 max-w-md mx-8">
+                <div class="relative">
+                    <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    <input type="text" placeholder="Search courses... (Cmd+K)"
+                        class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <button class="p-2 text-gray-600 hover:text-primary transition-colors relative">
+                    <i class="fa-solid fa-bell text-lg"></i>
+                    <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+                </button>
+                <button class="p-2 text-gray-600 hover:text-primary transition-colors">
+                    <i class="fa-solid fa-robot text-lg"></i>
+                </button>
+                <div class="flex items-center space-x-2">
+                    <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg" alt="User"
+                        class="w-8 h-8 rounded-full">
+                    <i class="fa-solid fa-chevron-down text-gray-400 text-sm"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed left-0 top-16 bottom-0 w-64 bg-sidebar text-white overflow-y-auto">
+        <nav class="p-6">
+            <div class="space-y-2">
+                <div class="mb-6">
+                    <a href="dashboard.html"
+                        class="flex items-center space-x-3 px-4 py-3 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-chart-line"></i>
+                        <span class="font-medium">Dashboard</span>
+                    </a>
+                </div>
+
+                <div class="space-y-1">
+                    <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 py-2">Learning
+                        Management</div>
+                    <a href="courses.html" class="flex items-center space-x-3 px-4 py-2 bg-primary rounded-lg">
+                        <i class="fa-solid fa-book"></i>
+                        <span>Courses</span>
+                    </a>
+                    <a href="modules.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-layer-group"></i>
+                        <span>Modules</span>
+                    </a>
+                    <a href="lessons.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-play-circle"></i>
+                        <span>Lessons</span>
+                    </a>
+                    <a href="quizzes.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-question-circle"></i>
+                        <span>Quiz & Exams</span>
+                    </a>
+                    <a href="assignments.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-tasks"></i>
+                        <span>Assignments</span>
+                    </a>
+                    <a href="certificates.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-certificate"></i>
+                        <span>Certificates</span>
+                    </a>
+                </div>
+
+                <div class="space-y-1 mt-6">
+                    <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 py-2">User Management
+                    </div>
+                    <a href="students.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-users"></i>
+                        <span>Students</span>
+                    </a>
+                    <a href="instructors.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-chalkboard-teacher"></i>
+                        <span>Instructors</span>
+                    </a>
+                    <a href="payments.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-credit-card"></i>
+                        <span>Payments</span>
+                    </a>
+                    <a href="enrollments.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span>Enrollments</span>
+                    </a>
+                </div>
+
+                <div class="space-y-1 mt-6">
+                    <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 py-2">Communication
+                    </div>
+                    <a href="chat.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-comments"></i>
+                        <span>Live Chat</span>
+                    </a>
+                    <a href="ai-agents.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-robot"></i>
+                        <span>AI Agents</span>
+                    </a>
+                    <a href="support.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-headset"></i>
+                        <span>Support Tickets</span>
+                    </a>
+                </div>
+
+                <div class="space-y-1 mt-6">
+                    <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 py-2">Content & Media
+                    </div>
+                    <a href="cms.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-file-alt"></i>
+                        <span>CMS</span>
+                    </a>
+                    <a href="media.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-photo-video"></i>
+                        <span>Media Library</span>
+                    </a>
+                </div>
+
+                <div class="space-y-1 mt-6">
+                    <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 py-2">System</div>
+                    <a href="roles.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-user-shield"></i>
+                        <span>Roles & Permissions</span>
+                    </a>
+                    <a href="integrations.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-plug"></i>
+                        <span>Integrations</span>
+                    </a>
+                    <a href="settings.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-cog"></i>
+                        <span>Settings</span>
+                    </a>
+                    <a href="logs.html"
+                        class="flex items-center space-x-3 px-4 py-2 text-gray-300 hover:text-white hover:bg-gray-800 rounded-lg transition-colors">
+                        <i class="fa-solid fa-history"></i>
+                        <span>Activity Logs</span>
+                    </a>
+                </div>
+            </div>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main id="main-content" class="ml-64 pt-16">
+        <div class="p-6">
+            <!-- Page Header -->
+            <div id="page-header" class="mb-8">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-3xl font-bold text-secondary mb-2">Courses</h2>
+                        <p class="text-gray-600">Manage and organize your learning courses</p>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button
+                            class="bg-white hover:bg-gray-50 text-secondary border border-gray-300 px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors">
+                            <i class="fa-solid fa-download"></i>
+                            <span>Export</span>
+                        </button>
+                        <button id="create-course-btn"
+                            class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Create Course</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div id="stats-section" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Total Courses</p>
+                            <p class="text-2xl font-bold text-secondary mt-1">127</p>
+                            <p class="text-accent text-sm mt-1">
+                                <i class="fa-solid fa-arrow-up text-xs"></i> +8% from last month
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-book text-primary text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Published</p>
+                            <p class="text-2xl font-bold text-secondary mt-1">98</p>
+                            <p class="text-accent text-sm mt-1">
+                                <i class="fa-solid fa-circle text-xs"></i> 77.2% published
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-check-circle text-accent text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Active Students</p>
+                            <p class="text-2xl font-bold text-secondary mt-1">2,847</p>
+                            <p class="text-accent text-sm mt-1">
+                                <i class="fa-solid fa-arrow-up text-xs"></i> +12% from last month
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-users text-yellow-600 text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Avg. Completion</p>
+                            <p class="text-2xl font-bold text-secondary mt-1">78%</p>
+                            <p class="text-accent text-sm mt-1">
+                                <i class="fa-solid fa-arrow-up text-xs"></i> +8% from last month
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-chart-line text-purple-600 text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters and Search -->
+            <div class="bg-card rounded-xl p-4 shadow-sm border border-gray-100 mb-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0">
+                    <div class="flex flex-wrap gap-2">
+                        <select
+                            class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20">
+                            <option>All Categories</option>
+                            <option>Web Development</option>
+                            <option>Data Science</option>
+                            <option>Digital Marketing</option>
+                            <option>UI/UX Design</option>
+                            <option>Business</option>
+                        </select>
+                        <select
+                            class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20">
+                            <option>All Status</option>
+                            <option>Published</option>
+                            <option>Draft</option>
+                            <option>Archived</option>
+                        </select>
+                        <select
+                            class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20">
+                            <option>Sort by: Newest</option>
+                            <option>Sort by: Oldest</option>
+                            <option>Sort by: Name</option>
+                            <option>Sort by: Students</option>
+                            <option>Sort by: Rating</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button class="p-2 text-gray-600 hover:text-primary transition-colors">
+                            <i class="fa-solid fa-filter"></i>
+                        </button>
+                        <button class="p-2 text-gray-600 hover:text-primary transition-colors">
+                            <i class="fa-solid fa-grid-2"></i>
+                        </button>
+                        <button class="p-2 text-gray-600 hover:text-primary transition-colors">
+                            <i class="fa-solid fa-list"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Courses Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Course Card 1 -->
+                <div
+                    class="course-card bg-card rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
+                            alt="Web Development" class="w-full h-40 object-cover">
+                        <div class="absolute top-3 right-3">
+                            <span
+                                class="bg-accent/90 text-white text-xs font-medium px-2 py-1 rounded-full">Published</span>
+                        </div>
+                        <div class="absolute bottom-3 left-3">
+                            <span class="bg-primary text-white text-xs font-medium px-2 py-1 rounded-full">Web
+                                Development</span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="font-semibold text-secondary text-lg mb-1">Complete Web Development Bootcamp
+                                </h3>
+                                <p class="text-gray-500 text-sm">Learn HTML, CSS, JavaScript, React, Node.js and more
+                                </p>
+                            </div>
+                            <div class="relative">
+                                <button class="course-menu-btn p-1 text-gray-400 hover:text-primary rounded">
+                                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                                </button>
+                                <div
+                                    class="course-menu hidden absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                                    <button
+                                        class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg">
+                                        <i class="fa-solid fa-pen mr-2"></i>Edit Course
+                                    </button>
+                                    <button class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <i class="fa-solid fa-copy mr-2"></i>Duplicate
+                                    </button>
+                                    <button class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <i class="fa-solid fa-eye mr-2"></i>Preview
+                                    </button>
+                                    <button class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <i class="fa-solid fa-chart-simple mr-2"></i>Analytics
+                                    </button>
+                                    <hr>
+                                    <button
+                                        class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-b-lg">
+                                        <i class="fa-solid fa-trash mr-2"></i>Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-4 text-sm text-gray-500">
+                                <span class="flex items-center">
+                                    <i class="fa-solid fa-user-graduate mr-1"></i> 1,247 Students
+                                </span>
+                                <span class="flex items-center">
+                                    <i class="fa-solid fa-star text-yellow-400 mr-1"></i> 4.8
+                                </span>
+                            </div>
+                            <div class="text-sm font-medium text-secondary">$89.99</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="flex justify-between text-sm text-gray-600 mb-1">
+                                <span>Completion Rate</span>
+                                <span>85%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-accent h-2 rounded-full" style="width: 85%"></div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center space-x-2">
+                                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg"
+                                    alt="Instructor" class="w-6 h-6 rounded-full">
+                                <span class="text-sm text-gray-600">Sarah Johnson</span>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button
+                                    class="text-primary hover:text-primary/80 text-sm font-medium flex items-center">
+                                    <i class="fa-solid fa-pen mr-1"></i> Edit
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Course Card 2 -->
+                <div
+                    class="course-card bg-card rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
+                            alt="Data Science" class="w-full h-40 object-cover">
+                        <div class="absolute top-3 right-3">
+                            <span
+                                class="bg-yellow-100 text-yellow-800 text-xs font-medium px-2 py-1 rounded-full">Draft</span>
+                        </div>
+                        <div class="absolute bottom-3 left-3">
+                            <span class="bg-blue-500 text-white text-xs font-medium px-2 py-1 rounded-full">Data
+                                Science</span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="font-semibold text-secondary text-lg mb-1">Data Science & Machine Learning
+                                </h3>
+                                <p class="text-gray-500 text-sm">Python, Pandas, NumPy, Scikit-learn, TensorFlow</p>
+                            </div>
+                            <div class="relative">
+                                <button class="course-menu-btn p-1 text-gray-400 hover:text-primary rounded">
+                                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                                </button>
+                                <div
+                                    class="course-menu hidden absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                                    <button
+                                        class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg">
+                                        <i class="fa-solid fa-pen mr-2"></i>Edit Course
+                                    </button>
+                                    <button class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <i class="fa-solid fa-copy mr-2"></i>Duplicate
+                                    </button>
+                                    <button class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <i class="fa-solid fa-eye mr-2"></i>Preview
+                                    </button>
+                                    <button class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <i class="fa-solid fa-chart-simple mr-2"></i>Analytics
+                                    </button>
+                                    <hr>
+                                    <button
+                                        class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-b-lg">
+                                        <i class="fa-solid fa-trash mr-2"></i>Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-4 text-sm text-gray-500">
+                                <span class="flex items-center">
+                                    <i class="fa-solid fa-user-graduate mr-1"></i> 892 Students
+                                </span>
+                                <span class="flex items-center">
+                                    <i class="fa-solid fa-star text-yellow-400 mr-1"></i> 4.7
+                                </span>
+                            </div>
+                            <div class="text-sm font-medium text-secondary">$99.99</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="flex justify-between text-sm text-gray-600 mb-1">
+                                <span>Completion Rate</span>
+                                <span>72%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-yellow-500 h-2 rounded-full" style="width: 72%"></div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center space-x-2">
+                                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg"
+                                    alt="Instructor" class="w-6 h-6 rounded-full">
+                                <span class="text-sm text-gray-600">Michael Chen</span>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button
+                                    class="text-primary hover:text-primary/80 text-sm font-medium flex items-center">
+                                    <i class="fa-solid fa-pen mr-1"></i> Edit
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Course Card 3 -->
+                <div
+                    class="course-card bg-card rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1563986768609-322da13575f3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
+                            alt="Digital Marketing" class="w-full h-40 object-cover">
+                        <div class="absolute top-3 right-3">
+                            <span
+                                class="bg-accent/90 text-white text-xs font-medium px-2 py-1 rounded-full">Published</span>
+                        </div>
+                        <div class="absolute bottom-3 left-3">
+                            <span
+                                class="bg-green-500 text-white text-xs font-medium px-2 py-1 rounded-full">Marketing</span>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="font-semibold text-secondary text-lg mb-1">Digital Marketing Mastery</h3>
+                                <p class="text-gray-500 text-sm">SEO, Social Media, Content Marketing, Analytics</p>
+                            </div>
+                            <div class="relative">
+                                <button class="course-menu-btn p-1 text-gray-400 hover:text-primary rounded">
+                                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                                </button>
+                                <div
+                                    class="course-menu hidden absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+                                    <button
+                                        class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg">
+                                        <i class="fa-solid fa-pen mr-2"></i>Edit Course
+                                    </button>
+                                    <button class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <i class="fa-solid fa-copy mr-2"></i>Duplicate
+                                    </button>
+                                    <button class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <i class="fa-solid fa-eye mr-2"></i>Preview
+                                    </button>
+                                    <button class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                        <i class="fa-solid fa-chart-simple mr-2"></i>Analytics
+                                    </button>
+                                    <hr>
+                                    <button
+                                        class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-b-lg">
+                                        <i class="fa-solid fa-trash mr-2"></i>Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-4 text-sm text-gray-500">
+                                <span class="flex items-center">
+                                    <i class="fa-solid fa-user-graduate mr-1"></i> 1,543 Students
+                                </span>
+                                <span class="flex items-center">
+                                    <i class="fa-solid fa-star text-yellow-400 mr-1"></i> 4.9
+                                </span>
+                            </div>
+                            <div class="text-sm font-medium text-secondary">$79.99</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="flex justify-between text-sm text-gray-600 mb-1">
+                                <span>Completion Rate</span>
+                                <span>91%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-accent h-2 rounded-full" style="width: 91%"></div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center space-x-2">
+                                <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg"
+                                    alt="Instructor" class="w-6 h-6 rounded-full">
+                                <span class="text-sm text-gray-600">Emma Wilson</span>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button
+                                    class="text-primary hover:text-primary/80 text-sm font-medium flex items-center">
+                                    <i class="fa-solid fa-pen mr-1"></i> Edit
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty State (Hidden by default) -->
+            <div id="empty-state" class="hidden bg-card rounded-xl p-12 shadow-sm border border-gray-100 text-center">
+                <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fa-solid fa-book-open text-gray-400 text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-secondary mb-2">No courses yet</h3>
+                <p class="text-gray-600 mb-6 max-w-md mx-auto">Create your first course to start sharing knowledge with
+                    students around the world.</p>
+                <button
+                    class="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg inline-flex items-center space-x-2 transition-colors">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Create Your First Course</span>
+                </button>
+            </div>
+
+            <!-- Create Course Modal -->
+            <div id="create-course-modal"
+                class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+                <div class="bg-white rounded-xl shadow-lg w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+                    <div class="p-6 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-secondary">Create New Course</h3>
+                    </div>
+                    <div class="p-6">
+                        <form id="course-form">
+                            <div class="space-y-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Course Title</label>
+                                        <input type="text"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                            placeholder="Enter course title" required>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                                        <select
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                            required>
+                                            <option value="">Select a category</option>
+                                            <option value="web">Web Development</option>
+                                            <option value="data">Data Science</option>
+                                            <option value="marketing">Digital Marketing</option>
+                                            <option value="design">UI/UX Design</option>
+                                            <option value="business">Business</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                    <textarea
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                        rows="3"
+                                        placeholder="Describe what students will learn in this course"></textarea>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Price ($)</label>
+                                        <input type="number"
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                            placeholder="0.00" min="0" step="0.01">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Level</label>
+                                        <select
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
+                                            <option value="beginner">Beginner</option>
+                                            <option value="intermediate">Intermediate</option>
+                                            <option value="advanced">Advanced</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                                        <select
+                                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
+                                            <option value="draft">Draft</option>
+                                            <option value="published">Published</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Course Image</label>
+                                    <div
+                                        class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg">
+                                        <div class="space-y-1 text-center">
+                                            <i class="fa-solid fa-cloud-arrow-up text-gray-400 text-3xl mx-auto"></i>
+                                            <div class="flex text-sm text-gray-600">
+                                                <label
+                                                    class="relative cursor-pointer bg-white rounded-md font-medium text-primary hover:text-primary/80 focus-within:outline-none">
+                                                    <span>Upload an image</span>
+                                                    <input type="file" class="sr-only">
+                                                </label>
+                                                <p class="pl-1">or drag and drop</p>
+                                            </div>
+                                            <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center">
+                                    <input type="checkbox"
+                                        class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded">
+                                    <label class="ml-2 block text-sm text-gray-700">Feature this course on the
+                                        homepage</label>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="p-6 border-t border-gray-200 flex justify-end space-x-3">
+                        <button id="cancel-course-btn"
+                            class="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">Cancel</button>
+                        <button id="save-course-btn"
+                            class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg transition-colors">Create
+                            Course</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Course menu toggle
+            const menuButtons = document.querySelectorAll('.course-menu-btn');
+            menuButtons.forEach(button => {
+                button.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    const menu = this.nextElementSibling;
+                    const isVisible = !menu.classList.contains('hidden');
+
+                    // Close all other menus
+                    document.querySelectorAll('.course-menu').forEach(m => {
+                        m.classList.add('hidden');
+                    });
+
+                    // Toggle current menu
+                    if (!isVisible) {
+                        menu.classList.remove('hidden');
+                    }
+                });
+            });
+
+            // Close menus when clicking elsewhere
+            document.addEventListener('click', function () {
+                document.querySelectorAll('.course-menu').forEach(menu => {
+                    menu.classList.add('hidden');
+                });
+            });
+
+            // Create course modal
+            const createCourseBtn = document.getElementById('create-course-btn');
+            const createCourseModal = document.getElementById('create-course-modal');
+            const cancelCourseBtn = document.getElementById('cancel-course-btn');
+            const saveCourseBtn = document.getElementById('save-course-btn');
+
+            createCourseBtn.addEventListener('click', function () {
+                createCourseModal.classList.remove('hidden');
+            });
+
+            cancelCourseBtn.addEventListener('click', function () {
+                createCourseModal.classList.add('hidden');
+            });
+
+            saveCourseBtn.addEventListener('click', function () {
+                // In a real app, you would save the course data here
+                alert('Course created successfully!');
+                createCourseModal.classList.add('hidden');
+                document.getElementById('course-form').reset();
+            });
+
+            // Close modal when clicking outside
+            createCourseModal.addEventListener('click', function (e) {
+                if (e.target === createCourseModal) {
+                    createCourseModal.classList.add('hidden');
+                }
+            });
+
+            // Search functionality
+            const searchInput = document.querySelector('input[placeholder="Search courses... (Cmd+K)"]');
+            searchInput.addEventListener('input', function () {
+                const searchTerm = this.value.toLowerCase();
+                const courseCards = document.querySelectorAll('.course-card');
+                let visibleCount = 0;
+
+                courseCards.forEach(card => {
+                    const title = card.querySelector('h3').textContent.toLowerCase();
+                    const description = card.querySelector('p').textContent.toLowerCase();
+
+                    if (title.includes(searchTerm) || description.includes(searchTerm)) {
+                        card.style.display = 'block';
+                        visibleCount++;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+
+                // Show empty state if no courses match the search
+                const emptyState = document.getElementById('empty-state');
+                if (visibleCount === 0 && searchTerm !== '') {
+                    emptyState.classList.remove('hidden');
+                    document.querySelector('.grid.grid-cols-1').classList.add('hidden');
+                } else {
+                    emptyState.classList.add('hidden');
+                    document.querySelector('.grid.grid-cols-1').classList.remove('hidden');
+                }
+            });
+
+            // Keyboard shortcut for search (Cmd+K)
+            document.addEventListener('keydown', function (e) {
+                if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                    e.preventDefault();
+                    searchInput.focus();
+                }
+            });
+
+            // Initialize progress rings
+            initializeProgressRings();
+
+            function initializeProgressRings() {
+                const progressElements = document.querySelectorAll('.progress-ring');
+
+                progressElements.forEach(ring => {
+                    const circle = ring.querySelector('.progress-ring-circle');
+                    const radius = circle.r.baseVal.value;
+                    const circumference = radius * 2 * Math.PI;
+                    const progress = parseInt(ring.dataset.progress);
+
+                    circle.style.strokeDasharray = `${circumference} ${circumference}`;
+                    circle.style.strokeDashoffset = circumference - (progress / 100) * circumference;
+                });
+            }
+        });
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Chat - EduSaaS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest' };</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous"
+        referrerpolicy="no-referrer"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .chat-popup {
+            animation: slideInUp 0.3s ease-out;
+        }
+
+        @keyframes slideInUp {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .chat-message {
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .typing-indicator {
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: #9CA3AF;
+            margin: 0 2px;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes typing {
+
+            0%,
+            80%,
+            100% {
+                transform: scale(0.8);
+                opacity: 0.5;
+            }
+
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .online-indicator {
+            width: 8px;
+            height: 8px;
+            background-color: #10B981;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366F1',
+                        secondary: '#0F172A',
+                        accent: '#10B981',
+                        background: '#F5F6FA',
+                        sidebar: '#111827',
+                        card: '#FFFFFF'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-background">
+
+    <!-- Main content area (for demonstration) -->
+    <div class="p-8 max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-secondary mb-4">EduSaaS Platform</h1>
+        <p class="text-gray-600 mb-8">This is a demonstration of the live chat popup component. Click the chat button in
+            the bottom right to open the chat.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-card p-6 rounded-xl shadow-sm border border-gray-100">
+                <h3 class="font-semibold text-secondary mb-2">Training Programs</h3>
+                <p class="text-gray-600 text-sm">Manage your aviation training programs and schedules</p>
+            </div>
+            <div class="bg-card p-6 rounded-xl shadow-sm border border-gray-100">
+                <h3 class="font-semibold text-secondary mb-2">Aircraft Brokerage</h3>
+                <p class="text-gray-600 text-sm">Browse aircraft listings and manage sales</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Toggle Button -->
+    <div id="chat-toggle"
+        class="fixed bottom-6 right-6 w-14 h-14 bg-primary rounded-full shadow-lg flex items-center justify-center cursor-pointer hover:bg-primary/90 transition-colors z-40">
+        <i class="fa-solid fa-comments text-white text-xl"></i>
+        <span
+            class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center animate-pulse">3</span>
+    </div>
+
+    <!-- Live Chat Popup -->
+    <div id="chat-popup"
+        class="chat-popup fixed bottom-24 right-6 w-96 h-[600px] bg-card rounded-xl shadow-2xl border border-gray-200 flex flex-col z-50 hidden">
+        <!-- Chat Header -->
+        <div class="bg-primary text-white rounded-t-xl p-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="relative">
+                    <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                        <i class="fa-solid fa-headset text-white"></i>
+                    </div>
+                    <div class="online-indicator absolute -bottom-1 -right-1"></div>
+                </div>
+                <div>
+                    <h3 class="font-semibold">Support Team</h3>
+                    <p class="text-white/80 text-sm">We're online and ready to help</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button
+                    class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-minimize text-white text-sm"></i>
+                </button>
+                <button id="close-chat"
+                    class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-times text-white"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Chat Messages Area -->
+        <div class="flex-1 p-4 overflow-y-auto bg-gray-50">
+            <div class="space-y-4">
+                <!-- System Message -->
+                <div class="text-center">
+                    <span class="bg-gray-200 text-gray-600 text-xs px-3 py-1 rounded-full">Today</span>
+                </div>
+
+                <!-- Support Message -->
+                <div class="chat-message flex justify-start">
+                    <div class="max-w-xs lg:max-w-md">
+                        <div class="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
+                            <p class="text-sm text-gray-800">Hello! Welcome to EduSaaS Support. I'm Sarah, how can I
+                                help you today?</p>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Sarah, Support Agent • 10:30 AM</p>
+                    </div>
+                </div>
+
+                <!-- User Message -->
+                <div class="chat-message flex justify-end">
+                    <div class="max-w-xs lg:max-w-md">
+                        <div class="bg-primary text-white rounded-lg p-3">
+                            <p class="text-sm">Hi, I'm having trouble accessing the aircraft brokerage module. It says I
+                                don't have permission.</p>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1 text-right">You • 10:31 AM</p>
+                    </div>
+                </div>
+
+                <!-- Support Message -->
+                <div class="chat-message flex justify-start">
+                    <div class="max-w-xs lg:max-w-md">
+                        <div class="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
+                            <p class="text-sm text-gray-800">I can help with that! Let me check your account
+                                permissions. What's your user role?</p>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Sarah, Support Agent • 10:32 AM</p>
+                    </div>
+                </div>
+
+                <!-- User Message -->
+                <div class="chat-message flex justify-end">
+                    <div class="max-w-xs lg:max-w-md">
+                        <div class="bg-primary text-white rounded-lg p-3">
+                            <p class="text-sm">I'm an instructor. I need to access aircraft listings for training
+                                purposes.</p>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1 text-right">You • 10:32 AM</p>
+                    </div>
+                </div>
+
+                <!-- Support Message with Typing Indicator -->
+                <div class="chat-message flex justify-start">
+                    <div class="max-w-xs lg:max-w-md">
+                        <div class="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
+                            <div class="typing-indicator">
+                                <span class="typing-dot"></span>
+                                <span class="typing-dot"></span>
+                                <span class="typing-dot"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="border-t border-gray-200 p-3 bg-white">
+            <div class="flex space-x-2 overflow-x-auto pb-2">
+                <button
+                    class="quick-action bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-colors">
+                    <i class="fa-solid fa-lock mr-1"></i> Permission Issues
+                </button>
+                <button
+                    class="quick-action bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-colors">
+                    <i class="fa-solid fa-plane mr-1"></i> Aircraft Access
+                </button>
+                <button
+                    class="quick-action bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-colors">
+                    <i class="fa-solid fa-book mr-1"></i> Training Programs
+                </button>
+                <button
+                    class="quick-action bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-lg text-sm whitespace-nowrap transition-colors">
+                    <i class="fa-solid fa-credit-card mr-1"></i> Billing Help
+                </button>
+            </div>
+        </div>
+
+        <!-- Message Input -->
+        <div class="border-t border-gray-200 p-4 bg-white rounded-b-xl">
+            <div class="flex space-x-3">
+                <div class="flex-1 relative">
+                    <input type="text" id="message-input" placeholder="Type your message..."
+                        class="w-full pl-4 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors">
+                    <div class="absolute right-3 top-1/2 transform -translate-y-1/2 flex space-x-2">
+                        <button class="text-gray-400 hover:text-gray-600 transition-colors">
+                            <i class="fa-solid fa-paperclip"></i>
+                        </button>
+                        <button class="text-gray-400 hover:text-gray-600 transition-colors">
+                            <i class="fa-regular fa-face-smile"></i>
+                        </button>
+                    </div>
+                </div>
+                <button id="send-message"
+                    class="bg-primary text-white px-4 rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Minimized State -->
+    <div id="chat-minimized"
+        class="fixed bottom-24 right-6 w-80 bg-primary text-white rounded-xl shadow-lg p-4 hidden z-50">
+        <div class="flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="relative">
+                    <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                        <i class="fa-solid fa-headset text-white text-sm"></i>
+                    </div>
+                    <div class="online-indicator absolute -bottom-1 -right-1"></div>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-sm">Support Chat</h3>
+                    <p class="text-white/80 text-xs">3 unread messages</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button id="maximize-chat"
+                    class="w-6 h-6 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-maximize text-white text-xs"></i>
+                </button>
+                <button id="close-minimized"
+                    class="w-6 h-6 rounded-full hover:bg-white/10 flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-times text-white text-xs"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const chatToggle = document.getElementById('chat-toggle');
+            const chatPopup = document.getElementById('chat-popup');
+            const chatMinimized = document.getElementById('chat-minimized');
+            const closeChat = document.getElementById('close-chat');
+            const maximizeChat = document.getElementById('maximize-chat');
+            const closeMinimized = document.getElementById('close-minimized');
+            const messageInput = document.getElementById('message-input');
+            const sendMessage = document.getElementById('send-message');
+            const quickActions = document.querySelectorAll('.quick-action');
+
+            let isChatOpen = false;
+            let isMinimized = false;
+
+            // Toggle chat popup
+            chatToggle.addEventListener('click', function () {
+                if (!isChatOpen) {
+                    openChat();
+                } else if (isMinimized) {
+                    maximizeChatPopup();
+                } else {
+                    minimizeChat();
+                }
+            });
+
+            // Close chat completely
+            closeChat.addEventListener('click', closeChatPopup);
+            closeMinimized.addEventListener('click', closeChatPopup);
+
+            // Maximize from minimized state
+            maximizeChat.addEventListener('click', maximizeChatPopup);
+
+            // Send message
+            sendMessage.addEventListener('click', sendNewMessage);
+            messageInput.addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    sendNewMessage();
+                }
+            });
+
+            // Quick actions
+            quickActions.forEach(action => {
+                action.addEventListener('click', function () {
+                    const text = this.textContent.trim();
+                    messageInput.value = text;
+                    messageInput.focus();
+                });
+            });
+
+            function openChat() {
+                chatPopup.classList.remove('hidden');
+                chatMinimized.classList.add('hidden');
+                isChatOpen = true;
+                isMinimized = false;
+                setTimeout(() => {
+                    messageInput.focus();
+                }, 300);
+            }
+
+            function minimizeChat() {
+                chatPopup.classList.add('hidden');
+                chatMinimized.classList.remove('hidden');
+                isMinimized = true;
+            }
+
+            function maximizeChatPopup() {
+                chatPopup.classList.remove('hidden');
+                chatMinimized.classList.add('hidden');
+                isMinimized = false;
+                setTimeout(() => {
+                    messageInput.focus();
+                }, 300);
+            }
+
+            function closeChatPopup() {
+                chatPopup.classList.add('hidden');
+                chatMinimized.classList.add('hidden');
+                isChatOpen = false;
+                isMinimized = false;
+            }
+
+            function sendNewMessage() {
+                const message = messageInput.value.trim();
+                if (message) {
+                    // Add user message to chat
+                    const messagesContainer = chatPopup.querySelector('.overflow-y-auto');
+                    const messageHTML = `
+                        <div class="chat-message flex justify-end">
+                            <div class="max-w-xs lg:max-w-md">
+                                <div class="bg-primary text-white rounded-lg p-3">
+                                    <p class="text-sm">${message}</p>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1 text-right">You • Just now</p>
+                            </div>
+                        </div>
+                    `;
+                    messagesContainer.insertAdjacentHTML('beforeend', messageHTML);
+
+                    // Clear input
+                    messageInput.value = '';
+
+                    // Scroll to bottom
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+                    // Simulate typing indicator
+                    simulateAgentResponse();
+                }
+            }
+
+            function simulateAgentResponse() {
+                const messagesContainer = chatPopup.querySelector('.overflow-y-auto');
+
+                // Show typing indicator
+                const typingHTML = `
+                    <div class="chat-message flex justify-start" id="typing-indicator">
+                        <div class="max-w-xs lg:max-w-md">
+                            <div class="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
+                                <div class="typing-indicator">
+                                    <span class="typing-dot"></span>
+                                    <span class="typing-dot"></span>
+                                    <span class="typing-dot"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                messagesContainer.insertAdjacentHTML('beforeend', typingHTML);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+                // Simulate response after delay
+                setTimeout(() => {
+                    // Remove typing indicator
+                    const typingIndicator = document.getElementById('typing-indicator');
+                    if (typingIndicator) {
+                        typingIndicator.remove();
+                    }
+
+                    // Add agent response
+                    const responses = [
+                        "I understand the issue. Let me check your instructor permissions for aircraft access.",
+                        "I can see your account. It looks like you need additional permissions for the brokerage module.",
+                        "I've escalated this to our admin team. They'll update your permissions within the next hour.",
+                        "In the meantime, you can access the training aircraft through the 'Training Resources' section.",
+                        "Is there anything else I can help you with today?"
+                    ];
+
+                    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+
+                    const responseHTML = `
+                        <div class="chat-message flex justify-start">
+                            <div class="max-w-xs lg:max-w-md">
+                                <div class="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
+                                    <p class="text-sm text-gray-800">${randomResponse}</p>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">Sarah, Support Agent • Just now</p>
+                            </div>
+                        </div>
+                    `;
+
+                    messagesContainer.insertAdjacentHTML('beforeend', responseHTML);
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                }, 2000);
+            }
+
+            // Close chat when clicking outside
+            document.addEventListener('click', function (e) {
+                if (isChatOpen && !chatPopup.contains(e.target) && !chatToggle.contains(e.target) && !chatMinimized.contains(e.target)) {
+                    minimizeChat();
+                }
+            });
+
+            // Demo: Auto-open chat after 5 seconds
+            setTimeout(() => {
+                if (!isChatOpen) {
+                    openChat();
+                }
+            }, 5000);
+        });
+    </script>
+
+</body>
+
+</html>

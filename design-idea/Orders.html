@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orders - EduSaaS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest' };</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous"
+        referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.plot.ly/plotly-3.1.1.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-2px);
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .order-status-processing {
+            background-color: #3B82F6;
+            color: white;
+        }
+
+        .order-status-completed {
+            background-color: #10B981;
+            color: white;
+        }
+
+        .order-status-pending {
+            background-color: #F59E0B;
+            color: white;
+        }
+
+        .order-status-cancelled {
+            background-color: #EF4444;
+            color: white;
+        }
+
+        .order-status-shipped {
+            background-color: #8B5CF6;
+            color: white;
+        }
+
+        .order-status-refunded {
+            background-color: #6B7280;
+            color: white;
+        }
+
+        .tab-active {
+            background-color: #6366F1;
+            color: white;
+        }
+
+        .tab-inactive {
+            background-color: #F3F4F6;
+            color: #4B5563;
+        }
+
+        .table-row-hover:hover {
+            background-color: #F9FAFB;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366F1',
+                        secondary: '#0F172A',
+                        accent: '#10B981',
+                        background: '#F5F6FA',
+                        sidebar: '#111827',
+                        card: '#FFFFFF'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-background">
+
+    <!-- Main Content -->
+    <main id="main-content" class="pt-6">
+        <div class="p-6">
+            <!-- Page Header -->
+            <div id="page-header" class="mb-8">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-3xl font-bold text-secondary mb-2">Orders</h2>
+                        <p class="text-gray-600">Manage customer orders, track shipments, and process returns.</p>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button
+                            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors flex items-center space-x-2">
+                            <i class="fa-solid fa-download"></i>
+                            <span>Export</span>
+                        </button>
+                        <button
+                            class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Create Order</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Shop Navigation Tabs -->
+            <div class="bg-card rounded-xl p-1 shadow-sm border border-gray-100 mb-8 inline-flex">
+                <button
+                    class="tab-inactive px-6 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-gray-200">Products</button>
+                <button
+                    class="tab-inactive px-6 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-gray-200">Categories</button>
+                <button class="tab-active px-6 py-2 rounded-lg text-sm font-medium transition-colors">Orders</button>
+                <button
+                    class="tab-inactive px-6 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-gray-200">Discounts</button>
+            </div>
+
+            <!-- Stats Cards -->
+            <div id="stats-section" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Total Orders</p>
+                            <p class="text-2xl font-bold text-secondary mt-1">1,247</p>
+                            <p class="text-accent text-sm mt-1">
+                                <i class="fa-solid fa-arrow-up text-xs"></i> +12% this month
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-shopping-cart text-primary text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Revenue</p>
+                            <p class="text-2xl font-bold text-secondary mt-1">$84,329</p>
+                            <p class="text-accent text-sm mt-1">
+                                <i class="fa-solid fa-arrow-up text-xs"></i> +18% from last month
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-dollar-sign text-accent text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Avg. Order Value</p>
+                            <p class="text-2xl font-bold text-secondary mt-1">$67.65</p>
+                            <p class="text-accent text-sm mt-1">
+                                <i class="fa-solid fa-arrow-up text-xs"></i> +$4.20 from last month
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-chart-line text-yellow-600 text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Pending Orders</p>
+                            <p class="text-2xl font-bold text-secondary mt-1">42</p>
+                            <p class="text-red-500 text-sm mt-1">
+                                <i class="fa-solid fa-clock text-xs"></i> Needs attention
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-exclamation-triangle text-red-600 text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters and Actions -->
+            <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100 mb-8">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+                    <div class="flex flex-wrap gap-2">
+                        <button class="px-4 py-2 bg-primary text-white rounded-lg text-sm">All Orders</button>
+                        <button
+                            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm">Pending</button>
+                        <button
+                            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm">Processing</button>
+                        <button
+                            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm">Completed</button>
+                        <button
+                            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm">Cancelled</button>
+                    </div>
+                    <div class="flex space-x-2">
+                        <div class="relative">
+                            <i
+                                class="fa-solid fa-calendar absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <select
+                                class="pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm">
+                                <option>Last 7 days</option>
+                                <option>Last 30 days</option>
+                                <option>Last 90 days</option>
+                                <option>Custom range</option>
+                            </select>
+                        </div>
+                        <div class="relative">
+                            <i
+                                class="fa-solid fa-sort absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <select
+                                class="pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm">
+                                <option>Sort by: Newest</option>
+                                <option>Sort by: Oldest</option>
+                                <option>Sort by: Total</option>
+                                <option>Sort by: Customer</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders Table -->
+            <div class="bg-card rounded-xl shadow-sm border border-gray-100 mb-8 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="bg-gray-50 border-b border-gray-200">
+                                <th
+                                    class="py-4 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <div class="flex items-center space-x-2">
+                                        <input type="checkbox" class="rounded text-primary focus:ring-primary">
+                                        <span>Order</span>
+                                    </div>
+                                </th>
+                                <th
+                                    class="py-4 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Customer</th>
+                                <th
+                                    class="py-4 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Date</th>
+                                <th
+                                    class="py-4 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Total</th>
+                                <th
+                                    class="py-4 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Status</th>
+                                <th
+                                    class="py-4 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Items</th>
+                                <th
+                                    class="py-4 px-6 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            <!-- Order 1 -->
+                            <tr class="table-row-hover">
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <div class="flex items-center space-x-3">
+                                        <input type="checkbox" class="rounded text-primary focus:ring-primary">
+                                        <div>
+                                            <div class="font-medium text-primary">#ORD-7842</div>
+                                            <div class="text-sm text-gray-500">Online Course</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <div class="flex items-center space-x-3">
+                                        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg"
+                                            alt="Customer" class="w-8 h-8 rounded-full">
+                                        <div>
+                                            <div class="font-medium text-secondary">Sarah Johnson</div>
+                                            <div class="text-sm text-gray-500">sarah@example.com</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <div class="text-sm text-secondary">Today, 10:24 AM</div>
+                                    <div class="text-sm text-gray-500">2 hours ago</div>
+                                </td>
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <div class="font-medium text-secondary">$199.99</div>
+                                    <div class="text-sm text-gray-500">Paid</div>
+                                </td>
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <span class="status-badge order-status-processing">Processing</span>
+                                </td>
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <div class="text-sm text-secondary">1 item</div>
+                                    <div class="text-sm text-gray-500">Web Dev Bootcamp</div>
+                                </td>
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <div class="flex space-x-2">
+                                        <button
+                                            class="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                            title="View Details">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </button>
+                                        <button class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+                                            title="More Options">
+                                            <i class="fa-solid fa-ellipsis-vertical"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Order 2 -->
+                            <tr class="table-row-hover">
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <div class="flex items-center space-x-3">
+                                        <input type="checkbox" class="rounded text-primary focus:ring-primary">
+                                        <div>
+                                            <div class="font-medium text-primary">#ORD-7841</div>
+                                            <div class="text-sm text-gray-500">E-book</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <div class="flex items-center space-x-3">
+                                        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg"
+                                            alt="Customer" class="w-8 h-8 rounded-full">
+                                        <div>
+                                            <div class="font-medium text-secondary">Michael Chen</div>
+                                            <div class="text-sm text-gray-500">michael@example.com</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <div class="text-sm text-secondary">Yesterday, 3:45 PM</div>
+                                    <div class="text-sm text-gray-500">1 day ago</div>
+                                </td>
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <div class="font-medium text-secondary">$89.99</div>
+                                    <div class="text-sm text-gray-500">Paid</div>
+                                </td>
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <span class="status-badge order-status-completed">Completed</span>
+                                </td>
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <div class="text-sm text-secondary">1 item</div>
+                                    <div class="text-sm text-gray-500">Advanced Python</div>
+                                </td>
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <div class="flex space-x-2">
+                                        <button
+                                            class="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                            title="View Details">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </button>
+                                        <button class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+                                            title="More Options">
+                                            <i class="fa-solid fa-ellipsis-vertical"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Order 3 -->
+                            <tr class="table-row-hover">
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <div class="flex items-center space-x-3">
+                                        <input type="checkbox" class="rounded text-primary focus:ring-primary">
+                                        <div>
+                                            <div class="font-medium text-primary">#ORD-7840</div>
+                                            <div class="text-sm text-gray-500">Bundle</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <div class="flex items-center space-x-3">
+                                        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg"
+                                            alt="Customer" class="w-8 h-8 rounded-full">
+                                        <div>
+                                            <div class="font-medium text-secondary">Emma Wilson</div>
+                                            <div class="text-sm text-gray-500">emma@example.com</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <div class="text-sm text-secondary">Oct 12, 2023</div>
+                                    <div class="text-sm text-gray-500">3 days ago</div>
+                                </td>
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <div class="font-medium text-secondary">$249.98</div>
+                                    <div class="text-sm text-gray-500">Paid</div>
+                                </td>
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <span class="status-badge order-status-shipped">Shipped</span>
+                                </td>
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <div class="text-sm text-secondary">2 items</div>
+                                    <div class="text-sm text-gray-500">Course + E-book</div>
+                                </td>
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <div class="flex space-x-2">
+                                        <button
+                                            class="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                            title="View Details">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </button>
+                                        <button class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+                                            title="More Options">
+                                            <i class="fa-solid fa-ellipsis-vertical"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Order 4 -->
+                            <tr class="table-row-hover">
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <div class="flex items-center space-x-3">
+                                        <input type="checkbox" class="rounded text-primary focus:ring-primary">
+                                        <div>
+                                            <div class="font-medium text-primary">#ORD-7839</div>
+                                            <div class="text-sm text-gray-500">Merchandise</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <div class="flex items-center space-x-3">
+                                        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg"
+                                            alt="Customer" class="w-8 h-8 rounded-full">
+                                        <div>
+                                            <div class="font-medium text-secondary">David Brown</div>
+                                            <div class="text-sm text-gray-500">david@example.com</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <div class="text-sm text-secondary">Oct 10, 2023</div>
+                                    <div class="text-sm text-gray-500">5 days ago</div>
+                                </td>
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <div class="font-medium text-secondary">$49.99</div>
+                                    <div class="text-sm text-gray-500">Refunded</div>
+                                </td>
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <span class="status-badge order-status-refunded">Refunded</span>
+                                </td>
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <div class="text-sm text-secondary">1 item</div>
+                                    <div class="text-sm text-gray-500">T-Shirt</div>
+                                </td>
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <div class="flex space-x-2">
+                                        <button
+                                            class="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                            title="View Details">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </button>
+                                        <button class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+                                            title="More Options">
+                                            <i class="fa-solid fa-ellipsis-vertical"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Order 5 -->
+                            <tr class="table-row-hover">
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <div class="flex items-center space-x-3">
+                                        <input type="checkbox" class="rounded text-primary focus:ring-primary">
+                                        <div>
+                                            <div class="font-medium text-primary">#ORD-7838</div>
+                                            <div class="text-sm text-gray-500">Subscription</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <div class="flex items-center space-x-3">
+                                        <img src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-6.jpg"
+                                            alt="Customer" class="w-8 h-8 rounded-full">
+                                        <div>
+                                            <div class="font-medium text-secondary">Lisa Anderson</div>
+                                            <div class="text-sm text-gray-500">lisa@example.com</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <div class="text-sm text-secondary">Oct 8, 2023</div>
+                                    <div class="text-sm text-gray-500">1 week ago</div>
+                                </td>
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <div class="font-medium text-secondary">$29.99</div>
+                                    <div class="text-sm text-gray-500">Monthly</div>
+                                </td>
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <span class="status-badge order-status-pending">Pending</span>
+                                </td>
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <div class="text-sm text-secondary">1 item</div>
+                                    <div class="text-sm text-gray-500">Pro Membership</div>
+                                </td>
+                                <td class="py-4 px-6 whitespace-nowrap">
+                                    <div class="flex space-x-2">
+                                        <button
+                                            class="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                                            title="View Details">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </button>
+                                        <button class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors"
+                                            title="More Options">
+                                            <i class="fa-solid fa-ellipsis-vertical"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                <div class="bg-white px-6 py-4 border-t border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div class="text-sm text-gray-700">
+                            Showing <span class="font-medium">1</span> to <span class="font-medium">5</span> of <span
+                                class="font-medium">1,247</span> orders
+                        </div>
+                        <div class="flex space-x-2">
+                            <button
+                                class="px-3 py-1 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                                Previous
+                            </button>
+                            <button class="px-3 py-1 bg-primary text-white rounded-lg">1</button>
+                            <button
+                                class="px-3 py-1 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">2</button>
+                            <button
+                                class="px-3 py-1 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">3</button>
+                            <button
+                                class="px-3 py-1 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                                Next
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-secondary">Order Status Distribution</h3>
+                        <button class="text-primary hover:text-primary/80 text-sm font-medium">View Report</button>
+                    </div>
+                    <div id="order-status-chart" style="height: 300px;"></div>
+                </div>
+
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-secondary">Revenue Trends</h3>
+                        <button class="text-primary hover:text-primary/80 text-sm font-medium">View Report</button>
+                    </div>
+                    <div id="revenue-trends-chart" style="height: 300px;"></div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                <h3 class="text-lg font-semibold text-secondary mb-4">Recent Order Activity</h3>
+                <div class="space-y-4">
+                    <div class="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
+                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="fa-solid fa-check text-green-600 text-sm"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm text-secondary">
+                                <span class="font-medium">Order #ORD-7841</span> completed successfully
+                            </p>
+                            <p class="text-sm text-gray-500 mt-1">Michael Chen purchased Advanced Python course</p>
+                            <p class="text-xs text-gray-400 mt-1">2 hours ago</p>
+                        </div>
+                        <span class="status-badge order-status-completed text-xs">Completed</span>
+                    </div>
+
+                    <div class="flex items-start space-x-4 p-4 bg-yellow-50 rounded-lg">
+                        <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="fa-solid fa-clock text-yellow-600 text-sm"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm text-secondary">
+                                <span class="font-medium">Order #ORD-7838</span> requires payment confirmation
+                            </p>
+                            <p class="text-sm text-gray-500 mt-1">Lisa Anderson's Pro Membership subscription pending
+                            </p>
+                            <p class="text-xs text-gray-400 mt-1">4 hours ago</p>
+                        </div>
+                        <span class="status-badge order-status-pending text-xs">Pending</span>
+                    </div>
+
+                    <div class="flex items-start space-x-4 p-4 bg-blue-50 rounded-lg">
+                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <i class="fa-solid fa-truck text-blue-600 text-sm"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm text-secondary">
+                                <span class="font-medium">Order #ORD-7840</span> shipped to customer
+                            </p>
+                            <p class="text-sm text-gray-500 mt-1">Course materials delivered to Emma Wilson</p>
+                            <p class="text-xs text-gray-400 mt-1">1 day ago</p>
+                        </div>
+                        <span class="status-badge order-status-shipped text-xs">Shipped</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Charts
+        document.addEventListener('DOMContentLoaded', function () {
+            try {
+                // Order Status Chart
+                const orderStatusData = [{
+                    type: 'pie',
+                    labels: ['Completed', 'Processing', 'Pending', 'Shipped', 'Cancelled', 'Refunded'],
+                    values: [856, 245, 42, 78, 16, 10],
+                    marker: {
+                        colors: ['#10B981', '#3B82F6', '#F59E0B', '#8B5CF6', '#EF4444', '#6B7280']
+                    }
+                }];
+
+                const orderStatusLayout = {
+                    margin: { t: 20, r: 20, b: 20, l: 20 },
+                    plot_bgcolor: '#FFFFFF',
+                    paper_bgcolor: '#FFFFFF',
+                    showlegend: true,
+                    legend: { orientation: 'h', y: -0.1 }
+                };
+
+                Plotly.newPlot('order-status-chart', orderStatusData, orderStatusLayout, { responsive: true, displayModeBar: false });
+
+                // Revenue Trends Chart
+                const revenueTrendsData = [{
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    x: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+                    y: [45000, 52000, 48000, 61000, 73000, 84000, 79000, 82000, 78000, 84329],
+                    line: { color: '#6366F1', width: 3 },
+                    marker: { size: 6 }
+                }];
+
+                const revenueTrendsLayout = {
+                    margin: { t: 20, r: 20, b: 40, l: 60 },
+                    plot_bgcolor: '#FFFFFF',
+                    paper_bgcolor: '#FFFFFF',
+                    showlegend: false,
+                    xaxis: { showgrid: false },
+                    yaxis: { showgrid: true, gridcolor: '#f1f5f9', title: 'Revenue ($)' }
+                };
+
+                Plotly.newPlot('revenue-trends-chart', revenueTrendsData, revenueTrendsLayout, { responsive: true, displayModeBar: false });
+
+            } catch (e) {
+                console.error('Chart rendering failed:', e);
+            }
+
+            // Table row selection
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function () {
+                    const row = this.closest('tr');
+                    if (this.checked) {
+                        row.classList.add('bg-blue-50');
+                    } else {
+                        row.classList.remove('bg-blue-50');
+                    }
+                });
+            });
+        });
+    </script>
+
+</body>
+
+</html>

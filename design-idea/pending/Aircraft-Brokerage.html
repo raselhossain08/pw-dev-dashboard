@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aircraft Brokerage - EduSaaS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script> window.FontAwesomeConfig = { autoReplaceSvg: 'nest' };</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js" crossorigin="anonymous"
+        referrerpolicy="no-referrer"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        ::-webkit-scrollbar {
+            display: none;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .aircraft-card {
+            transition: all 0.3s ease;
+        }
+
+        .aircraft-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .inquiry-item {
+            transition: all 0.2s ease;
+        }
+
+        .inquiry-item:hover {
+            background-color: #f8fafc;
+        }
+
+        .status-available {
+            background-color: #10B981;
+        }
+
+        .status-sold {
+            background-color: #6B7280;
+        }
+
+        .status-reserved {
+            background-color: #F59E0B;
+        }
+
+        .type-piston {
+            background-color: #6366F1;
+        }
+
+        .type-turbine {
+            background-color: #8B5CF6;
+        }
+
+        .priority-high {
+            background-color: #EF4444;
+        }
+
+        .priority-medium {
+            background-color: #F59E0B;
+        }
+
+        .priority-low {
+            background-color: #10B981;
+        }
+
+        .tab-active {
+            border-bottom: 2px solid #6366F1;
+            color: #6366F1;
+        }
+
+        .filter-group {
+            transition: all 0.2s ease;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366F1',
+                        secondary: '#0F172A',
+                        accent: '#10B981',
+                        background: '#F5F6FA',
+                        sidebar: '#111827',
+                        card: '#FFFFFF'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-background">
+
+    <!-- Main Content -->
+    <main id="main-content" class="pt-6">
+        <div class="p-6">
+            <!-- Page Header -->
+            <div id="page-header" class="mb-8">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h2 class="text-3xl font-bold text-secondary mb-2">Aircraft Brokerage</h2>
+                        <p class="text-gray-600">Manage aircraft listings, buying requests, and client inquiries.</p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <button
+                            class="border border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                            <i class="fa-solid fa-download mr-2"></i>
+                            Export Data
+                        </button>
+                        <button
+                            class="bg-primary text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-primary/90 transition-colors">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Add Aircraft</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div id="stats-section" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Aircraft For Sale</p>
+                            <p class="text-2xl font-bold text-secondary mt-1">24</p>
+                            <p class="text-accent text-sm mt-1">
+                                <i class="fa-solid fa-arrow-up text-xs"></i> +3 this month
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-plane text-primary text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Buying Requests</p>
+                            <p class="text-2xl font-bold text-secondary mt-1">18</p>
+                            <p class="text-accent text-sm mt-1">
+                                <i class="fa-solid fa-clock text-xs"></i> 5 new this week
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-hand-holding-usd text-accent text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Active Inquiries</p>
+                            <p class="text-2xl font-bold text-secondary mt-1">47</p>
+                            <p class="text-accent text-sm mt-1">
+                                <i class="fa-solid fa-comments text-xs"></i> 12 unread
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-envelope text-purple-600 text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm font-medium">Total Value</p>
+                            <p class="text-2xl font-bold text-secondary mt-1">$42M</p>
+                            <p class="text-accent text-sm mt-1">
+                                <i class="fa-solid fa-chart-line text-xs"></i> +8% from last month
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-dollar-sign text-yellow-600 text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabs Navigation -->
+            <div class="border-b border-gray-200 mb-8">
+                <nav class="flex space-x-8">
+                    <button class="tab-active py-4 px-1 font-medium text-sm">Aircraft For Sale</button>
+                    <button class="py-4 px-1 font-medium text-sm text-gray-500 hover:text-gray-700">Aircraft
+                        Wanted</button>
+                    <button class="py-4 px-1 font-medium text-sm text-gray-500 hover:text-gray-700">Inquiry
+                        Messages</button>
+                    <button class="py-4 px-1 font-medium text-sm text-gray-500 hover:text-gray-700">Aircraft
+                        Types</button>
+                    <button class="py-4 px-1 font-medium text-sm text-gray-500 hover:text-gray-700">Client
+                        Management</button>
+                </nav>
+            </div>
+
+            <!-- Aircraft For Sale Section -->
+            <div id="aircraft-for-sale" class="mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-semibold text-secondary">Aircraft For Sale</h3>
+
+                    <div class="flex items-center space-x-4">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-600">Filter:</span>
+                            <select class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                                <option>All Types</option>
+                                <option>Piston Single</option>
+                                <option>Piston Multi</option>
+                                <option>Turboprop</option>
+                                <option>Business Jet</option>
+                                <option>Helicopter</option>
+                            </select>
+                        </div>
+
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-gray-600">Status:</span>
+                            <select class="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                                <option>All Status</option>
+                                <option>Available</option>
+                                <option>Reserved</option>
+                                <option>Under Contract</option>
+                                <option>Sold</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Aircraft Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Aircraft Card 1 -->
+                    <div class="aircraft-card bg-card rounded-xl overflow-hidden shadow-sm border border-gray-100">
+                        <div class="relative">
+                            <img src="https://images.unsplash.com/photo-1558618666-fcd25856cd63?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80"
+                                alt="Cessna 172" class="w-full h-48 object-cover">
+                            <div class="absolute top-3 right-3">
+                                <span
+                                    class="status-available text-white text-xs px-2 py-1 rounded-full">Available</span>
+                            </div>
+                            <div class="absolute top-3 left-3">
+                                <span class="type-piston text-white text-xs px-2 py-1 rounded-full">Piston Single</span>
+                            </div>
+                        </div>
+
+                        <div class="p-6">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h4 class="font-semibold text-secondary">Cessna 172S Skyhawk SP</h4>
+                                    <p class="text-sm text-gray-600">2018 • TT 1,200 hrs</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xl font-bold text-secondary">$325,000</p>
+                                    <p class="text-xs text-gray-600">Asking Price</p>
+                                </div>
+                            </div>
+
+                            <div class="space-y-2 mb-4">
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Location</span>
+                                    <span class="font-medium">KAPA - Denver, CO</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Engine</span>
+                                    <span class="font-medium">Lycoming IO-360</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Avionics</span>
+                                    <span class="font-medium">Garmin G1000</span>
+                                </div>
+                            </div>
+
+                            <div class="flex space-x-2">
+                                <button
+                                    class="flex-1 bg-primary text-white py-2 px-3 rounded-lg hover:bg-primary/90 transition-colors text-sm">
+                                    View Details
+                                </button>
+                                <button
+                                    class="flex-1 border border-gray-300 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                                    Contact Seller
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Aircraft Card 2 -->
+                    <div class="aircraft-card bg-card rounded-xl overflow-hidden shadow-sm border border-gray-100">
+                        <div class="relative">
+                            <img src="https://images.unsplash.com/photo-1558618667-d2d6e735c694?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80"
+                                alt="King Air 350" class="w-full h-48 object-cover">
+                            <div class="absolute top-3 right-3">
+                                <span class="status-reserved text-white text-xs px-2 py-1 rounded-full">Reserved</span>
+                            </div>
+                            <div class="absolute top-3 left-3">
+                                <span class="type-turbine text-white text-xs px-2 py-1 rounded-full">Turboprop</span>
+                            </div>
+                        </div>
+
+                        <div class="p-6">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h4 class="font-semibold text-secondary">Beechcraft King Air 350i</h4>
+                                    <p class="text-sm text-gray-600">2016 • TT 2,800 hrs</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xl font-bold text-secondary">$4.2M</p>
+                                    <p class="text-xs text-gray-600">Asking Price</p>
+                                </div>
+                            </div>
+
+                            <div class="space-y-2 mb-4">
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Location</span>
+                                    <span class="font-medium">KTEB - Teterboro, NJ</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Engines</span>
+                                    <span class="font-medium">PT6A-60A</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Avionics</span>
+                                    <span class="font-medium">Collins Pro Line 21</span>
+                                </div>
+                            </div>
+
+                            <div class="flex space-x-2">
+                                <button
+                                    class="flex-1 bg-primary text-white py-2 px-3 rounded-lg hover:bg-primary/90 transition-colors text-sm">
+                                    View Details
+                                </button>
+                                <button
+                                    class="flex-1 border border-gray-300 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                                    Contact Seller
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Aircraft Card 3 -->
+                    <div class="aircraft-card bg-card rounded-xl overflow-hidden shadow-sm border border-gray-100">
+                        <div class="relative">
+                            <img src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80"
+                                alt="Cirrus SR22" class="w-full h-48 object-cover">
+                            <div class="absolute top-3 right-3">
+                                <span
+                                    class="status-available text-white text-xs px-2 py-1 rounded-full">Available</span>
+                            </div>
+                            <div class="absolute top-3 left-3">
+                                <span class="type-piston text-white text-xs px-2 py-1 rounded-full">Piston Single</span>
+                            </div>
+                        </div>
+
+                        <div class="p-6">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <h4 class="font-semibold text-secondary">Cirrus SR22T G6</h4>
+                                    <p class="text-sm text-gray-600">2021 • TT 450 hrs</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xl font-bold text-secondary">$785,000</p>
+                                    <p class="text-xs text-gray-600">Asking Price</p>
+                                </div>
+                            </div>
+
+                            <div class="space-y-2 mb-4">
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Location</span>
+                                    <span class="font-medium">KFXE - Fort Lauderdale, FL</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Engine</span>
+                                    <span class="font-medium">Continental TSIO-550</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600">Avionics</span>
+                                    <span class="font-medium">Cirrus Perspective+</span>
+                                </div>
+                            </div>
+
+                            <div class="flex space-x-2">
+                                <button
+                                    class="flex-1 bg-primary text-white py-2 px-3 rounded-lg hover:bg-primary/90 transition-colors text-sm">
+                                    View Details
+                                </button>
+                                <button
+                                    class="flex-1 border border-gray-300 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-50 transition-colors text-sm">
+                                    Contact Seller
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aircraft Wanted Section -->
+            <div id="aircraft-wanted" class="bg-card rounded-xl p-6 shadow-sm border border-gray-100 mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-semibold text-secondary">Aircraft Wanted (Buying Requests)</h3>
+                    <button
+                        class="bg-primary text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-primary/90 transition-colors">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Add Request</span>
+                    </button>
+                </div>
+
+                <!-- Buying Requests Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-gray-200">
+                                <th class="text-left py-3 px-4 text-sm font-medium text-gray-600">Client</th>
+                                <th class="text-left py-3 px-4 text-sm font-medium text-gray-600">Aircraft Type</th>
+                                <th class="text-left py-3 px-4 text-sm font-medium text-gray-600">Budget</th>
+                                <th class="text-left py-3 px-4 text-sm font-medium text-gray-600">Priority</th>
+                                <th class="text-left py-3 px-4 text-sm font-medium text-gray-600">Date Posted</th>
+                                <th class="text-left py-3 px-4 text-sm font-medium text-gray-600">Status</th>
+                                <th class="text-left py-3 px-4 text-sm font-medium text-gray-600">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Request 1 -->
+                            <tr class="inquiry-item border-b border-gray-100">
+                                <td class="py-4 px-4">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                                            <span class="text-white text-xs font-medium">JD</span>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-secondary">John Davidson</p>
+                                            <p class="text-sm text-gray-500">Corporate Buyer</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <p class="font-medium text-secondary">King Air 350/360</p>
+                                    <p class="text-sm text-gray-600">Turboprop • 2015+</p>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <p class="font-medium text-secondary">$3.5M - $4.5M</p>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <span class="priority-high text-white text-xs px-2 py-1 rounded-full">High</span>
+                                </td>
+                                <td class="py-4 px-4 text-sm text-gray-600">Oct 12, 2023</td>
+                                <td class="py-4 px-4">
+                                    <span class="bg-accent/10 text-accent text-xs px-2 py-1 rounded-full">Active</span>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <div class="flex space-x-2">
+                                        <button class="text-primary hover:text-primary/80">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </button>
+                                        <button class="text-primary hover:text-primary/80">
+                                            <i class="fa-solid fa-edit"></i>
+                                        </button>
+                                        <button class="text-red-500 hover:text-red-700">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Request 2 -->
+                            <tr class="inquiry-item border-b border-gray-100">
+                                <td class="py-4 px-4">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
+                                            <span class="text-white text-xs font-medium">SW</span>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-secondary">Sarah Wilson</p>
+                                            <p class="text-sm text-gray-500">Private Owner</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <p class="font-medium text-secondary">Cirrus SR22/G6</p>
+                                    <p class="text-sm text-gray-600">Piston Single • 2018+</p>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <p class="font-medium text-secondary">$600K - $750K</p>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <span
+                                        class="priority-medium text-white text-xs px-2 py-1 rounded-full">Medium</span>
+                                </td>
+                                <td class="py-4 px-4 text-sm text-gray-600">Oct 8, 2023</td>
+                                <td class="py-4 px-4">
+                                    <span
+                                        class="bg-yellow-100 text-yellow-600 text-xs px-2 py-1 rounded-full">Pending</span>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <div class="flex space-x-2">
+                                        <button class="text-primary hover:text-primary/80">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </button>
+                                        <button class="text-primary hover:text-primary/80">
+                                            <i class="fa-solid fa-edit"></i>
+                                        </button>
+                                        <button class="text-red-500 hover:text-red-700">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Request 3 -->
+                            <tr class="inquiry-item border-b border-gray-100">
+                                <td class="py-4 px-4">
+                                    <div class="flex items-center space-x-3">
+                                        <div
+                                            class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
+                                            <span class="text-white text-xs font-medium">MR</span>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-secondary">Mike Rodriguez</p>
+                                            <p class="text-sm text-gray-500">Flight School</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <p class="font-medium text-secondary">Cessna 172</p>
+                                    <p class="text-sm text-gray-600">Piston Single • 2015+</p>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <p class="font-medium text-secondary">$250K - $350K</p>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <span class="priority-low text-white text-xs px-2 py-1 rounded-full">Low</span>
+                                </td>
+                                <td class="py-4 px-4 text-sm text-gray-600">Oct 5, 2023</td>
+                                <td class="py-4 px-4">
+                                    <span class="bg-accent/10 text-accent text-xs px-2 py-1 rounded-full">Active</span>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <div class="flex space-x-2">
+                                        <button class="text-primary hover:text-primary/80">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </button>
+                                        <button class="text-primary hover:text-primary/80">
+                                            <i class="fa-solid fa-edit"></i>
+                                        </button>
+                                        <button class="text-red-500 hover:text-red-700">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Inquiry Messages Section -->
+            <div id="inquiry-messages" class="bg-card rounded-xl p-6 shadow-sm border border-gray-100 mb-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-semibold text-secondary">Inquiry Messages</h3>
+                    <div class="flex items-center space-x-3">
+                        <div class="relative">
+                            <i
+                                class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <input type="text" placeholder="Search inquiries..."
+                                class="pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
+                        </div>
+                        <button
+                            class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors text-sm">
+                            <i class="fa-solid fa-filter mr-2"></i>
+                            Filter
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Messages List -->
+                    <div class="lg:col-span-1 border border-gray-200 rounded-lg overflow-hidden">
+                        <div class="bg-gray-50 p-4 border-b border-gray-200">
+                            <h4 class="font-medium text-secondary">Recent Inquiries</h4>
+                        </div>
+                        <div class="max-h-96 overflow-y-auto">
+                            <!-- Message 1 -->
+                            <div class="inquiry-item border-b border-gray-100 p-4 cursor-pointer hover:bg-primary/5">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center">
+                                            <span class="text-white text-sm font-medium">RS</span>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-secondary">Robert Smith</p>
+                                            <p class="text-sm text-gray-600">Cessna 172S Inquiry</p>
+                                        </div>
+                                    </div>
+                                    <span class="text-xs text-gray-500">2h ago</span>
+                                </div>
+                                <p class="text-sm text-gray-600 truncate">I'm interested in the Cessna 172S. Could you
+                                    provide more details about the maintenance history?</p>
+                                <div class="flex items-center justify-between mt-2">
+                                    <span class="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full">New</span>
+                                    <span class="text-xs text-gray-500">$325,000</span>
+                                </div>
+                            </div>
+
+                            <!-- Message 2 -->
+                            <div class="inquiry-item border-b border-gray-100 p-4 cursor-pointer hover:bg-primary/5">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 bg-accent rounded-full flex items-center justify-center">
+                                            <span class="text-white text-sm font-medium">EJ</span>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-secondary">Emma Johnson</p>
+                                            <p class="text-sm text-gray-600">King Air 350i Question</p>
+                                        </div>
+                                    </div>
+                                    <span class="text-xs text-gray-500">1d ago</span>
+                                </div>
+                                <p class="text-sm text-gray-600 truncate">What's the status of the engine overhaul on
+                                    the King Air? Are there any upcoming maintenance events?</p>
+                                <div class="flex items-center justify-between mt-2">
+                                    <span
+                                        class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">Replied</span>
+                                    <span class="text-xs text-gray-500">$4.2M</span>
+                                </div>
+                            </div>
+
+                            <!-- Message 3 -->
+                            <div class="inquiry-item border-b border-gray-100 p-4 cursor-pointer hover:bg-primary/5">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div class="flex items-center space-x-3">
+                                        <div
+                                            class="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center">
+                                            <span class="text-white text-sm font-medium">DL</span>
+                                        </div>
+                                        <div>
+                                            <p class="font-medium text-secondary">David Lee</p>
+                                            <p class="text-sm text-gray-600">Cirrus SR22T Availability</p>
+                                        </div>
+                                    </div>
+                                    <span class="text-xs text-gray-500">3d ago</span>
+                                </div>
+                                <p class="text-sm text-gray-600 truncate">Is the Cirrus SR22T still available? I'd like
+                                    to schedule a viewing and test flight next week.</p>
+                                <div class="flex items-center justify-between mt-2">
+                                    <span
+                                        class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">Replied</span>
+                                    <span class="text-xs text-gray-500">$785,000</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Message Detail -->
+                    <div class="lg:col-span-2 border border-gray-200 rounded-lg">
+                        <div class="bg-gray-50 p-4 border-b border-gray-200">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <h4 class="font-medium text-secondary">Cessna 172S Inquiry</h4>
+                                    <p class="text-sm text-gray-600">Robert Smith • robert.smith@email.com</p>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <button class="text-gray-400 hover:text-primary">
+                                        <i class="fa-solid fa-phone"></i>
+                                    </button>
+                                    <button class="text-gray-400 hover:text-primary">
+                                        <i class="fa-solid fa-envelope"></i>
+                                    </button>
+                                    <button class="text-gray-400 hover:text-primary">
+                                        <i class="fa-solid fa-ellipsis-v"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-4 max-h-96 overflow-y-auto">
+                            <!-- Message Thread -->
+                            <div class="space-y-4">
+                                <!-- Client Message -->
+                                <div class="flex justify-start">
+                                    <div class="max-w-xs lg:max-w-md bg-gray-100 rounded-lg p-4">
+                                        <p class="text-sm text-gray-800">Hello, I'm interested in the Cessna 172S listed
+                                            on your platform. Could you provide more details about the maintenance
+                                            history and any recent upgrades?</p>
+                                        <p class="text-xs text-gray-500 mt-2">Robert Smith • 2 hours ago</p>
+                                    </div>
+                                </div>
+
+                                <!-- Broker Reply -->
+                                <div class="flex justify-end">
+                                    <div class="max-w-xs lg:max-w-md bg-primary text-white rounded-lg p-4">
+                                        <p class="text-sm">Hello Robert, thank you for your inquiry. The Cessna 172S has
+                                            excellent maintenance records with all annuals completed on time. Recent
+                                            upgrades include new tires, Garmin GTX 345 transponder, and fresh interior.
+                                        </p>
+                                        <p class="text-xs opacity-80 mt-2">You • 1 hour ago</p>
+                                    </div>
+                                </div>
+
+                                <!-- Client Follow-up -->
+                                <div class="flex justify-start">
+                                    <div class="max-w-xs lg:max-w-md bg-gray-100 rounded-lg p-4">
+                                        <p class="text-sm text-gray-800">Thanks for the information. Is the aircraft
+                                            available for a pre-purchase inspection? Also, what's the engine time and
+                                            when was the last overhaul?</p>
+                                        <p class="text-xs text-gray-500 mt-2">Robert Smith • 30 minutes ago</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Reply Box -->
+                        <div class="border-t border-gray-200 p-4">
+                            <div class="flex space-x-3">
+                                <input type="text" placeholder="Type your reply..."
+                                    class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
+                                <button
+                                    class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors">
+                                    Send
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aircraft Types Section -->
+            <div id="aircraft-types" class="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-semibold text-secondary">Aircraft Types</h3>
+                    <button
+                        class="bg-primary text-white px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-primary/90 transition-colors">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Add Type</span>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Piston Aircraft -->
+                    <div class="border border-gray-200 rounded-lg p-6">
+                        <div class="flex items-center space-x-3 mb-6">
+                            <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+                                <i class="fa-solid fa-propeller-plane text-primary text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-secondary">Piston Aircraft</h4>
+                                <p class="text-sm text-gray-600">Single & Multi-engine piston aircraft</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center p-3 border border-gray-200 rounded-lg">
+                                <div>
+                                    <p class="font-medium text-secondary">Cessna 172</p>
+                                    <p class="text-sm text-gray-600">12 listings available</p>
+                                </div>
+                                <span class="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full">Popular</span>
+                            </div>
+
+                            <div class="flex justify-between items-center p-3 border border-gray-200 rounded-lg">
+                                <div>
+                                    <p class="font-medium text-secondary">Piper PA-28</p>
+                                    <p class="text-sm text-gray-600">8 listings available</p>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-between items-center p-3 border border-gray-200 rounded-lg">
+                                <div>
+                                    <p class="font-medium text-secondary">Cirrus SR22</p>
+                                    <p class="text-sm text-gray-600">6 listings available</p>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-between items-center p-3 border border-gray-200 rounded-lg">
+                                <div>
+                                    <p class="font-medium text-secondary">Beechcraft Bonanza</p>
+                                    <p class="text-sm text-gray-600">4 listings available</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Turbine Aircraft -->
+                    <div class="border border-gray-200 rounded-lg p-6">
+                        <div class="flex items-center space-x-3 mb-6">
+                            <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                                <i class="fa-solid fa-jet-fighter text-purple-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-secondary">Turbine Aircraft</h4>
+                                <p class="text-sm text-gray-600">Turboprop & Business jets</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center p-3 border border-gray-200 rounded-lg">
+                                <div>
+                                    <p class="font-medium text-secondary">King Air 350</p>
+                                    <p class="text-sm text-gray-600">5 listings available</p>
+                                </div>
+                                <span class="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full">Popular</span>
+                            </div>
+
+                            <div class="flex justify-between items-center p-3 border border-gray-200 rounded-lg">
+                                <div>
+                                    <p class="font-medium text-secondary">Pilatus PC-12</p>
+                                    <p class="text-sm text-gray-600">3 listings available</p>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-between items-center p-3 border border-gray-200 rounded-lg">
+                                <div>
+                                    <p class="font-medium text-secondary">Cessna Citation</p>
+                                    <p class="text-sm text-gray-600">4 listings available</p>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-between items-center p-3 border border-gray-200 rounded-lg">
+                                <div>
+                                    <p class="font-medium text-secondary">Piper Meridian</p>
+                                    <p class="text-sm text-gray-600">2 listings available</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add Aircraft Modal -->
+    <div id="add-aircraft-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-6 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-secondary">Add New Aircraft Listing</h3>
+                <button id="close-add-aircraft-modal" class="text-gray-400 hover:text-gray-600">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Basic Information -->
+                <div class="space-y-4">
+                    <h4 class="font-medium text-secondary">Basic Information</h4>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Aircraft Model</label>
+                        <input type="text"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            placeholder="e.g., Cessna 172S">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Manufacturer</label>
+                        <input type="text"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            placeholder="e.g., Cessna">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Year</label>
+                        <input type="number"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            placeholder="e.g., 2018">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Registration</label>
+                        <input type="text"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            placeholder="e.g., N172SA">
+                    </div>
+                </div>
+
+                <!-- Specifications -->
+                <div class="space-y-4">
+                    <h4 class="font-medium text-secondary">Specifications</h4>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Aircraft Type</label>
+                        <select
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
+                            <option>Piston Single</option>
+                            <option>Piston Multi</option>
+                            <option>Turboprop</option>
+                            <option>Business Jet</option>
+                            <option>Helicopter</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Total Time</label>
+                        <input type="text"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            placeholder="e.g., 1,200 hrs">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Engine Model</label>
+                        <input type="text"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            placeholder="e.g., Lycoming IO-360">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Avionics</label>
+                        <input type="text"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            placeholder="e.g., Garmin G1000">
+                    </div>
+                </div>
+
+                <!-- Pricing & Location -->
+                <div class="space-y-4">
+                    <h4 class="font-medium text-secondary">Pricing & Location</h4>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Asking Price</label>
+                        <input type="text"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            placeholder="e.g., $325,000">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                        <input type="text"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            placeholder="e.g., KAPA - Denver, CO">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                        <select
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
+                            <option>Available</option>
+                            <option>Reserved</option>
+                            <option>Under Contract</option>
+                            <option>Sold</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Photos & Description -->
+                <div class="space-y-4">
+                    <h4 class="font-medium text-secondary">Media & Description</h4>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Aircraft Photos</label>
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                            <i class="fa-solid fa-cloud-upload-alt text-gray-400 text-2xl mb-2"></i>
+                            <p class="text-sm text-gray-600">Drag and drop photos here</p>
+                            <p class="text-xs text-gray-500 mt-1">or click to browse</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                        <textarea
+                            class="w-full h-24 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            placeholder="Enter aircraft description and features..."></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-3 mt-6">
+                <button id="cancel-add-aircraft"
+                    class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">Cancel</button>
+                <button class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">Add Aircraft</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Aircraft Brokerage functionality
+        document.addEventListener('DOMContentLoaded', function () {
+            // Tab functionality
+            const tabs = document.querySelectorAll('nav button');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function () {
+                    // Remove active class from all tabs
+                    tabs.forEach(t => {
+                        t.classList.remove('tab-active');
+                        t.classList.add('text-gray-500', 'hover:text-gray-700');
+                    });
+                    // Add active class to clicked tab
+                    this.classList.add('tab-active');
+                    this.classList.remove('text-gray-500', 'hover:text-gray-700');
+                });
+            });
+
+            // Add Aircraft modal functionality
+            const addAircraftBtn = document.querySelector('button.bg-primary');
+            const addAircraftModal = document.getElementById('add-aircraft-modal');
+            const closeAddAircraftModal = document.getElementById('close-add-aircraft-modal');
+            const cancelAddAircraft = document.getElementById('cancel-add-aircraft');
+
+            addAircraftBtn.addEventListener('click', function () {
+                addAircraftModal.classList.remove('hidden');
+            });
+
+            closeAddAircraftModal.addEventListener('click', function () {
+                addAircraftModal.classList.add('hidden');
+            });
+
+            cancelAddAircraft.addEventListener('click', function () {
+                addAircraftModal.classList.add('hidden');
+            });
+
+            // Inquiry message selection
+            const inquiryItems = document.querySelectorAll('.inquiry-item');
+            inquiryItems.forEach(item => {
+                item.addEventListener('click', function () {
+                    // Remove selection from all items
+                    inquiryItems.forEach(i => i.classList.remove('bg-primary/5'));
+                    // Add selection to clicked item
+                    this.classList.add('bg-primary/5');
+                });
+            });
+
+            // Aircraft card interactions
+            const aircraftCards = document.querySelectorAll('.aircraft-card');
+            aircraftCards.forEach(card => {
+                card.addEventListener('click', function (e) {
+                    // Don't trigger selection if clicking buttons
+                    if (e.target.closest('button')) return;
+
+                    // For demo purposes, toggle a selected state
+                    this.classList.toggle('border-primary');
+                    this.classList.toggle('border-gray-100');
+                });
+            });
+
+            // Close modal when clicking outside
+            window.addEventListener('click', function (e) {
+                if (e.target === addAircraftModal) {
+                    addAircraftModal.classList.add('hidden');
+                }
+            });
+        });
+    </script>
+
+</body>
+
+</html>
