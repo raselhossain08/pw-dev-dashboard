@@ -91,8 +91,9 @@ export function useProfile() {
         } else {
           push({ message: uploadResult.error || 'Failed to upload avatar', type: 'error' })
         }
-      } catch (err: any) {
-        push({ message: err.message, type: 'error' })
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : 'Failed to upload avatar'
+        push({ message: msg, type: 'error' })
       }
     },
     [user, refreshProfile, mutate, push]
@@ -108,8 +109,9 @@ export function useProfile() {
         } else {
           push({ message: res.error || 'Failed to update password', type: 'error' })
         }
-      } catch (err: any) {
-        push({ message: err.message, type: 'error' })
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : 'Failed to update password'
+        push({ message: msg, type: 'error' })
       }
     },
     [user, push]
@@ -128,8 +130,9 @@ export function useProfile() {
       if (unread.data) {
         setUnreadCount(unread.data.count)
       }
-    } catch (err: any) {
-      push({ message: err.message, type: 'error' })
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to load notifications'
+      push({ message: msg, type: 'error' })
     } finally {
       setLoadingTab(undefined)
     }
@@ -140,8 +143,9 @@ export function useProfile() {
       try {
         await markNotificationRead(id)
         loadNotifications()
-      } catch (err: any) {
-        push({ message: err.message, type: 'error' })
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : 'Failed to mark notification as read'
+        push({ message: msg, type: 'error' })
       }
     },
     [loadNotifications, push]
@@ -151,8 +155,9 @@ export function useProfile() {
     try {
       await markAllNotificationsRead()
       loadNotifications()
-    } catch (err: any) {
-      push({ message: err.message, type: 'error' })
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to mark all notifications as read'
+      push({ message: msg, type: 'error' })
     }
   }, [loadNotifications, push])
 
@@ -161,8 +166,9 @@ export function useProfile() {
       try {
         await deleteNotification(id)
         loadNotifications()
-      } catch (err: any) {
-        push({ message: err.message, type: 'error' })
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : 'Failed to delete notification'
+        push({ message: msg, type: 'error' })
       }
     },
     [loadNotifications, push]
@@ -181,8 +187,9 @@ export function useProfile() {
       if (ordersData.data) {
         setOrders(ordersData.data.orders)
       }
-    } catch (err: any) {
-      push({ message: err.message, type: 'error' })
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to load billing'
+      push({ message: msg, type: 'error' })
     } finally {
       setLoadingTab(undefined)
     }
@@ -193,8 +200,9 @@ export function useProfile() {
       await deleteAccountApi()
       push({ message: 'Account deleted', type: 'success' })
       return true
-    } catch (err: any) {
-      push({ message: err.message, type: 'error' })
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to delete account'
+      push({ message: msg, type: 'error' })
       return false
     }
   }, [push])

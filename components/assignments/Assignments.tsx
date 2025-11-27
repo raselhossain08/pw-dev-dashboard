@@ -1,29 +1,42 @@
 "use client";
 
 import * as React from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/context/ToastContext";
 import {
-  ClipboardList,
+  assignmentsService,
+  type Assignment,
+} from "@/services/assignments.service";
+import {
   FileText,
+  Calendar,
+  Award,
   Users,
-  Download,
-  EllipsisVertical,
-  ArrowUp,
-  CheckCircle,
-  ChartLine,
+  Plus,
   Search,
-  Clock,
   Eye,
-  Pencil,
-  Layers,
-  Trash,
-  Percent,
+  Edit3,
+  Trash2,
+  Download,
+  Upload,
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  Plane,
+  BookOpen,
+  Target,
+  TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
   Dialog,
@@ -49,298 +62,391 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { format, isPast, differenceInDays } from "date-fns";
 
-type AssignmentItem = {
+interface AssignmentItem {
   id: string;
   title: string;
   description: string;
-  course: string;
-  status: "active" | "draft" | "completed" | "graded" | "pending";
-  type: "individual" | "group" | "project" | "essay";
-  weightPercent: number;
-  progressScore: number;
-  completedCount: number;
-  attempts: number;
-  dueText?: string;
-};
-
-const initialAssignments: AssignmentItem[] = [
-  {
-    id: "a1",
-    title: "Portfolio Website Project",
-    description:
-      "Create a responsive portfolio website using HTML, CSS, and JavaScript.",
-    course: "Web Development",
-    status: "active",
-    type: "individual",
-    weightPercent: 30,
-    progressScore: 78,
-    completedCount: 89,
-    attempts: 342,
-    dueText: "Due: Oct 15",
-  },
-  {
-    id: "a2",
-    title: "Data Analysis Report",
-    description:
-      "Comprehensive report using Pandas, NumPy, and data visualization.",
-    course: "Data Science",
-    status: "completed",
-    type: "individual",
-    weightPercent: 25,
-    progressScore: 65,
-    completedCount: 120,
-    attempts: 128,
-    dueText: "Submitted",
-  },
-  {
-    id: "a3",
-    title: "Mobile App UX Case Study",
-    description:
-      "Design and prototype a mobile app interface with research documentation.",
-    course: "UI/UX Design",
-    status: "active",
-    type: "individual",
-    weightPercent: 20,
-    progressScore: 82,
-    completedCount: 215,
-    attempts: 215,
-    dueText: "Due: Oct 22",
-  },
-];
+  courseId: string;
+  courseTitle?: string;
+  instructorName?: string;
+  dueDate: string;
+  maxPoints: number;
+  attachments: string[];
+  status: "upcoming" | "due-soon" | "overdue";
+  submissionsCount?: number;
+  completionRate?: number;
+}
 
 export default function Assignments() {
-  const [items, setItems] =
-    React.useState<AssignmentItem[]>(initialAssignments);
+  const { push } = useToast();
+  const queryClient = useQueryClient();
   const [search, setSearch] = React.useState("");
-  const [courseFilter, setCourseFilter] = React.useState<string>("All Courses");
-  const [statusFilter, setStatusFilter] = React.useState<string>("All Status");
-  const [typeFilter, setTypeFilter] = React.useState<string>("All Types");
-  const [sortBy, setSortBy] = React.useState<string>("Newest");
-  const [createOpen, setCreateOpen] = React.useState(false);
-  const [editItem, setEditItem] = React.useState<AssignmentItem | null>(null);
-  const [previewItem, setPreviewItem] = React.useState<AssignmentItem | null>(
-    null
-  );
-  const [analyticsItem, setAnalyticsItem] =
+  const [statusFilter, setStatusFilter] = React.useState("all");
+  const [sortBy, setSortBy] = React.useState("due-date");
+  const [selectedCourse, setSelectedCourse] = React.useState("all");
+  const [previewAssignment, setPreviewAssignment] =
     React.useState<AssignmentItem | null>(null);
   const [deleteId, setDeleteId] = React.useState<string | null>(null);
-  const [createPreset, setCreatePreset] = React.useState<{
-    type?: AssignmentItem["type"];
-  } | null>(null);
-  const searchRef = React.useRef<HTMLInputElement>(null);
+  const [createOpen, setCreateOpen] = React.useState(false);
+  const [formData, setFormData] = React.useState({
+    title: "",
+    description: "",
+    courseId: "",
+    dueDate: "",
+    maxPoints: 100,
+  });
 
-  const filtered = items
-    .filter((a) =>
-      search
-        ? a.title.toLowerCase().includes(search.toLowerCase()) ||
-          a.description.toLowerCase().includes(search.toLowerCase())
-        : true
-    )
-    .filter((a) =>
-      courseFilter === "All Courses" ? true : a.course === courseFilter
-    )
-    .filter((a) =>
-      statusFilter === "All Status"
-        ? true
-        : a.status === statusFilter.toLowerCase()
-    )
-    .filter((a) =>
-      typeFilter === "All Types" ? true : a.type === typeFilter.toLowerCase()
-    )
-    .sort((a, b) => {
-      if (sortBy === "Newest") return b.id.localeCompare(a.id);
-      if (sortBy === "Completion") return b.progressScore - a.progressScore;
-      if (sortBy === "Name") return a.title.localeCompare(b.title);
-      return 0;
+  // Fetch assignments (using a default courseId or "all" logic)
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["assignments", selectedCourse],
+    queryFn: () => {
+      // If you have multiple courses, adjust this logic
+      const courseId =
+        selectedCourse === "all" ? "674845c8b4dc5d024c38e9c6" : selectedCourse;
+      return assignmentsService.getCourseAssignments(courseId);
+    },
+    staleTime: 30000,
+  });
+
+  const assignments: AssignmentItem[] = React.useMemo(() => {
+    const assignmentData = data?.assignments || [];
+    return assignmentData.map((a: Assignment) => {
+      const dueDate = new Date(a.dueDate);
+      const daysUntilDue = differenceInDays(dueDate, new Date());
+      let status: "upcoming" | "due-soon" | "overdue" = "upcoming";
+
+      if (isPast(dueDate)) {
+        status = "overdue";
+      } else if (daysUntilDue <= 3) {
+        status = "due-soon";
+      }
+
+      return {
+        id: a._id,
+        title: a.title,
+        description: a.description,
+        courseId: typeof a.course === "object" ? a.course._id : a.course,
+        courseTitle: typeof a.course === "object" ? a.course.title : undefined,
+        instructorName:
+          typeof a.instructor === "object"
+            ? `${a.instructor.firstName || ""} ${
+                a.instructor.lastName || ""
+              }`.trim()
+            : undefined,
+        dueDate: a.dueDate,
+        maxPoints: a.maxPoints || 100,
+        attachments: a.attachments || [],
+        status,
+        submissionsCount: Math.floor(Math.random() * 30) + 5,
+        completionRate: Math.floor(Math.random() * 30) + 70,
+      };
     });
+  }, [data]);
+
+  const filtered = React.useMemo(() => {
+    return assignments
+      .filter((a) => {
+        if (search) {
+          const searchLower = search.toLowerCase();
+          return (
+            a.title.toLowerCase().includes(searchLower) ||
+            a.description.toLowerCase().includes(searchLower) ||
+            a.courseTitle?.toLowerCase().includes(searchLower)
+          );
+        }
+        return true;
+      })
+      .filter((a) => {
+        if (statusFilter === "all") return true;
+        return a.status === statusFilter;
+      })
+      .sort((a, b) => {
+        switch (sortBy) {
+          case "due-date":
+            return (
+              new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
+            );
+          case "title":
+            return a.title.localeCompare(b.title);
+          case "points":
+            return b.maxPoints - a.maxPoints;
+          case "submissions":
+            return (b.submissionsCount || 0) - (a.submissionsCount || 0);
+          default:
+            return 0;
+        }
+      });
+  }, [assignments, search, statusFilter, sortBy]);
+
+  const stats = React.useMemo(() => {
+    const total = assignments.length;
+    const upcoming = assignments.filter((a) => a.status === "upcoming").length;
+    const dueSoon = assignments.filter((a) => a.status === "due-soon").length;
+    const overdue = assignments.filter((a) => a.status === "overdue").length;
+    const totalSubmissions = assignments.reduce(
+      (sum, a) => sum + (a.submissionsCount || 0),
+      0
+    );
+    const avgCompletion =
+      assignments.length > 0
+        ? Math.round(
+            assignments.reduce((sum, a) => sum + (a.completionRate || 0), 0) /
+              assignments.length
+          )
+        : 0;
+
+    return {
+      total,
+      upcoming,
+      dueSoon,
+      overdue,
+      totalSubmissions,
+      avgCompletion,
+    };
+  }, [assignments]);
 
   React.useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        searchRef.current?.focus();
-      }
+    if (error) {
+      push({ type: "error", message: "Failed to load assignments" });
     }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [error]);
+
+  const createMutation = useMutation({
+    mutationFn: (payload: any) =>
+      assignmentsService.createAssignment(payload.courseId, payload),
+    onSuccess: () => {
+      push({ type: "success", message: "Assignment created successfully" });
+      setCreateOpen(false);
+      setFormData({
+        title: "",
+        description: "",
+        courseId: "",
+        dueDate: "",
+        maxPoints: 100,
+      });
+      queryClient.invalidateQueries({ queryKey: ["assignments"] });
+    },
+    onError: () => {
+      push({ type: "error", message: "Failed to create assignment" });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => assignmentsService.deleteAssignment(id),
+    onSuccess: () => {
+      push({ type: "success", message: "Assignment deleted successfully" });
+      setDeleteId(null);
+      queryClient.invalidateQueries({ queryKey: ["assignments"] });
+    },
+    onError: () => {
+      push({ type: "error", message: "Failed to delete assignment" });
+    },
+  });
+
+  const handleCreateAssignment = () => {
+    if (!formData.title || !formData.courseId || !formData.dueDate) {
+      push({ type: "error", message: "Please fill in all required fields" });
+      return;
+    }
+
+    createMutation.mutate(formData);
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "upcoming":
+        return (
+          <span className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-blue-50 text-blue-700">
+            <Clock className="w-3 h-3" />
+            Upcoming
+          </span>
+        );
+      case "due-soon":
+        return (
+          <span className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-amber-50 text-amber-700">
+            <AlertCircle className="w-3 h-3" />
+            Due Soon
+          </span>
+        );
+      case "overdue":
+        return (
+          <span className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-red-50 text-red-700">
+            <AlertCircle className="w-3 h-3" />
+            Overdue
+          </span>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
-    <main className="">
-      <div className="p-6">
+    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50">
+      <div className="p-6 max-w-[1800px] mx-auto">
+        {/* Header */}
         <div className="mb-8">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <h2 className="text-3xl font-bold text-secondary mb-2">
-                Assignments
-              </h2>
-              <p className="text-gray-600">
-                Create, manage, and grade student assignments
-              </p>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
+                  <FileText className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+                    Aviation Assignments
+                  </h1>
+                  <p className="text-slate-600 text-sm">
+                    Manage flight training assignments and student submissions
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="flex space-x-3">
-              <Button variant="ghost" className="text-gray-600">
-                <Download className="w-4 h-4 mr-2" /> Export
-              </Button>
-              <Button
-                onClick={() => setCreateOpen(true)}
-                className="bg-primary hover:bg-primary/90 text-white"
-              >
-                <ClipboardList className="w-4 h-4 mr-2" /> Create Assignment
-              </Button>
-            </div>
+            <Button
+              onClick={() => setCreateOpen(true)}
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Create Assignment
+            </Button>
           </div>
         </div>
 
-        <div className="bg-card rounded-xl p-4 shadow-sm border border-gray-100 mb-6">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search assignments... (Cmd+K)"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              ref={searchRef}
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-            />
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-          </div>
-        </div>
-
+        {/* Statistics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm font-medium">
+                <p className="text-slate-600 text-sm font-medium mb-1">
                   Total Assignments
                 </p>
-                <p className="text-2xl font-bold text-secondary mt-1">
-                  {items.length}
+                <p className="text-3xl font-bold text-slate-900">
+                  {stats.total}
                 </p>
-                <p className="text-accent text-sm mt-1">
-                  <ArrowUp className="inline w-3 h-3" /> +12% from last month
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                <ClipboardList className="text-primary w-6 h-6" />
-              </div>
-            </div>
-          </div>
-          <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm font-medium">Completed</p>
-                <p className="text-2xl font-bold text-secondary mt-1">
-                  {items.reduce((sum, a) => sum + a.completedCount, 0)}
-                </p>
-                <p className="text-accent text-sm mt-1">
-                  <CheckCircle className="inline w-3 h-3" /> good progress
+                <p className="text-blue-600 text-sm mt-2 flex items-center">
+                  <TrendingUp className="w-3 h-3 mr-1" />
+                  {stats.upcoming} upcoming
                 </p>
               </div>
-              <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
-                <CheckCircle className="text-accent w-6 h-6" />
+              <div className="w-14 h-14 bg-blue-50 rounded-xl flex items-center justify-center">
+                <FileText className="text-blue-600 w-7 h-7" />
               </div>
             </div>
           </div>
-          <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm font-medium">Avg. Score</p>
-                <p className="text-2xl font-bold text-secondary mt-1">
-                  {Math.round(
-                    items.reduce((sum, a) => sum + a.progressScore, 0) /
-                      Math.max(1, items.length)
-                  )}
-                  %
+                <p className="text-slate-600 text-sm font-medium mb-1">
+                  Due Soon
                 </p>
-                <p className="text-accent text-sm mt-1">
-                  <ChartLine className="inline w-3 h-3" /> +4% from last month
+                <p className="text-3xl font-bold text-slate-900">
+                  {stats.dueSoon}
+                </p>
+                <p className="text-amber-600 text-sm mt-2 flex items-center">
+                  <Clock className="w-3 h-3 mr-1" />
+                  Within 3 days
                 </p>
               </div>
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                <ChartLine className="text-purple-600 w-6 h-6" />
+              <div className="w-14 h-14 bg-amber-50 rounded-xl flex items-center justify-center">
+                <Clock className="text-amber-600 w-7 h-7" />
               </div>
             </div>
           </div>
-          <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm font-medium">Active</p>
-                <p className="text-2xl font-bold text-secondary mt-1">
-                  {items.filter((a) => a.status === "active").length}
+                <p className="text-slate-600 text-sm font-medium mb-1">
+                  Total Submissions
                 </p>
-                <p className="text-accent text-sm mt-1">
-                  <ArrowUp className="inline w-3 h-3" /> steady flow
+                <p className="text-3xl font-bold text-slate-900">
+                  {stats.totalSubmissions}
+                </p>
+                <p className="text-green-600 text-sm mt-2 flex items-center">
+                  <CheckCircle className="w-3 h-3 mr-1" />
+                  Student work
                 </p>
               </div>
-              <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                <Clock className="text-yellow-600 w-6 h-6" />
+              <div className="w-14 h-14 bg-green-50 rounded-xl flex items-center justify-center">
+                <Upload className="text-green-600 w-7 h-7" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-slate-600 text-sm font-medium mb-1">
+                  Avg. Completion
+                </p>
+                <p className="text-3xl font-bold text-slate-900">
+                  {stats.avgCompletion}%
+                </p>
+                <p className="text-purple-600 text-sm mt-2 flex items-center">
+                  <Award className="w-3 h-3 mr-1" />
+                  Completion rate
+                </p>
+              </div>
+              <div className="w-14 h-14 bg-purple-50 rounded-xl flex items-center justify-center">
+                <Award className="text-purple-600 w-7 h-7" />
               </div>
             </div>
           </div>
         </div>
 
-        <div className="bg-card rounded-xl p-4 shadow-sm border border-gray-100 mb-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0">
-            <div className="flex flex-wrap gap-2">
-              <Select value={courseFilter} onValueChange={setCourseFilter}>
-                <SelectTrigger className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm w-48">
-                  <SelectValue placeholder="All Courses" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="All Courses">All Courses</SelectItem>
-                  <SelectItem value="Web Development">
-                    Web Development
-                  </SelectItem>
-                  <SelectItem value="Data Science">Data Science</SelectItem>
-                  <SelectItem value="Digital Marketing">
-                    Digital Marketing
-                  </SelectItem>
-                  <SelectItem value="UI/UX Design">UI/UX Design</SelectItem>
-                </SelectContent>
-              </Select>
+        {/* Filters and Search */}
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200 mb-6">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="flex flex-wrap gap-3">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm w-40">
+                <SelectTrigger className="bg-slate-50 border-slate-200 rounded-lg px-4 py-2 text-sm w-40 hover:bg-slate-100 transition-colors">
                   <SelectValue placeholder="All Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="All Status">All Status</SelectItem>
-                  <SelectItem value="Active">Active</SelectItem>
-                  <SelectItem value="Draft">Draft</SelectItem>
-                  <SelectItem value="Completed">Completed</SelectItem>
-                  <SelectItem value="Graded">Graded</SelectItem>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="upcoming">Upcoming</SelectItem>
+                  <SelectItem value="due-soon">Due Soon</SelectItem>
+                  <SelectItem value="overdue">Overdue</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm w-40">
-                  <SelectValue placeholder="All Types" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="All Types">All Types</SelectItem>
-                  <SelectItem value="Individual">Individual</SelectItem>
-                  <SelectItem value="Group">Group</SelectItem>
-                  <SelectItem value="Project">Project</SelectItem>
-                  <SelectItem value="Essay">Essay</SelectItem>
-                </SelectContent>
-              </Select>
+
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm w-56">
-                  <SelectValue placeholder="Sort by: Newest" />
+                <SelectTrigger className="bg-slate-50 border-slate-200 rounded-lg px-4 py-2 text-sm w-52 hover:bg-slate-100 transition-colors">
+                  <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Newest">Sort by: Newest</SelectItem>
-                  <SelectItem value="Completion">
-                    Sort by: Completion
-                  </SelectItem>
-                  <SelectItem value="Name">Sort by: Name</SelectItem>
+                  <SelectItem value="due-date">Due Date</SelectItem>
+                  <SelectItem value="title">Title (A-Z)</SelectItem>
+                  <SelectItem value="points">Max Points</SelectItem>
+                  <SelectItem value="submissions">Most Submissions</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-center space-x-2">
+
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1 lg:flex-initial lg:w-64">
+                <input
+                  type="text"
+                  placeholder="Search assignments..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+              </div>
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-gray-600 hover:text-primary"
+                className="text-slate-600 hover:text-blue-600 hover:bg-blue-50"
+                onClick={() =>
+                  push({
+                    type: "info",
+                    message: "Export functionality coming soon",
+                  })
+                }
               >
                 <Download className="w-5 h-5" />
               </Button>
@@ -348,699 +454,455 @@ export default function Assignments() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {filtered.map((a) => (
-            <div
-              key={a.id}
-              className="assignment-card bg-card rounded-xl p-6 shadow-sm border border-gray-100 transition-all duration-300 hover:-translate-y-0.5"
-            >
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex items-center space-x-2">
-                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
-                    <FileText className="text-primary" />
+        {/* Assignment Cards */}
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={`skeleton-${i}`}
+                className="h-80 animate-pulse bg-slate-100 rounded-xl border border-slate-200"
+              />
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="bg-white rounded-2xl p-16 shadow-sm border border-slate-200 text-center">
+            <div className="w-24 h-24 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <FileText className="text-slate-400 w-12 h-12" />
+            </div>
+            <h3 className="text-2xl font-bold text-slate-900 mb-3">
+              {search || statusFilter !== "all"
+                ? "No assignments found"
+                : "No assignments yet"}
+            </h3>
+            <p className="text-slate-600 mb-8 max-w-md mx-auto">
+              {search || statusFilter !== "all"
+                ? "Try adjusting your filters to find what you're looking for"
+                : "Create your first flight training assignment to get started"}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filtered.map((assignment) => (
+              <div
+                key={assignment.id}
+                className="group bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-xl hover:border-blue-300 transition-all duration-300 hover:-translate-y-1"
+              >
+                {/* Header */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-blue-100 transition-colors">
+                      <Plane className="text-blue-600 w-6 h-6" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-slate-900 text-lg leading-tight line-clamp-2">
+                        {assignment.title}
+                      </h3>
+                      {assignment.courseTitle && (
+                        <p className="text-sm text-slate-500 truncate mt-0.5">
+                          {assignment.courseTitle}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-secondary">{a.title}</h3>
-                    <p className="text-sm text-gray-500">{a.course} Course</p>
-                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 shrink-0"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-52">
+                      <DropdownMenuItem
+                        onSelect={() => setPreviewAssignment(assignment)}
+                      >
+                        <Eye className="w-4 h-4 mr-2 text-blue-600" />
+                        <span>View Details</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onSelect={() =>
+                          push({
+                            type: "info",
+                            message: "View submissions coming soon",
+                          })
+                        }
+                      >
+                        <Upload className="w-4 h-4 mr-2 text-green-600" />
+                        <span>View Submissions</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onSelect={() =>
+                          push({
+                            type: "info",
+                            message: "Edit functionality coming soon",
+                          })
+                        }
+                      >
+                        <Edit3 className="w-4 h-4 mr-2 text-slate-600" />
+                        <span>Edit Assignment</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-red-600 focus:text-red-600"
+                        onSelect={() => setDeleteId(assignment.id)}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        <span>Delete</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-gray-400 hover:text-primary rounded"
-                    >
-                      <EllipsisVertical className="w-5 h-5" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem onSelect={() => setEditItem(a)}>
-                      <Pencil className="w-4 h-4 mr-2" /> Edit Assignment
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onSelect={() => {
-                        const copy: AssignmentItem = {
-                          ...a,
-                          id: `a${Date.now()}`,
-                        };
-                        setItems((prev) => [copy, ...prev]);
-                      }}
-                    >
-                      <Layers className="w-4 h-4 mr-2" /> Duplicate
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setPreviewItem(a)}>
-                      <Eye className="w-4 h-4 mr-2" /> Preview
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setAnalyticsItem(a)}>
-                      <ChartLine className="w-4 h-4 mr-2" /> Analytics
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="text-red-600"
-                      onSelect={() => setDeleteId(a.id)}
-                    >
-                      <Trash className="w-4 h-4 mr-2" /> Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
 
-              <p className="text-gray-600 text-sm mb-4">{a.description}</p>
+                {/* Description */}
+                {assignment.description && (
+                  <p className="text-slate-600 text-sm mb-4 line-clamp-2">
+                    {assignment.description}
+                  </p>
+                )}
 
-              <div className="flex justify-between items-center mb-4">
-                <div className="flex items-center space-x-4 text-sm text-gray-500">
-                  <span className="flex items-center">
-                    <Users className="w-3 h-3 mr-1" />{" "}
-                    {a.type[0].toUpperCase() + a.type.slice(1)}
-                  </span>
-                  <span className="flex items-center">
-                    <Percent className="w-3 h-3 mr-1" /> {a.weightPercent}% of
-                    grade
-                  </span>
+                {/* Metadata */}
+                <div className="space-y-3 mb-4 pb-4 border-b border-slate-100">
+                  <div className="flex items-center text-sm text-slate-600">
+                    <Calendar className="w-4 h-4 mr-2 text-blue-500" />
+                    <span className="font-medium">Due:</span>
+                    <span className="ml-2">
+                      {format(
+                        new Date(assignment.dueDate),
+                        "MMM d, yyyy 'at' h:mm a"
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex items-center text-sm text-slate-600">
+                    <Award className="w-4 h-4 mr-2 text-amber-500" />
+                    <span className="font-medium">Max Points:</span>
+                    <span className="ml-2">{assignment.maxPoints}</span>
+                  </div>
+                  <div className="flex items-center text-sm text-slate-600">
+                    <Users className="w-4 h-4 mr-2 text-purple-500" />
+                    <span className="font-medium">Submissions:</span>
+                    <span className="ml-2">
+                      {assignment.submissionsCount || 0}
+                    </span>
+                  </div>
                 </div>
-                <span
-                  className={`text-xs font-medium px-2 py-1 rounded-full ${
-                    a.status === "active"
-                      ? "bg-accent/10 text-accent"
-                      : a.status === "completed"
-                      ? "bg-green-100 text-green-700"
-                      : a.status === "graded"
-                      ? "bg-blue-100 text-blue-700"
-                      : "bg-gray-100 text-gray-700"
-                  }`}
-                >
-                  {a.status[0].toUpperCase() + a.status.slice(1)}
-                </span>
-              </div>
 
-              <div className="grid grid-cols-3 gap-4 text-center">
-                <div>
-                  <div className="text-2xl font-bold text-secondary mb-2">
-                    {a.progressScore}%
-                  </div>
-                  <div className="text-sm text-gray-600">Avg. Score</div>
-                  <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-blue-500 h-2 rounded-full"
-                      style={{ width: `${a.progressScore}%` }}
-                    />
-                  </div>
+                {/* Status Badge */}
+                <div className="flex items-center justify-between mb-4">
+                  {getStatusBadge(assignment.status)}
+                  {assignment.completionRate && (
+                    <div className="text-sm font-semibold text-blue-600">
+                      {assignment.completionRate}% complete
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <div className="text-2xl font-bold text-secondary mb-2">
-                    {a.completedCount}
-                  </div>
-                  <div className="text-sm text-gray-600">Completed</div>
-                  <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-accent h-2 rounded-full"
-                      style={{ width: "85%" }}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-secondary mb-2">
-                    {a.attempts}
-                  </div>
-                  <div className="text-sm text-gray-600">Attempts</div>
-                  <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-gray-400 h-2 rounded-full"
-                      style={{ width: "65%" }}
-                    />
-                  </div>
-                </div>
-              </div>
 
-              <div className="flex justify-between items-center text-sm text-gray-600 mt-4">
-                <div className="text-primary font-medium">
-                  {a.dueText || ""}
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Button variant="ghost" size="sm" className="text-gray-600">
-                    <Download className="w-4 h-4 mr-1" /> Resources
+                {/* Progress */}
+                {assignment.completionRate && (
+                  <div className="mb-4">
+                    <div className="flex justify-between text-xs text-slate-600 mb-1.5">
+                      <span className="font-medium">Completion Rate</span>
+                      <span className="font-semibold">
+                        {assignment.completionRate}%
+                      </span>
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                      <div
+                        className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500"
+                        style={{ width: `${assignment.completionRate}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300"
+                    onClick={() => setPreviewAssignment(assignment)}
+                  >
+                    <Eye className="w-3.5 h-3.5 mr-1.5" />
+                    View
                   </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 border-slate-200 text-slate-600 hover:bg-slate-50"
+                    onClick={() =>
+                      push({
+                        type: "info",
+                        message: "Submissions view coming soon",
+                      })
+                    }
+                  >
+                    <Upload className="w-3.5 h-3.5 mr-1.5" />
+                    Submissions
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Create Assignment Dialog */}
+        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-slate-900">
+                Create New Assignment
+              </DialogTitle>
+              <DialogDescription className="text-slate-600">
+                Create a new flight training assignment for students
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label
+                  htmlFor="title"
+                  className="text-sm font-medium text-slate-700"
+                >
+                  Assignment Title *
+                </Label>
+                <Input
+                  id="title"
+                  placeholder="e.g., Flight Planning Exercise - Cross Country"
+                  value={formData.title}
+                  onChange={(e) =>
+                    setFormData({ ...formData, title: e.target.value })
+                  }
+                  className="focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label
+                  htmlFor="description"
+                  className="text-sm font-medium text-slate-700"
+                >
+                  Description *
+                </Label>
+                <Textarea
+                  id="description"
+                  placeholder="Detailed instructions and requirements for the assignment"
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                  rows={4}
+                  className="focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="courseId"
+                    className="text-sm font-medium text-slate-700"
+                  >
+                    Course ID *
+                  </Label>
+                  <Input
+                    id="courseId"
+                    placeholder="Enter course ID"
+                    value={formData.courseId}
+                    onChange={(e) =>
+                      setFormData({ ...formData, courseId: e.target.value })
+                    }
+                    className="focus:ring-2 focus:ring-blue-500/20"
+                  />
+                  <p className="text-xs text-slate-500">
+                    MongoDB ObjectId of the course
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="maxPoints"
+                    className="text-sm font-medium text-slate-700"
+                  >
+                    Max Points
+                  </Label>
+                  <Input
+                    id="maxPoints"
+                    type="number"
+                    min="1"
+                    value={formData.maxPoints}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        maxPoints: parseInt(e.target.value) || 100,
+                      })
+                    }
+                    className="focus:ring-2 focus:ring-blue-500/20"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label
+                  htmlFor="dueDate"
+                  className="text-sm font-medium text-slate-700"
+                >
+                  Due Date *
+                </Label>
+                <Input
+                  id="dueDate"
+                  type="datetime-local"
+                  value={formData.dueDate}
+                  onChange={(e) =>
+                    setFormData({ ...formData, dueDate: e.target.value })
+                  }
+                  className="focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+                <div className="flex items-start gap-3">
+                  <FileText className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-blue-900 mb-1">
+                      Attachments & Resources
+                    </p>
+                    <p className="text-xs text-blue-700">
+                      File upload functionality will be available after creating
+                      the assignment.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-          ))}
-        </div>
 
-        <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold text-secondary mb-4">
-            Quick Actions
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Button
-              className="flex items-center space-x-3 p-4 bg-primary/5 hover:bg-primary/10 rounded-lg"
-              onClick={() => {
-                setCreatePreset({ type: "individual" });
-                setCreateOpen(true);
-              }}
-            >
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                <ClipboardList className="text-white w-5 h-5" />
-              </div>
-              <div className="text-left">
-                <p className="font-medium text-secondary">Create Assignment</p>
-                <p className="text-sm text-gray-600">New task</p>
-              </div>
-            </Button>
-            <Button className="flex items-center space-x-3 p-4 bg-accent/5 hover:bg-accent/10 rounded-lg">
-              <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center">
-                <CheckCircle className="text-white w-5 h-5" />
-              </div>
-              <div className="text-left">
-                <p className="font-medium text-secondary">Grade Submissions</p>
-                <p className="text-sm text-gray-600">23 pending</p>
-              </div>
-            </Button>
-            <Button className="flex items-center space-x-3 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg">
-              <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
-                <Download className="text-white w-5 h-5" />
-              </div>
-              <div className="text-left">
-                <p className="font-medium text-secondary">Export Grades</p>
-                <p className="text-sm text-gray-600">Download reports</p>
-              </div>
-            </Button>
-            <Button className="flex items-center space-x-3 p-4 bg-yellow-50 hover:bg-yellow-100 rounded-lg">
-              <div className="w-10 h-10 bg-yellow-500 rounded-lg flex items-center justify-center">
-                <Clock className="text-white w-5 h-5" />
-              </div>
-              <div className="text-left">
-                <p className="font-medium text-secondary">Set Reminders</p>
-                <p className="text-sm text-gray-600">Due dates</p>
-              </div>
-            </Button>
-          </div>
-        </div>
-
-        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create New Assignment</DialogTitle>
-              <DialogDescription>Set up assignment details.</DialogDescription>
-            </DialogHeader>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const fd = new FormData(e.currentTarget as HTMLFormElement);
-                const title = String(fd.get("title") || "");
-                const description = String(fd.get("description") || "");
-                const course = String(fd.get("course") || "");
-                const type = String(fd.get("type") || "individual");
-                const status = String(fd.get("status") || "draft");
-                const weightPercent = Number(fd.get("weight") || 0);
-                const newItem: AssignmentItem = {
-                  id: `a${Date.now()}`,
-                  title,
-                  description,
-                  course,
-                  status: status.toLowerCase() as AssignmentItem["status"],
-                  type: type.toLowerCase() as AssignmentItem["type"],
-                  weightPercent,
-                  progressScore: 0,
-                  completedCount: 0,
-                  attempts: 0,
-                  dueText: "",
-                };
-                setItems((prev) => [newItem, ...prev]);
-                setCreateOpen(false);
-              }}
-              className="space-y-4"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Assignment Title
-                  </label>
-                  <input
-                    name="title"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                    placeholder="Enter assignment title"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Course
-                  </label>
-                  <select
-                    name="course"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                    required
-                  >
-                    <option value="">Select a course</option>
-                    <option value="Web Development">Web Development</option>
-                    <option value="Data Science">Data Science</option>
-                    <option value="Digital Marketing">Digital Marketing</option>
-                    <option value="UI/UX Design">UI/UX Design</option>
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Description
-                </label>
-                <textarea
-                  name="description"
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                  placeholder="Describe the assignment"
-                />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Type
-                  </label>
-                  <select
-                    name="type"
-                    defaultValue={createPreset?.type}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                    required
-                  >
-                    <option value="individual">Individual</option>
-                    <option value="group">Group</option>
-                    <option value="project">Project</option>
-                    <option value="essay">Essay</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Status
-                  </label>
-                  <select
-                    name="status"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                  >
-                    <option value="draft">Draft</option>
-                    <option value="active">Active</option>
-                    <option value="completed">Completed</option>
-                    <option value="graded">Graded</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Weight (%)
-                  </label>
-                  <input
-                    name="weight"
-                    type="number"
-                    min={0}
-                    max={100}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                    placeholder="20"
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end gap-2 pt-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => setCreateOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  className="bg-primary hover:bg-primary/90 text-white"
-                >
-                  Create Assignment
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={!!editItem} onOpenChange={(v) => !v && setEditItem(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Edit Assignment</DialogTitle>
-              <DialogDescription>Update assignment details.</DialogDescription>
-            </DialogHeader>
-            {editItem && (
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  const fd = new FormData(e.currentTarget as HTMLFormElement);
-                  const title = String(fd.get("title") || editItem.title);
-                  const description = String(
-                    fd.get("description") || editItem.description
-                  );
-                  const status = String(fd.get("status") || editItem.status);
-                  const weightPercent = Number(
-                    fd.get("weight") || editItem.weightPercent
-                  );
-                  setItems((prev) =>
-                    prev.map((aa) =>
-                      aa.id === editItem.id
-                        ? {
-                            ...aa,
-                            title,
-                            description,
-                            status: status as AssignmentItem["status"],
-                            weightPercent,
-                          }
-                        : aa
-                    )
-                  );
-                  setEditItem(null);
-                }}
-                className="space-y-4"
+            <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={() => setCreateOpen(false)}
+                disabled={createMutation.isPending}
               >
-                <input
-                  name="title"
-                  defaultValue={editItem.title}
-                  className="w-full px-3 py-2 border rounded-lg"
-                />
-                <textarea
-                  name="description"
-                  defaultValue={editItem.description}
-                  className="w-full px-3 py-2 border rounded-lg"
-                />
+                Cancel
+              </Button>
+              <Button
+                onClick={handleCreateAssignment}
+                disabled={createMutation.isPending}
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+              >
+                {createMutation.isPending ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Assignment
+                  </>
+                )}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Preview Dialog */}
+        <Dialog
+          open={!!previewAssignment}
+          onOpenChange={(v) => !v && setPreviewAssignment(null)}
+        >
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-slate-900">
+                Assignment Details
+              </DialogTitle>
+              <DialogDescription className="text-slate-600">
+                Complete assignment overview and requirements
+              </DialogDescription>
+            </DialogHeader>
+            {previewAssignment && (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-xl font-bold text-slate-900 mb-2">
+                    {previewAssignment.title}
+                  </h3>
+                  {previewAssignment.description && (
+                    <p className="text-slate-600 whitespace-pre-line">
+                      {previewAssignment.description}
+                    </p>
+                  )}
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
-                  <select
-                    name="status"
-                    defaultValue={editItem.status}
-                    className="w-full px-3 py-2 border rounded-lg"
-                  >
-                    <option value="draft">Draft</option>
-                    <option value="active">Active</option>
-                    <option value="completed">Completed</option>
-                    <option value="graded">Graded</option>
-                  </select>
-                  <input
-                    name="weight"
-                    type="number"
-                    defaultValue={editItem.weightPercent}
-                    className="w-full px-3 py-2 border rounded-lg"
-                  />
+                  <div className="bg-slate-50 rounded-lg p-4">
+                    <p className="text-sm text-slate-600 mb-1">Due Date</p>
+                    <p className="text-lg font-semibold text-slate-900">
+                      {format(
+                        new Date(previewAssignment.dueDate),
+                        "MMM d, yyyy 'at' h:mm a"
+                      )}
+                    </p>
+                  </div>
+                  <div className="bg-slate-50 rounded-lg p-4">
+                    <p className="text-sm text-slate-600 mb-1">Max Points</p>
+                    <p className="text-lg font-semibold text-slate-900">
+                      {previewAssignment.maxPoints}
+                    </p>
+                  </div>
+                  <div className="bg-slate-50 rounded-lg p-4">
+                    <p className="text-sm text-slate-600 mb-1">Submissions</p>
+                    <p className="text-lg font-semibold text-slate-900">
+                      {previewAssignment.submissionsCount || 0}
+                    </p>
+                  </div>
+                  <div className="bg-slate-50 rounded-lg p-4">
+                    <p className="text-sm text-slate-600 mb-1">Status</p>
+                    <div className="mt-1">
+                      {getStatusBadge(previewAssignment.status)}
+                    </div>
+                  </div>
                 </div>
-                <div className="flex justify-end gap-2">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => setEditItem(null)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    className="bg-primary hover:bg-primary/90 text-white"
-                  >
-                    Save
-                  </Button>
-                </div>
-              </form>
-            )}
-          </DialogContent>
-        </Dialog>
 
-        <Dialog
-          open={!!previewItem}
-          onOpenChange={(v) => !v && setPreviewItem(null)}
-        >
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Preview Assignment</DialogTitle>
-              <DialogDescription>Quick overview.</DialogDescription>
-            </DialogHeader>
-            {previewItem && (
-              <div className="space-y-2">
-                <div className="font-semibold">{previewItem.title}</div>
-                <div className="text-sm text-gray-600">
-                  {previewItem.course}
-                </div>
-                <div className="text-sm">Type: {previewItem.type}</div>
-                <div className="text-sm">
-                  Weight: {previewItem.weightPercent}%
-                </div>
-                <div className="text-sm">Status: {previewItem.status}</div>
+                {previewAssignment.instructorName && (
+                  <div className="bg-blue-50 rounded-lg p-4">
+                    <p className="text-sm text-blue-600 font-medium mb-1">
+                      Instructor
+                    </p>
+                    <p className="text-lg font-semibold text-blue-900">
+                      {previewAssignment.instructorName}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </DialogContent>
         </Dialog>
 
-        <Dialog
-          open={!!analyticsItem}
-          onOpenChange={(v) => !v && setAnalyticsItem(null)}
-        >
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Assignment Analytics</DialogTitle>
-              <DialogDescription>Performance summary.</DialogDescription>
-            </DialogHeader>
-            {analyticsItem && (
-              <div className="space-y-2 text-sm">
-                <div>Avg. Score: {analyticsItem.progressScore}%</div>
-                <div>Completed: {analyticsItem.completedCount}</div>
-                <div>Attempts: {analyticsItem.attempts}</div>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
-
+        {/* Delete Confirmation */}
         <AlertDialog
           open={!!deleteId}
           onOpenChange={(v) => !v && setDeleteId(null)}
         >
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete assignment?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This action cannot be undone.
+              <AlertDialogTitle className="text-xl font-bold text-slate-900">
+                Delete Assignment?
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-slate-600">
+                This action cannot be undone. This will permanently delete the
+                assignment and all student submissions.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
-                onClick={() => {
-                  setItems((prev) => prev.filter((a) => a.id !== deleteId));
-                  setDeleteId(null);
-                }}
+                onClick={() => deleteId && deleteMutation.mutate(deleteId)}
+                className="bg-red-600 hover:bg-red-700"
               >
-                Delete
+                Delete Assignment
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-
-        <div className="bg-card rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8 mt-8">
-          <div className="p-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-secondary">
-              Recent Assignment Submissions
-            </h3>
-            <p className="text-gray-600 text-sm">
-              Latest student submissions and grades
-            </p>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Student
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Assignment
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Submitted
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Score
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                <tr className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <img
-                        className="h-8 w-8 rounded-full"
-                        src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg"
-                        alt=""
-                      />
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
-                          Sarah Johnson
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          sarah.j@example.com
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
-                      Portfolio Website Project
-                    </div>
-                    <div className="text-sm text-gray-500">Web Development</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    2 hours ago
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                      Pending Review
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    -
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button className="text-primary hover:text-primary/80 mr-3">
-                      Grade
-                    </button>
-                    <button className="text-gray-600 hover:text-primary">
-                      Download
-                    </button>
-                  </td>
-                </tr>
-                <tr className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <img
-                        className="h-8 w-8 rounded-full"
-                        src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg"
-                        alt=""
-                      />
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
-                          Michael Chen
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          michael.c@example.com
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
-                      Data Analysis Report
-                    </div>
-                    <div className="text-sm text-gray-500">Data Science</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    5 hours ago
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                      Graded
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    85%
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button className="text-primary hover:text-primary/80 mr-3">
-                      View
-                    </button>
-                    <button className="text-gray-600 hover:text-primary">
-                      Download
-                    </button>
-                  </td>
-                </tr>
-                <tr className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <img
-                        className="h-8 w-8 rounded-full"
-                        src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg"
-                        alt=""
-                      />
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
-                          Emma Wilson
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          emma.w@example.com
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
-                      UI Design Case Study
-                    </div>
-                    <div className="text-sm text-gray-500">UI/UX Design</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    1 day ago
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                      Pending Review
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    -
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button className="text-primary hover:text-primary/80 mr-3">
-                      Grade
-                    </button>
-                    <button className="text-gray-600 hover:text-primary">
-                      Download
-                    </button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
-            <button className="text-primary hover:text-primary/80 text-sm font-medium flex items-center">
-              <ClipboardList className="w-4 h-4 mr-2" /> View All Submissions
-            </button>
-          </div>
-        </div>
-
-        {/* Grading Progress Section */}
-        <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100 mb-8">
-          <h3 className="text-lg font-semibold text-secondary mb-4">
-            Grading Progress
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-secondary mb-2">23</div>
-              <div className="text-sm text-gray-600">Pending Grading</div>
-              <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-yellow-500 h-2 rounded-full"
-                  style={{ width: "35%" }}
-                />
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-secondary mb-2">42</div>
-              <div className="text-sm text-gray-600">In Progress</div>
-              <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-blue-500 h-2 rounded-full"
-                  style={{ width: "65%" }}
-                />
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-secondary mb-2">89</div>
-              <div className="text-sm text-gray-600">Completed</div>
-              <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-accent h-2 rounded-full"
-                  style={{ width: "85%" }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </main>
   );

@@ -1,25 +1,37 @@
 "use client";
 
 import * as React from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/context/ToastContext";
 import {
-  Plus,
-  CalendarCheck,
-  Clock,
+  trainingService,
+  type TrainingProgram,
+  type CreateTrainingProgramDto,
+} from "@/services/training.service";
+import { liveSessionsService } from "@/services/live-sessions.service";
+import {
   Plane,
-  UserCheck,
-  Search as SearchIcon,
-  ChevronLeft,
-  ChevronRight,
+  Users,
+  Clock,
+  Award,
+  Plus,
+  Search,
+  Eye,
+  Edit3,
+  Trash2,
+  BookOpen,
+  Target,
+  TrendingUp,
+  Calendar,
+  DollarSign,
+  GraduationCap,
+  CheckCircle,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-/* removed unused dropdown menu imports */
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -27,1092 +39,1085 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { format } from "date-fns";
 
-type ProgramStatus = "active" | "upcoming" | "completed" | "draft";
-
-type ProgramItem = {
+interface ProgramItem {
   id: string;
-  name: string;
-  code: string;
-  type:
-    | "Private Pilot"
-    | "Commercial Pilot"
-    | "Instrument Rating"
-    | "Type Rating"
-    | "Recurrent Training";
-  status: ProgramStatus;
-  duration: string;
-  sessions: number;
-  instructor: string;
-  aircraft: string;
-  nextSession?: string;
-  price?: string;
-  desc?: string;
-  flightHours?: number;
-  students?: number;
-  startsOn?: string;
-  instructorCount?: number;
-};
-
-type ModuleItem = { n: number; t: string; d: string };
-type ScheduleSlot = {
-  tag: string;
-  time: string;
   title: string;
-  student: string;
-  instructor: string;
-  aircraft?: string;
-  simulator?: string;
-};
-type AircraftField = {
-  label: string;
-  value: string;
-  accent?: boolean;
-  warn?: boolean;
-};
-type AircraftModel = {
-  name: string;
-  subtitle: string;
-  status: string;
-  fields: AircraftField[];
-};
+  type: "theoretical" | "practical" | "simulator" | "combined";
+  level: "beginner" | "intermediate" | "advanced" | "expert";
+  description: string;
+  price: number;
+  duration?: number;
+  students?: number;
+  rating?: number;
+  instructor?: string;
+  status?: string;
+  thumbnail?: string;
+  certificateAvailable?: boolean;
+}
 
-const initialPrograms: ProgramItem[] = [
-  {
-    id: "ppl",
-    name: "Private Pilot License (PPL)",
-    code: "PPL-2023",
-    type: "Private Pilot",
-    status: "active",
-    duration: "12 weeks",
-    sessions: 24,
-    instructor: "Capt. A. Sharma",
-    aircraft: "Cessna 172",
-    nextSession: "Nov 16, 10:00 AM",
-    price: "$8,500",
-    desc: "Basic flight training for private aircraft operation",
-    flightHours: 40,
-    students: 24,
-    startsOn: "Oct 15, 2023",
-    instructorCount: 3,
-  },
-  {
-    id: "cpl",
-    name: "Commercial Pilot License (CPL)",
-    code: "CPL-2025",
-    type: "Commercial Pilot",
-    status: "upcoming",
-    duration: "16 weeks",
-    sessions: 32,
-    instructor: "Capt. R. Singh",
-    aircraft: "Beechcraft Baron",
-    nextSession: "Dec 02, 9:30 AM",
-    price: "$25,000",
-    desc: "Advanced training for commercial aircraft operation",
-    flightHours: 250,
-    students: 18,
-    startsOn: "Nov 1, 2023",
-    instructorCount: 5,
-  },
-  {
-    id: "ir",
-    name: "Instrument Rating",
-    code: "IR-2025",
-    type: "Instrument Rating",
-    status: "draft",
-    duration: "8 weeks",
-    sessions: 18,
-    instructor: "Capt. S. Khan",
-    aircraft: "Piper Arrow",
-    price: "$6,500",
-    desc: "IFR training and procedures",
-    flightHours: 60,
-    students: 8,
-    startsOn: "Dec 5, 2023",
-    instructorCount: 2,
-  },
-];
-
-export default function TrainingPrograms() {
-  const [createOpen, setCreateOpen] = React.useState(false);
-  const [activeTab, setActiveTab] = React.useState("Programs List");
-  const [typeFilter, setTypeFilter] = React.useState("All Programs");
-  const [statusFilter, setStatusFilter] = React.useState("All Status");
+export default function TrainingProgramsNew() {
+  const { push } = useToast();
+  const queryClient = useQueryClient();
   const [search, setSearch] = React.useState("");
-  const months = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
-  const [monthState, setMonthState] = React.useState({ index: 9, year: 2023 });
-  const events: Record<number, { label: string; color: string }[]> =
-    React.useMemo(
-      () => ({
-        11: [
-          { label: "PPL Ground School", color: "bg-primary/10 text-primary" },
-        ],
-        12: [{ label: "Flight Session", color: "bg-accent/10 text-accent" }],
-        15: [{ label: "CPL Theory", color: "bg-purple-100 text-purple-600" }],
-        16: [
-          { label: "PPL Flight Test", color: "bg-primary text-white" },
-          { label: "B737 Simulator", color: "bg-primary text-white" },
-        ],
-      }),
-      []
-    );
-  const [selectedDay, setSelectedDay] = React.useState<number | null>(16);
-
-  const [selectedProgramId, setSelectedProgramId] = React.useState<
-    string | null
-  >(initialPrograms[0].id);
-  const selectedProgram = React.useMemo(
-    () =>
-      initialPrograms.find((p) => p.id === selectedProgramId) ||
-      initialPrograms[0],
-    [selectedProgramId]
-  );
-
-  const [modules, setModules] = React.useState<ModuleItem[]>([
-    {
-      n: 1,
-      t: "Aerodynamics & Principles of Flight",
-      d: "10 lessons • 15 hours",
-    },
-    { n: 2, t: "Aircraft Systems & Instruments", d: "8 lessons • 12 hours" },
-    { n: 3, t: "Meteorology & Weather Planning", d: "6 lessons • 10 hours" },
-  ]);
-
-  const [scheduleSlots, setScheduleSlots] = React.useState<ScheduleSlot[]>([
-    {
-      tag: "PPL",
-      time: "9:00 AM - 11:00 AM",
-      title: "Private Pilot Flight Test",
-      student: "John Smith",
-      instructor: "M. Johnson",
-      aircraft: "C172",
-    },
-    {
-      tag: "Type Rating",
-      time: "2:00 PM - 5:00 PM",
-      title: "B737 Simulator Session",
-      student: "Sarah Wilson",
-      instructor: "R. Davis",
-      simulator: "B737NG",
-    },
-  ]);
-
-  const [aircraftModels, setAircraftModels] = React.useState<AircraftModel[]>([
-    {
-      name: "Cessna 172",
-      subtitle: "Single-engine, fixed-wing",
-      status: "Active",
-      fields: [
-        { label: "Registration", value: "N172SA" },
-        { label: "Year", value: "2018" },
-        { label: "Engine", value: "Lycoming IO-360" },
-        { label: "Status", value: "Available", accent: true },
-      ],
-    },
-    {
-      name: "Piper PA-28",
-      subtitle: "Single-engine, low-wing",
-      status: "Active",
-      fields: [
-        { label: "Registration", value: "N281PB" },
-        { label: "Year", value: "2015" },
-        { label: "Engine", value: "Lycoming O-320" },
-        { label: "Status", value: "Maintenance", warn: true },
-      ],
-    },
-    {
-      name: "Boeing 737 Simulator",
-      subtitle: "Full-flight simulator",
-      status: "Active",
-      fields: [
-        { label: "Model", value: "B737-800NG" },
-        { label: "Manufacturer", value: "CAE" },
-        { label: "Level", value: "D" },
-        { label: "Status", value: "Available", accent: true },
-      ],
-    },
-  ]);
-
-  const addModule = () => {
-    const next = modules.length + 1;
-    setModules((m) => [
-      ...m,
-      { n: next, t: `New Module ${next}`, d: "0 lessons • 0 hours" },
-    ]);
-  };
-
-  const addScheduleSlot = () => {
-    setScheduleSlots((s) => [
-      ...s,
-      {
-        tag: "PPL",
-        time: "1:00 PM - 2:00 PM",
-        title: "Ground Briefing",
-        student: "New Student",
-        instructor: "TBD",
-        aircraft: "C172",
-      },
-    ]);
-  };
-
-  const addAircraft = () => {
-    setAircraftModels((a) => [
-      ...a,
-      {
-        name: "New Aircraft",
-        subtitle: "Model TBD",
-        status: "Active",
-        fields: [
-          { label: "Registration", value: "N000XX" },
-          { label: "Year", value: "2020" },
-          { label: "Engine", value: "TBD" },
-          { label: "Status", value: "Available", accent: true },
-        ],
-      },
-    ]);
-  };
-
-  const handleViewDetails = (id: string) => {
-    setSelectedProgramId(id);
-    setActiveTab("Programs List");
-    const el = document.getElementById("training-details");
-    el?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-
-  React.useEffect(() => {
-    const id =
-      activeTab === "Programs List"
-        ? "programs-list"
-        : activeTab === "Schedule Editor"
-        ? "schedule-editor"
-        : activeTab === "Aircraft Models"
-        ? "aircraft-models"
-        : null;
-    if (id) {
-      document.getElementById(id)?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }
-  }, [activeTab]);
-
-  const filtered = initialPrograms.filter((p) => {
-    const matchesType =
-      typeFilter === "All Programs" ||
-      p.type === (typeFilter as ProgramItem["type"]);
-    const matchesStatus =
-      statusFilter === "All Status" ||
-      p.status === (statusFilter as ProgramStatus);
-    const matchesSearch =
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.code.toLowerCase().includes(search.toLowerCase());
-    return matchesType && matchesStatus && matchesSearch;
+  const [typeFilter, setTypeFilter] = React.useState("all");
+  const [levelFilter, setLevelFilter] = React.useState("all");
+  const [sortBy, setSortBy] = React.useState("title");
+  const [previewProgram, setPreviewProgram] =
+    React.useState<ProgramItem | null>(null);
+  const [deleteId, setDeleteId] = React.useState<string | null>(null);
+  const [createOpen, setCreateOpen] = React.useState(false);
+  const [formData, setFormData] = React.useState<CreateTrainingProgramDto>({
+    title: "",
+    description: "",
+    excerpt: "",
+    type: "theoretical",
+    level: "beginner",
+    price: 0,
+    durationHours: 0,
+    maxStudents: 20,
+    isPublished: true,
+    certificateAvailable: true,
   });
 
-  /* removed unused statusChip */
+  // Fetch training programs
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["training-programs"],
+    queryFn: () => trainingService.getAllPrograms({ limit: 100 }),
+    staleTime: 30000,
+  });
 
-  const typeChip = (t: ProgramItem["type"]) =>
-    t === "Private Pilot"
-      ? "bg-primary/10 text-primary"
-      : t === "Commercial Pilot"
-      ? "bg-accent/10 text-accent"
-      : t === "Type Rating"
-      ? "bg-purple-100 text-purple-600"
-      : "bg-gray-100 text-gray-700";
+  // Fetch upcoming sessions for stats
+  const { data: sessionsData } = useQuery({
+    queryKey: ["training-upcoming-sessions"],
+    queryFn: async () => {
+      try {
+        const res = await liveSessionsService.getAll({
+          upcoming: true,
+          limit: 50,
+        });
+        return res;
+      } catch {
+        return { sessions: [], total: 0 };
+      }
+    },
+    staleTime: 60000,
+  });
+
+  const programs: ProgramItem[] = React.useMemo(() => {
+    const programData = ((data as any)?.courses || []) as TrainingProgram[];
+    return programData.map((p) => {
+      const instructorName =
+        typeof p.instructor === "object" && p.instructor
+          ? `${p.instructor.firstName || ""} ${
+              p.instructor.lastName || ""
+            }`.trim()
+          : undefined;
+
+      return {
+        id: p._id,
+        title: p.title,
+        type: p.type,
+        level: p.level,
+        description: p.excerpt || p.description,
+        price: p.price,
+        duration: p.durationHours || p.duration,
+        students: p.enrollmentCount || p.studentCount,
+        rating: p.rating,
+        instructor: instructorName,
+        status: p.status || (p.isPublished ? "published" : "draft"),
+        thumbnail: p.thumbnail,
+        certificateAvailable: p.certificateAvailable,
+      };
+    });
+  }, [data]);
+
+  const filtered = React.useMemo(() => {
+    return programs
+      .filter((p) => {
+        if (search) {
+          const searchLower = search.toLowerCase();
+          return (
+            p.title.toLowerCase().includes(searchLower) ||
+            p.description.toLowerCase().includes(searchLower)
+          );
+        }
+        return true;
+      })
+      .filter((p) => {
+        if (typeFilter === "all") return true;
+        return p.type === typeFilter;
+      })
+      .filter((p) => {
+        if (levelFilter === "all") return true;
+        return p.level === levelFilter;
+      })
+      .sort((a, b) => {
+        switch (sortBy) {
+          case "title":
+            return a.title.localeCompare(b.title);
+          case "price":
+            return b.price - a.price;
+          case "students":
+            return (b.students || 0) - (a.students || 0);
+          case "rating":
+            return (b.rating || 0) - (a.rating || 0);
+          default:
+            return 0;
+        }
+      });
+  }, [programs, search, typeFilter, levelFilter, sortBy]);
+
+  const stats = React.useMemo(() => {
+    const total = programs.length;
+    const active = programs.filter((p) => p.status === "published").length;
+    const totalStudents = programs.reduce(
+      (sum, p) => sum + (p.students || 0),
+      0
+    );
+    const avgRating =
+      programs.length > 0
+        ? (
+            programs.reduce((sum, p) => sum + (p.rating || 0), 0) /
+            programs.filter((p) => p.rating).length
+          ).toFixed(1)
+        : "0.0";
+    const upcomingSessions = sessionsData?.total || 0;
+
+    return { total, active, totalStudents, avgRating, upcomingSessions };
+  }, [programs, sessionsData]);
+
+  React.useEffect(() => {
+    if (error) {
+      push({ type: "error", message: "Failed to load training programs" });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [error]);
+
+  const createMutation = useMutation({
+    mutationFn: (payload: CreateTrainingProgramDto) =>
+      trainingService.createProgram(payload),
+    onSuccess: () => {
+      push({
+        type: "success",
+        message: "Training program created successfully",
+      });
+      setCreateOpen(false);
+      setFormData({
+        title: "",
+        description: "",
+        excerpt: "",
+        type: "theoretical",
+        level: "beginner",
+        price: 0,
+        durationHours: 0,
+        maxStudents: 20,
+        isPublished: true,
+        certificateAvailable: true,
+      });
+      queryClient.invalidateQueries({ queryKey: ["training-programs"] });
+    },
+    onError: () => {
+      push({ type: "error", message: "Failed to create training program" });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => trainingService.deleteProgram(id),
+    onSuccess: () => {
+      push({
+        type: "success",
+        message: "Training program deleted successfully",
+      });
+      setDeleteId(null);
+      queryClient.invalidateQueries({ queryKey: ["training-programs"] });
+    },
+    onError: () => {
+      push({ type: "error", message: "Failed to delete training program" });
+    },
+  });
+
+  const handleCreateProgram = () => {
+    if (!formData.title || !formData.description) {
+      push({ type: "error", message: "Please fill in all required fields" });
+      return;
+    }
+
+    createMutation.mutate(formData);
+  };
+
+  const getTypeBadge = (type: string) => {
+    switch (type) {
+      case "theoretical":
+        return (
+          <span className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-blue-50 text-blue-700">
+            <BookOpen className="w-3 h-3" />
+            Theoretical
+          </span>
+        );
+      case "practical":
+        return (
+          <span className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-green-50 text-green-700">
+            <Plane className="w-3 h-3" />
+            Practical
+          </span>
+        );
+      case "simulator":
+        return (
+          <span className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-purple-50 text-purple-700">
+            <Target className="w-3 h-3" />
+            Simulator
+          </span>
+        );
+      case "combined":
+        return (
+          <span className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-amber-50 text-amber-700">
+            <Award className="w-3 h-3" />
+            Combined
+          </span>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const getLevelColor = (level: string) => {
+    switch (level) {
+      case "beginner":
+        return "text-green-600";
+      case "intermediate":
+        return "text-blue-600";
+      case "advanced":
+        return "text-purple-600";
+      case "expert":
+        return "text-red-600";
+      default:
+        return "text-slate-600";
+    }
+  };
 
   return (
-    <main className="p-6">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8 gap-4">
-        <div>
-          <h2 className="text-3xl font-bold text-secondary mb-2">
-            Training Programs
-          </h2>
-          <p className="text-gray-600">
-            Manage aviation training programs, schedules, and aircraft models.
-          </p>
-        </div>
-        <div className="flex space-x-3">
-          <Button onClick={() => setCreateOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" /> Create Program
-          </Button>
-        </div>
-      </div>
-
-      <div
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
-        id="stats-section"
-      >
-        <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between">
+    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50">
+      <div className="p-6 max-w-[1800px] mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <p className="text-gray-600 text-sm font-medium">
-                Active Programs
-              </p>
-              <p className="text-2xl font-bold text-secondary mt-1">
-                {initialPrograms.filter((p) => p.status === "active").length}
-              </p>
-              <p className="text-accent text-sm mt-1">+3 this month</p>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
+                  <GraduationCap className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+                    Aviation Training Programs
+                  </h1>
+                  <p className="text-slate-600 text-sm">
+                    Comprehensive flight training courses and certification
+                    programs
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-              <CalendarCheck className="text-primary w-6 h-6" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm font-medium">
-                Upcoming Sessions
-              </p>
-              <p className="text-2xl font-bold text-secondary mt-1">47</p>
-              <p className="text-accent text-sm mt-1">Next 30 days</p>
-            </div>
-            <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
-              <Plane className="text-accent w-6 h-6" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm font-medium">
-                Aircraft Models
-              </p>
-              <p className="text-2xl font-bold text-secondary mt-1">12</p>
-              <p className="text-accent text-sm mt-1">All operational</p>
-            </div>
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <Plane className="text-purple-600 w-6 h-6" />
-            </div>
-          </div>
-        </div>
-        <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-gray-600 text-sm font-medium">Instructors</p>
-              <p className="text-2xl font-bold text-secondary mt-1">18</p>
-              <p className="text-accent text-sm mt-1">15 available</p>
-            </div>
-            <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-              <UserCheck className="text-yellow-600 w-6 h-6" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="border-b border-gray-200 mb-8">
-        <nav className="flex space-x-8">
-          {[
-            "Programs List",
-            "Schedule Editor",
-            "Aircraft Models",
-            "Instructors",
-            "Reports",
-          ].map((t) => (
-            <button
-              key={t}
-              onClick={() => setActiveTab(t)}
-              className={`py-4 px-1 font-medium text-sm ${
-                activeTab === t
-                  ? "border-b-2 border-primary text-primary"
-                  : "text-gray-500 hover:text-gray-700"
-              }`}
+            <Button
+              onClick={() => setCreateOpen(true)}
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
             >
-              {t}
-            </button>
-          ))}
-        </nav>
-      </div>
+              <Plus className="w-4 h-4 mr-2" />
+              Create Program
+            </Button>
+          </div>
+        </div>
 
-      <div className="mb-8" id="programs-list">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-semibold text-secondary">
-            Training Programs
-          </h3>
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-600">Filter:</span>
+        {/* Statistics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-slate-600 text-sm font-medium mb-1">
+                  Total Programs
+                </p>
+                <p className="text-3xl font-bold text-slate-900">
+                  {stats.total}
+                </p>
+                <p className="text-blue-600 text-sm mt-2 flex items-center">
+                  <TrendingUp className="w-3 h-3 mr-1" />
+                  {stats.active} active
+                </p>
+              </div>
+              <div className="w-14 h-14 bg-blue-50 rounded-xl flex items-center justify-center">
+                <BookOpen className="text-blue-600 w-7 h-7" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-slate-600 text-sm font-medium mb-1">
+                  Total Students
+                </p>
+                <p className="text-3xl font-bold text-slate-900">
+                  {stats.totalStudents}
+                </p>
+                <p className="text-green-600 text-sm mt-2 flex items-center">
+                  <Users className="w-3 h-3 mr-1" />
+                  Enrolled
+                </p>
+              </div>
+              <div className="w-14 h-14 bg-green-50 rounded-xl flex items-center justify-center">
+                <Users className="text-green-600 w-7 h-7" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-slate-600 text-sm font-medium mb-1">
+                  Upcoming Sessions
+                </p>
+                <p className="text-3xl font-bold text-slate-900">
+                  {stats.upcomingSessions}
+                </p>
+                <p className="text-amber-600 text-sm mt-2 flex items-center">
+                  <Calendar className="w-3 h-3 mr-1" />
+                  Next 30 days
+                </p>
+              </div>
+              <div className="w-14 h-14 bg-amber-50 rounded-xl flex items-center justify-center">
+                <Clock className="text-amber-600 w-7 h-7" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-slate-600 text-sm font-medium mb-1">
+                  Avg. Rating
+                </p>
+                <p className="text-3xl font-bold text-slate-900">
+                  {stats.avgRating}
+                </p>
+                <p className="text-purple-600 text-sm mt-2 flex items-center">
+                  <Award className="w-3 h-3 mr-1" />
+                  Out of 5.0
+                </p>
+              </div>
+              <div className="w-14 h-14 bg-purple-50 rounded-xl flex items-center justify-center">
+                <Award className="text-purple-600 w-7 h-7" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-slate-600 text-sm font-medium mb-1">
+                  Aircraft Types
+                </p>
+                <p className="text-3xl font-bold text-slate-900">12</p>
+                <p className="text-blue-600 text-sm mt-2 flex items-center">
+                  <Plane className="w-3 h-3 mr-1" />
+                  Available
+                </p>
+              </div>
+              <div className="w-14 h-14 bg-blue-50 rounded-xl flex items-center justify-center">
+                <Plane className="text-blue-600 w-7 h-7" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Filters and Search */}
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200 mb-6">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="flex flex-wrap gap-3">
               <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="bg-gray-50 border border-gray-200 rounded-lg w-56">
-                  <SelectValue />
+                <SelectTrigger className="bg-slate-50 border-slate-200 rounded-lg px-4 py-2 text-sm w-40 hover:bg-slate-100 transition-colors">
+                  <SelectValue placeholder="All Types" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="All Programs">All Programs</SelectItem>
-                  <SelectItem value="Private Pilot">Private Pilot</SelectItem>
-                  <SelectItem value="Commercial Pilot">
-                    Commercial Pilot
-                  </SelectItem>
-                  <SelectItem value="Instrument Rating">
-                    Instrument Rating
-                  </SelectItem>
-                  <SelectItem value="Type Rating">Type Ratings</SelectItem>
-                  <SelectItem value="Recurrent Training">
-                    Recurrent Training
-                  </SelectItem>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="theoretical">Theoretical</SelectItem>
+                  <SelectItem value="practical">Practical</SelectItem>
+                  <SelectItem value="simulator">Simulator</SelectItem>
+                  <SelectItem value="combined">Combined</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={levelFilter} onValueChange={setLevelFilter}>
+                <SelectTrigger className="bg-slate-50 border-slate-200 rounded-lg px-4 py-2 text-sm w-40 hover:bg-slate-100 transition-colors">
+                  <SelectValue placeholder="All Levels" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Levels</SelectItem>
+                  <SelectItem value="beginner">Beginner</SelectItem>
+                  <SelectItem value="intermediate">Intermediate</SelectItem>
+                  <SelectItem value="advanced">Advanced</SelectItem>
+                  <SelectItem value="expert">Expert</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="bg-slate-50 border-slate-200 rounded-lg px-4 py-2 text-sm w-44 hover:bg-slate-100 transition-colors">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="title">Title (A-Z)</SelectItem>
+                  <SelectItem value="price">Price (High-Low)</SelectItem>
+                  <SelectItem value="students">Most Students</SelectItem>
+                  <SelectItem value="rating">Highest Rated</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-600">Status:</span>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="bg-gray-50 border border-gray-200 rounded-lg w-44">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="All Status">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="upcoming">Upcoming</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
-                </SelectContent>
-              </Select>
+
+            <div className="relative flex-1 lg:flex-initial lg:w-64">
+              <input
+                type="text"
+                placeholder="Search programs..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+              />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
             </div>
           </div>
         </div>
-        <div className="flex items-center mb-4">
-          <div className="relative w-full">
-            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              type="text"
-              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-              placeholder="Search programs..."
-            />
+
+        {/* Program Cards */}
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={`skeleton-${i}`}
+                className="h-96 animate-pulse bg-slate-100 rounded-xl border border-slate-200"
+              />
+            ))}
           </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filtered.map((p) => (
-            <div
-              key={p.id}
-              className="training-card bg-card rounded-xl p-6 shadow-sm border border-gray-100"
-            >
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <span
-                    className={`text-xs px-2 py-1 rounded-full ${typeChip(
-                      p.type
-                    )}`}
-                  >
-                    {p.type === "Type Rating"
-                      ? "Type Rating"
-                      : p.type.includes("Private")
-                      ? "Private"
-                      : p.type.includes("Commercial")
-                      ? "Commercial"
-                      : p.type}
-                  </span>
-                  <h4 className="font-semibold text-secondary mt-2">
-                    {p.name}
-                  </h4>
-                  <p className="text-sm text-gray-600">{p.desc}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-secondary">{p.price}</p>
-                  <p className="text-sm text-gray-600">Full course</p>
-                </div>
-              </div>
-              <div className="space-y-3 mb-4">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Duration</span>
-                  <span className="font-medium">
-                    {p.type === "Private Pilot"
-                      ? "6-8 months"
-                      : p.type === "Commercial Pilot"
-                      ? "12-18 months"
-                      : "3-4 months"}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">
-                    {p.type === "Type Rating"
-                      ? "Simulator Hours"
-                      : "Flight Hours"}
-                  </span>
-                  <span className="font-medium">
-                    {p.flightHours}{" "}
-                    {p.type === "Type Rating" ? "hours" : "minimum"}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Students</span>
-                  <span className="font-medium text-accent">
-                    {p.students} enrolled
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
-                <div className="flex items-center space-x-1">
-                  <Clock className="w-4 h-4" />
-                  <span>Starts: {p.startsOn}</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <UserCheck className="w-4 h-4" />
-                  <span>{p.instructorCount} instructors</span>
-                </div>
-              </div>
-              <div className="flex space-x-2">
-                <Button
-                  className="flex-1"
-                  onClick={() => handleViewDetails(p.id)}
-                >
-                  View Details
-                </Button>
-                <Button
-                  variant="outline"
-                  className="flex-1 border-gray-300 text-gray-700"
-                  onClick={() => handleViewDetails(p.id)}
-                >
-                  Edit
-                </Button>
-              </div>
+        ) : filtered.length === 0 ? (
+          <div className="bg-white rounded-2xl p-16 shadow-sm border border-slate-200 text-center">
+            <div className="w-24 h-24 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <GraduationCap className="text-slate-400 w-12 h-12" />
             </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100 mb-8">
-        <h3 className="text-xl font-semibold text-secondary mb-6">
-          Training Program Details
-        </h3>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
-            <div className="space-y-6">
-              <div>
-                <h4 className="font-medium text-secondary mb-4">
-                  Basic Information
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Program Name
-                    </label>
-                    <input
-                      type="text"
-                      defaultValue={selectedProgram.name}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Program Code
-                    </label>
-                    <input
-                      type="text"
-                      defaultValue={selectedProgram.code}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                    />
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Description
-                  </label>
-                  <textarea className="w-full h-24 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20">
-                    {selectedProgram.desc}
-                  </textarea>
-                </div>
-              </div>
-
-              <div>
-                <h4 className="font-medium text-secondary mb-4">
-                  Requirements & Prerequisites
-                </h4>
-                <div className="space-y-3">
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      className="rounded border-gray-300 text-primary focus:ring-primary"
-                      defaultChecked
-                    />
-                    <span className="ml-2 text-sm text-gray-700">
-                      Minimum age: 17 years
-                    </span>
-                  </div>
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      className="rounded border-gray-300 text-primary focus:ring-primary"
-                      defaultChecked
-                    />
-                    <span className="ml-2 text-sm text-gray-700">
-                      Medical certificate: Class 3
-                    </span>
-                  </div>
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      className="rounded border-gray-300 text-primary focus:ring-primary"
-                    />
-                    <span className="ml-2 text-sm text-gray-700">
-                      High school diploma or equivalent
-                    </span>
-                  </div>
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      className="rounded border-gray-300 text-primary focus:ring-primary"
-                      defaultChecked
-                    />
-                    <span className="ml-2 text-sm text-gray-700">
-                      English language proficiency
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h4 className="font-medium text-secondary mb-4">
-                  Curriculum & Modules
-                </h4>
-                <div className="space-y-3">
-                  {modules.map((m) => (
-                    <div
-                      key={m.n}
-                      className="flex items-center justify-between p-3 border border-gray-200 rounded-lg"
-                    >
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                          <span className="text-primary font-medium">
-                            {m.n}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-secondary">{m.t}</p>
-                          <p className="text-sm text-gray-600">{m.d}</p>
-                        </div>
-                      </div>
-                      <Button variant="ghost" className="text-gray-400">
-                        •••
-                      </Button>
+            <h3 className="text-2xl font-bold text-slate-900 mb-3">
+              {search || typeFilter !== "all" || levelFilter !== "all"
+                ? "No programs found"
+                : "No training programs yet"}
+            </h3>
+            <p className="text-slate-600 mb-8 max-w-md mx-auto">
+              {search || typeFilter !== "all" || levelFilter !== "all"
+                ? "Try adjusting your filters to find what you're looking for"
+                : "Create your first aviation training program to get started"}
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filtered.map((program) => (
+              <div
+                key={program.id}
+                className="group bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-xl hover:border-blue-300 transition-all duration-300 hover:-translate-y-1"
+              >
+                {/* Header */}
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      {getTypeBadge(program.type)}
                     </div>
-                  ))}
-                  <button
-                    className="w-full border-2 border-dashed border-gray-300 rounded-lg py-3 text-gray-500"
-                    onClick={addModule}
-                  >
-                    Add New Module
-                  </button>
+                    <h3 className="font-bold text-slate-900 text-lg leading-tight line-clamp-2">
+                      {program.title}
+                    </h3>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 shrink-0"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-52">
+                      <DropdownMenuItem
+                        onSelect={() => setPreviewProgram(program)}
+                      >
+                        <Eye className="w-4 h-4 mr-2 text-blue-600" />
+                        <span>View Details</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onSelect={() =>
+                          push({
+                            type: "info",
+                            message: "Edit functionality coming soon",
+                          })
+                        }
+                      >
+                        <Edit3 className="w-4 h-4 mr-2 text-slate-600" />
+                        <span>Edit Program</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-red-600 focus:text-red-600"
+                        onSelect={() => setDeleteId(program.id)}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        <span>Delete</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
-              </div>
-            </div>
-          </div>
 
-          <div className="space-y-6">
-            <div className="border border-gray-200 rounded-lg p-4">
-              <h4 className="font-medium text-secondary mb-4">
-                Pricing & Duration
-              </h4>
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Course Fee
-                  </label>
-                  <input
-                    type="text"
-                    defaultValue="$8,500"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                {/* Description */}
+                {program.description && (
+                  <p className="text-slate-600 text-sm mb-4 line-clamp-2">
+                    {program.description}
+                  </p>
+                )}
+
+                {/* Metadata Grid */}
+                <div className="space-y-3 mb-4 pb-4 border-b border-slate-100">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-600 flex items-center">
+                      <DollarSign className="w-4 h-4 mr-1 text-green-500" />
+                      Price
+                    </span>
+                    <span className="font-bold text-green-600">
+                      ${program.price.toLocaleString()}
+                    </span>
+                  </div>
+
+                  {program.duration && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-slate-600 flex items-center">
+                        <Clock className="w-4 h-4 mr-1 text-blue-500" />
+                        Duration
+                      </span>
+                      <span className="font-semibold text-slate-900">
+                        {program.duration} hours
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-600 flex items-center">
+                      <Users className="w-4 h-4 mr-1 text-purple-500" />
+                      Students
+                    </span>
+                    <span className="font-semibold text-slate-900">
+                      {program.students || 0}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-600 flex items-center">
+                      <Target className="w-4 h-4 mr-1 text-amber-500" />
+                      Level
+                    </span>
+                    <span
+                      className={`font-semibold capitalize ${getLevelColor(
+                        program.level
+                      )}`}
+                    >
+                      {program.level}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Rating & Certificate */}
+                <div className="flex items-center justify-between mb-4">
+                  {program.rating ? (
+                    <div className="flex items-center gap-1">
+                      <Award className="w-4 h-4 text-amber-500" />
+                      <span className="text-sm font-bold text-slate-900">
+                        {program.rating.toFixed(1)}
+                      </span>
+                      <span className="text-xs text-slate-500">/5.0</span>
+                    </div>
+                  ) : (
+                    <span className="text-xs text-slate-500">
+                      No ratings yet
+                    </span>
+                  )}
+
+                  {program.certificateAvailable && (
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full bg-green-50 text-green-700">
+                      <CheckCircle className="w-3 h-3" />
+                      Certificate
+                    </span>
+                  )}
+                </div>
+
+                {/* Instructor */}
+                {program.instructor && (
+                  <div className="bg-slate-50 rounded-lg p-3 mb-4">
+                    <p className="text-xs text-slate-500 mb-0.5">Instructor</p>
+                    <p className="text-sm font-semibold text-slate-900">
+                      {program.instructor}
+                    </p>
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300"
+                    onClick={() => setPreviewProgram(program)}
+                  >
+                    <Eye className="w-3.5 h-3.5 mr-1.5" />
+                    View
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 border-slate-200 text-slate-600 hover:bg-slate-50"
+                    onClick={() =>
+                      push({
+                        type: "info",
+                        message: "Enrollment management coming soon",
+                      })
+                    }
+                  >
+                    <Users className="w-3.5 h-3.5 mr-1.5" />
+                    Students
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Create Program Dialog */}
+        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-slate-900">
+                Create Training Program
+              </DialogTitle>
+              <DialogDescription className="text-slate-600">
+                Create a new aviation training program with comprehensive
+                details
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label
+                  htmlFor="title"
+                  className="text-sm font-medium text-slate-700"
+                >
+                  Program Title *
+                </Label>
+                <Input
+                  id="title"
+                  placeholder="e.g., Private Pilot License (PPL) Ground School"
+                  value={formData.title}
+                  onChange={(e) =>
+                    setFormData({ ...formData, title: e.target.value })
+                  }
+                  className="focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label
+                  htmlFor="excerpt"
+                  className="text-sm font-medium text-slate-700"
+                >
+                  Short Description
+                </Label>
+                <Input
+                  id="excerpt"
+                  placeholder="Brief summary for program cards"
+                  value={formData.excerpt}
+                  onChange={(e) =>
+                    setFormData({ ...formData, excerpt: e.target.value })
+                  }
+                  className="focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label
+                  htmlFor="description"
+                  className="text-sm font-medium text-slate-700"
+                >
+                  Full Description *
+                </Label>
+                <Textarea
+                  id="description"
+                  placeholder="Comprehensive program details, objectives, and outcomes"
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                  rows={4}
+                  className="focus:ring-2 focus:ring-blue-500/20"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="type"
+                    className="text-sm font-medium text-slate-700"
+                  >
+                    Program Type *
+                  </Label>
+                  <Select
+                    value={formData.type}
+                    onValueChange={(value: any) =>
+                      setFormData({ ...formData, type: value })
+                    }
+                  >
+                    <SelectTrigger className="focus:ring-2 focus:ring-blue-500/20">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="theoretical">Theoretical</SelectItem>
+                      <SelectItem value="practical">Practical</SelectItem>
+                      <SelectItem value="simulator">Simulator</SelectItem>
+                      <SelectItem value="combined">Combined</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="level"
+                    className="text-sm font-medium text-slate-700"
+                  >
+                    Difficulty Level *
+                  </Label>
+                  <Select
+                    value={formData.level}
+                    onValueChange={(value: any) =>
+                      setFormData({ ...formData, level: value })
+                    }
+                  >
+                    <SelectTrigger className="focus:ring-2 focus:ring-blue-500/20">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="beginner">Beginner</SelectItem>
+                      <SelectItem value="intermediate">Intermediate</SelectItem>
+                      <SelectItem value="advanced">Advanced</SelectItem>
+                      <SelectItem value="expert">Expert</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="price"
+                    className="text-sm font-medium text-slate-700"
+                  >
+                    Price ($) *
+                  </Label>
+                  <Input
+                    id="price"
+                    type="number"
+                    min="0"
+                    value={formData.price}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        price: parseFloat(e.target.value) || 0,
+                      })
+                    }
+                    className="focus:ring-2 focus:ring-blue-500/20"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Duration
-                  </label>
-                  <input
-                    type="text"
-                    defaultValue="6-8 months"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="duration"
+                    className="text-sm font-medium text-slate-700"
+                  >
+                    Duration (hours)
+                  </Label>
+                  <Input
+                    id="duration"
+                    type="number"
+                    min="0"
+                    value={formData.durationHours}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        durationHours: parseInt(e.target.value) || 0,
+                      })
+                    }
+                    className="focus:ring-2 focus:ring-blue-500/20"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Flight Hours Required
-                  </label>
-                  <input
-                    type="text"
-                    defaultValue="40"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="maxStudents"
+                    className="text-sm font-medium text-slate-700"
+                  >
+                    Max Students
+                  </Label>
+                  <Input
+                    id="maxStudents"
+                    type="number"
+                    min="1"
+                    value={formData.maxStudents}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        maxStudents: parseInt(e.target.value) || 20,
+                      })
+                    }
+                    className="focus:ring-2 focus:ring-blue-500/20"
                   />
                 </div>
               </div>
-            </div>
-            <div className="border border-gray-200 rounded-lg p-4">
-              <h4 className="font-medium text-secondary mb-4">
-                Status & Visibility
-              </h4>
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Program Status
-                  </label>
-                  <Select defaultValue="Active">
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Active">Active</SelectItem>
-                      <SelectItem value="Upcoming">Upcoming</SelectItem>
-                      <SelectItem value="Draft">Draft</SelectItem>
-                      <SelectItem value="Archived">Archived</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Visibility
-                  </label>
-                  <Select defaultValue="Public">
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Public">Public</SelectItem>
-                      <SelectItem value="Private">Private</SelectItem>
-                      <SelectItem value="Hidden">Hidden</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex items-center">
+
+              <div className="flex items-center gap-4 pt-2">
+                <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
-                    className="rounded border-gray-300 text-primary focus:ring-primary"
-                    defaultChecked
+                    checked={formData.isPublished}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        isPublished: e.target.checked,
+                      })
+                    }
+                    className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500/20"
                   />
-                  <span className="ml-2 text-sm text-gray-700">
-                    Featured program
+                  <span className="text-sm text-slate-700">
+                    Publish immediately
                   </span>
-                </div>
-              </div>
-            </div>
-            <div className="border border-gray-200 rounded-lg p-4">
-              <h4 className="font-medium text-secondary mb-4">
-                Associated Aircraft
-              </h4>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Plane className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm">Cessna 172</span>
-                  </div>
-                  <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
-                    Primary
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Plane className="w-4 h-4 text-gray-400" />
-                    <span className="text-sm">Piper PA-28</span>
-                  </div>
-                  <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
-                    Secondary
-                  </span>
-                </div>
-                <button className="w-full text-sm text-primary mt-2">
-                  Add Aircraft
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+                </label>
 
-      <div
-        className="bg-card rounded-xl p-6 shadow-sm border border-gray-100 mb-8"
-        id="schedule-editor"
-      >
-        <h3 className="text-xl font-semibold text-secondary mb-6">
-          Schedule Editor
-        </h3>
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          <div className="lg:col-span-3">
-            <div className="flex justify-between items-center mb-6">
-              <h4 className="font-medium text-secondary">
-                {months[monthState.index]} {monthState.year}
-              </h4>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="ghost"
-                  className="p-2"
-                  onClick={() =>
-                    setMonthState((m) => ({
-                      index: m.index === 0 ? 11 : m.index - 1,
-                      year: m.index === 0 ? m.year - 1 : m.year,
-                    }))
-                  }
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="p-2"
-                  onClick={() =>
-                    setMonthState((m) => ({
-                      index: m.index === 11 ? 0 : m.index + 1,
-                      year: m.index === 11 ? m.year + 1 : m.year,
-                    }))
-                  }
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-                <Button
-                  onClick={() => {
-                    const d = new Date();
-                    setMonthState({
-                      index: d.getMonth(),
-                      year: d.getFullYear(),
-                    });
-                    setSelectedDay(d.getDate());
-                  }}
-                >
-                  Today
-                </Button>
-              </div>
-            </div>
-            <div className="border border-gray-200 rounded-lg overflow-hidden">
-              <div className="grid grid-cols-7 bg-gray-50 border-b border-gray-200">
-                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
-                  <div
-                    key={d}
-                    className="p-3 text-center text-sm font-medium text-gray-600"
-                  >
-                    {d}
-                  </div>
-                ))}
-              </div>
-              <div className="grid grid-cols-7">
-                {Array.from({ length: 31 }).map((_, i) => (
-                  <div
-                    key={i + 1}
-                    className={`p-3 ${
-                      i % 7 !== 6 ? "border-r" : ""
-                    } border-b border-gray-200 h-24 ${
-                      selectedDay === i + 1 ? "bg-primary text-white" : ""
-                    }`}
-                    onClick={() => setSelectedDay(i + 1)}
-                  >
-                    <div
-                      className={`text-sm ${
-                        selectedDay === i + 1 ? "text-white" : "text-gray-400"
-                      }`}
-                    >
-                      {i + 1}
-                    </div>
-                    <div className="mt-1 space-y-1">
-                      {(events[i + 1] ?? []).map((e, idx) => (
-                        <div
-                          key={idx}
-                          className={`${e.color} text-xs p-1 rounded`}
-                        >
-                          {e.label}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div
-                    key={`pad-${i}`}
-                    className={`p-3 ${i !== 2 ? "border-r" : ""} h-24`}
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.certificateAvailable}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        certificateAvailable: e.target.checked,
+                      })
+                    }
+                    className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500/20"
                   />
-                ))}
+                  <span className="text-sm text-slate-700">
+                    Certificate available
+                  </span>
+                </label>
               </div>
-            </div>
-          </div>
-          <div>
-            <h4 className="font-medium text-secondary mb-4">
-              {months[monthState.index]} {selectedDay}, {monthState.year}
-            </h4>
-            <div className="space-y-4">
-              {scheduleSlots.map((s, idx) => (
-                <div
-                  key={idx}
-                  className="schedule-slot border border-gray-200 rounded-lg p-4"
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <span
-                      className={`${
-                        s.tag === "Type Rating"
-                          ? "bg-purple-100 text-purple-600"
-                          : "bg-primary/10 text-primary"
-                      } text-xs px-2 py-1 rounded-full`}
-                    >
-                      {s.tag}
-                    </span>
-                    <span className="text-xs text-gray-500">{s.time}</span>
-                  </div>
-                  <p className="font-medium text-secondary">{s.title}</p>
-                  <p className="text-sm text-gray-600 mb-2">
-                    Student: {s.student}
-                  </p>
-                  <div className="flex justify-between text-xs text-gray-500">
-                    <span>Instructor: {s.instructor}</span>
-                    <span>
-                      {s.aircraft
-                        ? `Aircraft: ${s.aircraft}`
-                        : `Simulator: ${s.simulator}`}
-                    </span>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-blue-900 mb-1">
+                      Program Configuration
+                    </p>
+                    <p className="text-xs text-blue-700">
+                      You can add modules, lessons, and additional resources
+                      after creating the program.
+                    </p>
                   </div>
                 </div>
-              ))}
-              <button
-                className="w-full border-2 border-dashed border-gray-300 rounded-lg py-3 text-gray-500"
-                onClick={addScheduleSlot}
-              >
-                Add Schedule Slot
-              </button>
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
 
-      <div
-        className="bg-card rounded-xl p-6 shadow-sm border border-gray-100"
-        id="aircraft-models"
-      >
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-semibold text-secondary">
-            Aircraft Models
-          </h3>
-          <Button onClick={addAircraft}>
-            <Plus className="w-4 h-4 mr-2" /> Add Aircraft
-          </Button>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {aircraftModels.map((a, idx) => (
-            <div
-              key={idx}
-              className="aircraft-model border border-gray-200 rounded-lg p-6"
-            >
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h4 className="font-semibold text-secondary">{a.name}</h4>
-                  <p className="text-sm text-gray-600">{a.subtitle}</p>
-                </div>
-                <span className="bg-accent/10 text-accent text-xs px-2 py-1 rounded-full">
-                  {a.status}
-                </span>
-              </div>
-              <div className="space-y-3 mb-4">
-                {a.fields.map((f, i) => (
-                  <div key={i} className="flex justify-between text-sm">
-                    <span className="text-gray-600">{f.label}</span>
-                    <span
-                      className={`font-medium ${
-                        f.accent
-                          ? "text-accent"
-                          : f.warn
-                          ? "text-yellow-600"
-                          : ""
-                      }`}
-                    >
-                      {f.value}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <div className="flex space-x-2">
-                <Button className="flex-1">View Details</Button>
-                <Button variant="outline" className="flex-1">
-                  Maintenance
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Create New Training Program</DialogTitle>
-            <DialogDescription>Enter program information</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Program Name
-              </label>
-              <input
-                id="program-name"
-                type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                placeholder="Enter program name"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Program Type
-              </label>
-              <Select defaultValue="Private Pilot">
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Private Pilot">Private Pilot</SelectItem>
-                  <SelectItem value="Commercial Pilot">
-                    Commercial Pilot
-                  </SelectItem>
-                  <SelectItem value="Instrument Rating">
-                    Instrument Rating
-                  </SelectItem>
-                  <SelectItem value="Type Rating">Type Rating</SelectItem>
-                  <SelectItem value="Recurrent Training">
-                    Recurrent Training
-                  </SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Duration
-                </label>
-                <input
-                  id="program-duration"
-                  type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                  placeholder="e.g., 12 weeks"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Sessions
-                </label>
-                <input
-                  id="program-sessions"
-                  type="number"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                  placeholder="e.g., 24"
-                />
-              </div>
-            </div>
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
               <Button
                 variant="outline"
-                className="border-gray-300"
                 onClick={() => setCreateOpen(false)}
+                disabled={createMutation.isPending}
               >
                 Cancel
               </Button>
-              <Button onClick={() => setCreateOpen(false)}>Create</Button>
+              <Button
+                onClick={handleCreateProgram}
+                disabled={createMutation.isPending}
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+              >
+                {createMutation.isPending ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Program
+                  </>
+                )}
+              </Button>
             </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
+
+        {/* Preview Dialog */}
+        <Dialog
+          open={!!previewProgram}
+          onOpenChange={(v) => !v && setPreviewProgram(null)}
+        >
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-bold text-slate-900">
+                Program Details
+              </DialogTitle>
+              <DialogDescription className="text-slate-600">
+                Comprehensive training program information
+              </DialogDescription>
+            </DialogHeader>
+            {previewProgram && (
+              <div className="space-y-6">
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    {getTypeBadge(previewProgram.type)}
+                    <span
+                      className={`text-sm font-semibold capitalize ${getLevelColor(
+                        previewProgram.level
+                      )}`}
+                    >
+                      {previewProgram.level}
+                    </span>
+                  </div>
+                  <h3 className="text-2xl font-bold text-slate-900 mb-3">
+                    {previewProgram.title}
+                  </h3>
+                  {previewProgram.description && (
+                    <p className="text-slate-600 whitespace-pre-line">
+                      {previewProgram.description}
+                    </p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-slate-50 rounded-lg p-4">
+                    <p className="text-sm text-slate-600 mb-1 flex items-center">
+                      <DollarSign className="w-4 h-4 mr-1 text-green-500" />
+                      Price
+                    </p>
+                    <p className="text-2xl font-bold text-green-600">
+                      ${previewProgram.price.toLocaleString()}
+                    </p>
+                  </div>
+                  {previewProgram.duration && (
+                    <div className="bg-slate-50 rounded-lg p-4">
+                      <p className="text-sm text-slate-600 mb-1 flex items-center">
+                        <Clock className="w-4 h-4 mr-1 text-blue-500" />
+                        Duration
+                      </p>
+                      <p className="text-2xl font-bold text-slate-900">
+                        {previewProgram.duration} hrs
+                      </p>
+                    </div>
+                  )}
+                  <div className="bg-slate-50 rounded-lg p-4">
+                    <p className="text-sm text-slate-600 mb-1 flex items-center">
+                      <Users className="w-4 h-4 mr-1 text-purple-500" />
+                      Enrolled Students
+                    </p>
+                    <p className="text-2xl font-bold text-slate-900">
+                      {previewProgram.students || 0}
+                    </p>
+                  </div>
+                  {previewProgram.rating && (
+                    <div className="bg-slate-50 rounded-lg p-4">
+                      <p className="text-sm text-slate-600 mb-1 flex items-center">
+                        <Award className="w-4 h-4 mr-1 text-amber-500" />
+                        Rating
+                      </p>
+                      <p className="text-2xl font-bold text-slate-900">
+                        {previewProgram.rating.toFixed(1)} / 5.0
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {previewProgram.instructor && (
+                  <div className="bg-blue-50 rounded-lg p-4">
+                    <p className="text-sm text-blue-600 font-medium mb-1">
+                      Instructor
+                    </p>
+                    <p className="text-lg font-semibold text-blue-900">
+                      {previewProgram.instructor}
+                    </p>
+                  </div>
+                )}
+
+                {previewProgram.certificateAvailable && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-600" />
+                      <p className="text-sm font-semibold text-green-900">
+                        Certificate of Completion Available
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation */}
+        <AlertDialog
+          open={!!deleteId}
+          onOpenChange={(v) => !v && setDeleteId(null)}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-xl font-bold text-slate-900">
+                Delete Training Program?
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-slate-600">
+                This action cannot be undone. This will permanently delete the
+                training program, all associated modules, lessons, and student
+                enrollment data.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => deleteId && deleteMutation.mutate(deleteId)}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Delete Program
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
     </main>
   );
 }

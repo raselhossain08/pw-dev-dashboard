@@ -1,43 +1,71 @@
 import { apiClient } from "@/lib/api-client";
 
 export interface Course {
+    id?: string; // Added for frontend convenience
     _id: string;
     title: string;
     slug: string;
     description: string;
-    thumbnail: string;
+    excerpt?: string;
+    content?: string;
+    thumbnail?: string;
     instructor: {
         _id: string;
-        name: string;
+        firstName?: string;
+        lastName?: string;
+        email?: string;
         avatar?: string;
-    };
-    category: string;
-    level: "beginner" | "intermediate" | "advanced";
+    } | string;
+    categories?: string[];
+    level: "beginner" | "intermediate" | "advanced" | "expert";
+    type: "theoretical" | "practical" | "simulator" | "combined";
     price: number;
-    discountPrice?: number;
-    duration: number;
-    lessonsCount: number;
-    enrollmentsCount: number;
-    rating: number;
-    reviewsCount: number;
-    isPublished: boolean;
-    isFeatured: boolean;
-    tags: string[];
-    createdAt: string;
-    updatedAt: string;
+    duration?: number;
+    durationHours?: number;
+    maxStudents?: number;
+    studentCount?: number;
+    enrollmentCount?: number; // Added for sales progress tracking
+    rating?: number;
+    reviewCount?: number;
+    totalRatings?: number; // Added for ratings display
+    completionRate?: number;
+    isPublished?: boolean;
+    isFeatured?: boolean;
+    status?: "published" | "draft" | "archived";
+    tags?: string[];
+    prerequisites?: string[];
+    learningObjectives?: string[];
+    videoUrl?: string;
+    language?: string;
+    certificateAvailable?: boolean;
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 export interface CreateCourseDto {
     title: string;
+    slug?: string;
     description: string;
-    thumbnail: string;
-    category: string;
-    level: "beginner" | "intermediate" | "advanced";
+    excerpt?: string;
+    content?: string;
+    level: "beginner" | "intermediate" | "advanced" | "expert";
+    type: "theoretical" | "practical" | "simulator" | "combined";
     price: number;
-    discountPrice?: number;
-    tags?: string[];
+    duration?: number;
+    durationHours?: number;
+    maxStudents: number;
+    thumbnail?: string;
     isPublished?: boolean;
     isFeatured?: boolean;
+    tags?: string[];
+    categories?: string[];
+    prerequisites?: string[];
+    learningObjectives?: string[];
+    instructor?: string;
+    videoUrl?: string;
+    language?: string;
+    certificateAvailable?: boolean;
+    difficultyLevel?: string;
 }
 
 export type UpdateCourseDto = Partial<CreateCourseDto>

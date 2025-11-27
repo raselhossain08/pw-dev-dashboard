@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import { Suspense } from "react";
@@ -7,8 +7,17 @@ import { forgotPassword, resetPassword } from "@/services/auth.service";
 import { useToast } from "@/context/ToastContext";
 import { useSearchParams } from "next/navigation";
 import { resetSchema } from "@/lib/validate";
-import { Mail, ShieldCheck, Plane, Eye, EyeOff, KeyRound } from "lucide-react";
+import { Mail, Eye, EyeOff, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 type Step = "forgot" | "otp" | "reset";
 
@@ -18,11 +27,6 @@ function ForgotPasswordInner() {
   const [step, setStep] = React.useState<Step>("forgot");
   const [email, setEmail] = React.useState("");
   const [loading, setLoading] = React.useState(false);
-  const [progress, setProgress] = React.useState(0);
-  const [notification, setNotification] = React.useState<{
-    message: string;
-    type: "error" | "success";
-  } | null>(null);
 
   const [otpDigits, setOtpDigits] = React.useState<string[]>(Array(6).fill(""));
   const inputRefs = React.useRef<Array<HTMLInputElement | null>>([]);
@@ -50,26 +54,6 @@ function ForgotPasswordInner() {
     () => password.length > 0 && password === confirmPassword,
     [password, confirmPassword]
   );
-
-  React.useEffect(() => {
-    let timer: ReturnType<typeof setInterval> | undefined;
-    if (loading) {
-      setProgress(0);
-      timer = setInterval(() => {
-        setProgress((p) => {
-          const next = Math.min(100, p + Math.floor(10 + Math.random() * 20));
-          if (next >= 100) {
-            if (timer) clearInterval(timer);
-            setLoading(false);
-          }
-          return next;
-        });
-      }, 100);
-    }
-    return () => {
-      if (timer) clearInterval(timer);
-    };
-  }, [loading]);
 
   React.useEffect(() => {
     return () => {
@@ -108,13 +92,9 @@ function ForgotPasswordInner() {
   async function onForgotSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!email) {
-      setNotification({
-        message: "Please enter your email address.",
-        type: "error",
-      });
+      push({ message: "Please enter your email address.", type: "error" });
       return;
     }
-    setNotification(null);
     setLoading(true);
     const res = await forgotPassword({ email });
     setLoading(false);
@@ -134,13 +114,12 @@ function ForgotPasswordInner() {
     e.preventDefault();
     const otp = otpDigits.join("");
     if (otp.length !== 6) {
-      setNotification({
+      push({
         message: "Please enter the complete 6-digit code.",
         type: "error",
       });
       return;
     }
-    setNotification(null);
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
@@ -148,12 +127,12 @@ function ForgotPasswordInner() {
         setStep("reset");
         if (countdownTimer.current) clearInterval(countdownTimer.current);
         if (resendTimer.current) clearInterval(resendTimer.current);
-        setNotification({
+        push({
           message: "Identity verified. Please create a new password.",
           type: "success",
         });
       } else {
-        setNotification({
+        push({
           message: "Invalid verification code. Please try again.",
           type: "error",
         });
@@ -166,24 +145,23 @@ function ForgotPasswordInner() {
   async function onResetSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!password || !confirmPassword) {
-      setNotification({
+      push({
         message: "Please fill in all required fields.",
         type: "error",
       });
       return;
     }
     if (password !== confirmPassword) {
-      setNotification({ message: "Passwords do not match.", type: "error" });
+      push({ message: "Passwords do not match.", type: "error" });
       return;
     }
     if (password.length < 8) {
-      setNotification({
+      push({
         message: "Password must be at least 8 characters long.",
         type: "error",
       });
       return;
     }
-    setNotification(null);
     setLoading(true);
     const token = params.get("token") || otpDigits.join("");
     const parsed = resetSchema.safeParse({ token: token || "", password });
@@ -203,35 +181,32 @@ function ForgotPasswordInner() {
 
   function renderForgot() {
     return (
-      <form onSubmit={onForgotSubmit} className="space-y-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Email Address
-          </label>
-          <div className="relative">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 pl-11 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
-              placeholder="admin@personalwings.com"
-            />
-            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-          </div>
+      <form onSubmit={onForgotSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="email">Email Address</Label>
+          <Input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            disabled={loading}
+          />
         </div>
         <Button
           type="submit"
-          className="w-full bg-gradient-to-r from-primary to-purple-600 text-white"
+          className="w-full"
+          size="lg"
+          disabled={loading}
         >
+          <Mail className="w-4 h-4" />
           Send Reset Link
         </Button>
-        <div className="text-center">
-          <p className="text-gray-600 text-sm">
-            Remember your password?{" "}
-            <Link href="/login" className="text-primary font-semibold">
-              Back to Login
-            </Link>
-          </p>
+        <div className="text-center text-sm text-muted-foreground">
+          Remember your password?{" "}
+          <Link href="/login" className="text-primary font-medium hover:underline">
+            Back to Login
+          </Link>
         </div>
       </form>
     );
@@ -243,15 +218,15 @@ function ForgotPasswordInner() {
       .padStart(2, "0");
     const seconds = (countdownLeft % 60).toString().padStart(2, "0");
     return (
-      <form onSubmit={onOtpVerify} className="space-y-6">
-        <div className="text-center mb-2 text-sm text-gray-600">
+      <form onSubmit={onOtpVerify} className="space-y-4">
+        <div className="text-center text-sm text-muted-foreground mb-4">
           Code sent to {email || "your email"}
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3 text-center">
+        <div className="space-y-2">
+          <Label className="text-center block">
             Enter 6-digit verification code
-          </label>
-          <div className="flex justify-center space-x-3 mb-4">
+          </Label>
+          <div className="flex justify-center gap-2 mb-2">
             {otpDigits.map((d, i) => (
               <input
                 key={i}
@@ -274,23 +249,24 @@ function ForgotPasswordInner() {
                   }
                 }}
                 inputMode="numeric"
-                className="w-12 h-12 text-center border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                disabled={loading}
+                className="w-12 h-12 text-center text-lg font-semibold border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
               />
             ))}
           </div>
-          <div className="text-xs text-green-600 text-center">
-            Use code 123456 for testing
+          <div className="text-xs text-muted-foreground text-center">
+            Use code <span className="font-mono font-semibold">123456</span> for testing
           </div>
         </div>
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-600">
+        <div className="flex items-center justify-between text-sm">
+          <div className="text-muted-foreground">
             Expires in {minutes}:{seconds}
           </div>
           <Button
             type="button"
-            variant="outline"
-            className="border-gray-300"
-            disabled={resendLeft > 0}
+            variant="ghost"
+            size="sm"
+            disabled={resendLeft > 0 || loading}
             onClick={() => setResendLeft(60)}
           >
             {resendLeft > 0 ? `Resend in ${resendLeft}s` : "Resend Code"}
@@ -298,7 +274,9 @@ function ForgotPasswordInner() {
         </div>
         <Button
           type="submit"
-          className="w-full bg-gradient-to-r from-primary to-purple-600 text-white"
+          className="w-full"
+          size="lg"
+          disabled={loading}
         >
           Verify Code
         </Button>
@@ -308,24 +286,25 @@ function ForgotPasswordInner() {
 
   function renderReset() {
     return (
-      <form onSubmit={onResetSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              New Password *
-            </label>
+      <form onSubmit={onResetSubmit} className="space-y-4">
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="password">New Password</Label>
             <div className="relative">
-              <input
+              <Input
+                id="password"
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 pr-11 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
-                placeholder="••••••••"
+                placeholder=""
+                disabled={loading}
+                className="pr-10"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((s) => !s)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                tabIndex={-1}
               >
                 {showPassword ? (
                   <EyeOff className="w-4 h-4" />
@@ -334,21 +313,21 @@ function ForgotPasswordInner() {
                 )}
               </button>
             </div>
-            <div className="mt-2">
-              <div className="w-full bg-gray-200 rounded-full h-2">
+            <div className="space-y-1">
+              <div className="w-full bg-secondary rounded-full h-2">
                 <div
-                  className={`${
+                  className={`h-2 rounded-full transition-all ${
                     strength < 50
                       ? "bg-red-500"
                       : strength < 75
                       ? "bg-yellow-500"
                       : "bg-green-500"
-                  } h-2 rounded-full`}
+                  }`}
                   style={{ width: `${strength}%` }}
                 />
               </div>
               <div
-                className={`text-xs mt-1 ${
+                className={`text-xs ${
                   strength < 50
                     ? "text-red-500"
                     : strength < 75
@@ -361,22 +340,23 @@ function ForgotPasswordInner() {
             </div>
           </div>
 
-          <div>
-            <label className="block text sm font-medium text-gray-700 mb-2">
-              Confirm Password *
-            </label>
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Confirm Password</Label>
             <div className="relative">
-              <input
+              <Input
+                id="confirmPassword"
                 type={showConfirm ? "text" : "password"}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-4 py-3 pr-11 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20"
-                placeholder="••••••••"
+                placeholder=""
+                disabled={loading}
+                className="pr-10"
               />
               <button
                 type="button"
                 onClick={() => setShowConfirm((s) => !s)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                tabIndex={-1}
               >
                 {showConfirm ? (
                   <EyeOff className="w-4 h-4" />
@@ -385,117 +365,68 @@ function ForgotPasswordInner() {
                 )}
               </button>
             </div>
-            <div className={`text-xs mt-2 ${match ? "text-green-600" : "text-red-500"}`}>
-              {match ? "Passwords match" : "Passwords do not match"}
-            </div>
+            {confirmPassword && (
+              <div
+                className={`text-xs ${
+                  match ? "text-green-600" : "text-destructive"
+                }`}
+              >
+                {match ? " Passwords match" : " Passwords do not match"}
+              </div>
+            )}
           </div>
         </div>
         <Button
           type="submit"
-          className="w-full bg-gradient-to-r from-primary to purple-600 text-white"
+          className="w-full"
+          size="lg"
+          disabled={loading}
         >
+          <KeyRound className="w-4 h-4" />
           Reset Password
         </Button>
-        <div className="text-center">
-          <p className="text-gray-600 text-sm">
-            Back to{" "}
-            <Link href="/login" className="text-primary font-semibold">
-              Login
-            </Link>
-          </p>
+        <div className="text-center text-sm text-muted-foreground">
+          Back to{" "}
+          <Link href="/login" className="text-primary font-medium hover:underline">
+            Login
+          </Link>
         </div>
       </form>
     );
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-indigo-500 to-purple-600 relative">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 text-white/10 text-6xl">☁️</div>
-        <div className="absolute top-1/3 right-1/4 text-white/10 text-4xl">☁️</div>
-        <div className="absolute bottom-1/4 left-1/3 text-white/10 text-5xl">☁️</div>
-        <div className="absolute top-1/2 right-1/4 text-white/20 -rotate-45">
-          <Plane className="w-20 h-20" />
-        </div>
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      {/* Background decoration */}
+      <div className="absolute inset-0 -z-10 overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-accent/10 rounded-full blur-3xl" />
       </div>
 
-      <div className="rounded-3xl shadow-2xl w-full max-w-md mx-auto overflow-hidden bg-white/95 backdrop-blur-md border border-white/30">
-        <div className="bg-gradient-to-r from-primary to-purple-600 p-8 text-center text-white">
-          <div className="flex items-center justify-center space-x-3 mb-4">
-            <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
-              <ShieldCheck className="w-6 h-6" />
-            </div>
-            <h1 className="text-3xl font-bold">Personal Wings</h1>
+      <Card className="w-full max-w-md shadow-lg">
+        <CardHeader className="space-y-1 text-center">
+          <div className="mx-auto w-12 h-12 bg-primary rounded-lg flex items-center justify-center mb-2">
+            <KeyRound className="w-6 h-6 text-primary-foreground" />
           </div>
-          <p className="text-white/80 text-sm">
-            {step === "forgot"
-              ? "Reset Password"
-              : step === "otp"
-              ? "Verify Your Identity"
-              : "Create New Password"}
-          </p>
-        </div>
-
-        <div className="p-8">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">
-              {step === "forgot" && "Forgot your password?"}
-              {step === "otp" && "Enter Verification Code"}
-              {step === "reset" && "Set a New Password"}
-            </h2>
-            <p className="text-gray-600">
-              {step === "forgot" && "We’ll send a reset link to your email"}
-              {step === "otp" && `Code sent to ${email || "your email"}`}
-              {step === "reset" && "Create a strong password to secure your account"}
-            </p>
-          </div>
-
+          <CardTitle className="text-2xl font-bold">
+            {step === "forgot" && "Forgot Password"}
+            {step === "otp" && "Verify Identity"}
+            {step === "reset" && "Reset Password"}
+          </CardTitle>
+          <CardDescription>
+            {step === "forgot" && "Enter your email to receive a reset code"}
+            {step === "otp" &&
+              `We sent a verification code to ${email || "your email"}`}
+            {step === "reset" && "Create a strong password for your account"}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
           {step === "forgot" && renderForgot()}
           {step === "otp" && renderOtp()}
           {step === "reset" && renderReset()}
-        </div>
-
-        <div className="bg-gray-50 px-8 py-4 border-t border-gray-200">
-          <div className="text-center text-sm text-gray-600">
-            <p>© 2024 Personal Wings. All rights reserved.</p>
-            <p className="mt-1">
-              <button className="text-primary">Privacy Policy</button> •{" "}
-              <button className="text-primary">Terms of Service</button> •{" "}
-              <button className="text-primary">Support</button>
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {notification && (
-        <div
-          className={`fixed top-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg shadow-md ${
-            notification.type === "error"
-              ? "bg-red-600 text-white"
-              : "bg-green-600 text-white"
-          }`}
-        >
-          {notification.message}
-        </div>
-      )}
-
-      {loading && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl p-8 text-center shadow-2xl w-[360px]">
-            <div className="w-16 h-16 bg-gradient-to-r from-primary to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <KeyRound className="text-white w-7 h-7" />
-            </div>
-            <h3 className="text-xl font-bold text-gray-800 mb-2">Processing</h3>
-            <p className="text-gray-600 mb-4">
-              Please wait while we process your request...
-            </p>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div className="bg-primary h-2 rounded-full" style={{ width: `${progress}%` }} />
-            </div>
-          </div>
-        </div>
-      )}
-    </main>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 

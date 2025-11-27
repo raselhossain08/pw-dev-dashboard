@@ -7,13 +7,26 @@ export interface UploadProgress {
 }
 
 export interface UploadOptions {
-    folder?: string;
     type?: "image" | "video" | "raw" | "auto";
+    description?: string;
+    tags?: string[];
     onProgress?: (progress: UploadProgress) => void;
 }
 
 export interface UploadResult {
     id: string;
+    url: string;
+    publicId: string;
+    format: string;
+    resourceType: string;
+    size: number;
+    width?: number;
+    height?: number;
+    duration?: number;
+}
+
+interface UploadApiPayload {
+    _id: string;
     url: string;
     publicId: string;
     format: string;
@@ -32,19 +45,22 @@ class UploadService {
         const formData = new FormData();
         formData.append("file", file);
 
-        if (options.folder) {
-            formData.append("folder", options.folder);
-        }
-
         if (options.type) {
             formData.append("type", options.type);
         }
 
+        if (options.description) {
+            formData.append("description", options.description);
+        }
+
+        if (options.tags && options.tags.length > 0) {
+            options.tags.forEach((tag) => {
+                formData.append("tags[]", tag);
+            });
+        }
+
         try {
-            const { data } = await apiClient.post("/uploads/upload", formData, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
+            const { data } = await apiClient.post<UploadApiPayload>("/uploads/upload", formData, {
                 onUploadProgress: (progressEvent) => {
                     if (options.onProgress && progressEvent.total) {
                         const progress: UploadProgress = {
@@ -89,11 +105,12 @@ class UploadService {
         options: Omit<UploadOptions, "onProgress"> = {}
     ): Promise<UploadResult> {
         try {
-            const { data } = await apiClient.post("/uploads/upload-from-url", {
+            const { data } = await apiClient.post<UploadApiPayload>("/uploads/upload-from-url", {
                 url,
                 uploadFileDto: {
                     type: options.type,
-                    folder: options.folder,
+                    description: options.description,
+                    tags: options.tags,
                 },
             });
 

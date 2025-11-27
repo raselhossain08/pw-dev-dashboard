@@ -1,9 +1,10 @@
 // Lightweight axios-like wrapper using fetch
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
+type QueryParams = Record<string, string | number | boolean | undefined>;
 type RequestOptions = {
   headers?: Record<string, string>;
-  params?: Record<string, any>;
+  params?: QueryParams;
   onUploadProgress?: (e: { loaded: number; total?: number }) => void;
 };
 
@@ -14,11 +15,11 @@ async function buildHeaders(opts?: RequestOptions) {
     const { getAccessToken } = await import('./cookies');
     const token = getAccessToken();
     if (token) headers['Authorization'] = `Bearer ${token}`;
-  } catch {}
+  } catch { }
   return headers;
 }
 
-function withParams(url: string, params?: Record<string, any>) {
+function withParams(url: string, params?: QueryParams) {
   if (!params || Object.keys(params).length === 0) return url;
   const usp = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) if (v !== undefined) usp.append(k, String(v));
@@ -26,7 +27,7 @@ function withParams(url: string, params?: Record<string, any>) {
   return `${url}${sep}${usp.toString()}`;
 }
 
-async function request<T>(method: string, url: string, body?: any, opts?: RequestOptions) {
+async function request<T>(method: string, url: string, body?: unknown, opts?: RequestOptions) {
   const headers = await buildHeaders(opts);
   const isForm = typeof FormData !== 'undefined' && body instanceof FormData;
   if (isForm) delete headers['Content-Type'];
@@ -41,23 +42,23 @@ async function request<T>(method: string, url: string, body?: any, opts?: Reques
   if (!res.ok) throw new Error(json?.error || json?.message || `HTTP ${res.status}`);
   // best-effort progress notification at completion
   if (opts?.onUploadProgress) opts.onUploadProgress({ loaded: 1, total: 1 });
-  return { data: json } as { data: T };
+  return { data: json as T };
 }
 
 const api = {
-  get<T = any>(url: string, opts?: RequestOptions) {
+  get<T = unknown>(url: string, opts?: RequestOptions) {
     return request<T>('GET', withParams(url, opts?.params), undefined, opts);
   },
-  post<T = any>(url: string, data?: any, opts?: RequestOptions) {
+  post<T = unknown>(url: string, data?: unknown, opts?: RequestOptions) {
     return request<T>('POST', url, data, opts);
   },
-  put<T = any>(url: string, data?: any, opts?: RequestOptions) {
+  put<T = unknown>(url: string, data?: unknown, opts?: RequestOptions) {
     return request<T>('PUT', url, data, opts);
   },
-  patch<T = any>(url: string, data?: any, opts?: RequestOptions) {
+  patch<T = unknown>(url: string, data?: unknown, opts?: RequestOptions) {
     return request<T>('PATCH', url, data, opts);
   },
-  delete<T = any>(url: string, opts?: RequestOptions) {
+  delete<T = unknown>(url: string, opts?: RequestOptions) {
     return request<T>('DELETE', url, undefined, opts);
   },
 };

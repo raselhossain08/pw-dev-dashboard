@@ -1,37 +1,24 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
+import { useToast } from "@/context/ToastContext";
+import { coursesService, Course } from "@/services/courses.service";
 import {
   Book,
   Users,
   Star,
-  EllipsisVertical,
   ArrowUp,
   CheckCircle,
   ChartLine,
   Filter,
-  LayoutGrid,
-  List,
   Plus,
-  Eye,
-  Pencil,
-  Layers,
-  Trash,
 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   Select,
   SelectContent,
@@ -49,544 +36,410 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-
-type CourseItem = {
-  id: string;
-  title: string;
-  category: string;
-  description: string;
-  students: number;
-  rating: number;
-  duration: string;
-  status: "published" | "draft";
-  completion: number;
-  image: string;
-  instructor: string;
-};
-
-const initialCourses: CourseItem[] = [
-  {
-    id: "c1",
-    title: "Web Development Bootcamp",
-    category: "Web Development",
-    description:
-      "HTML, CSS, JavaScript, frameworks and deployment for modern web apps.",
-    students: 1200,
-    rating: 4.7,
-    duration: "12h",
-    status: "published",
-    completion: 82,
-    image:
-      "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=1470&q=80",
-    instructor: "Sarah Johnson",
-  },
-  {
-    id: "c2",
-    title: "Data Science & Machine Learning",
-    category: "Data Science",
-    description: "Python, Pandas, NumPy, scikit-learn and TensorFlow basics.",
-    students: 980,
-    rating: 4.6,
-    duration: "18h",
-    status: "draft",
-    completion: 72,
-    image:
-      "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1470&q=80",
-    instructor: "Michael Chen",
-  },
-  {
-    id: "c3",
-    title: "UI Design Principles",
-    category: "UI/UX Design",
-    description: "Color theory, typography, layout principles and design systems.",
-    students: 650,
-    rating: 4.8,
-    duration: "9h",
-    status: "published",
-    completion: 91,
-    image:
-      "https://images.unsplash.com/photo-1557838923-2985c318be48?auto=format&fit=crop&w=1470&q=80",
-    instructor: "Emily Davis",
-  },
-];
+import CoursesTable from "./CoursesTable";
 
 export default function Courses() {
-  const [courses, setCourses] = React.useState<CourseItem[]>(initialCourses);
+  const router = useRouter();
+  const { push } = useToast();
+  const { user } = useAuth();
+  const qc = useQueryClient();
   const [search, setSearch] = React.useState("");
-  const [categoryFilter, setCategoryFilter] = React.useState<string>("All Categories");
+  const [categoryFilter, setCategoryFilter] =
+    React.useState<string>("All Categories");
   const [statusFilter, setStatusFilter] = React.useState<string>("All Status");
   const [sortBy, setSortBy] = React.useState<string>("Newest");
-  const [createOpen, setCreateOpen] = React.useState(false);
-  const [editCourse, setEditCourse] = React.useState<CourseItem | null>(null);
-  const [previewCourse, setPreviewCourse] = React.useState<CourseItem | null>(null);
   const [deleteId, setDeleteId] = React.useState<string | null>(null);
+  const [actionLoading, setActionLoading] = React.useState<string | null>(null);
 
-  const filtered = courses
-    .filter((c) =>
-      search
-        ? c.title.toLowerCase().includes(search.toLowerCase()) ||
-          c.description.toLowerCase().includes(search.toLowerCase())
-        : true
-    )
-    .filter((c) => (categoryFilter === "All Categories" ? true : c.category === categoryFilter))
-    .filter((c) =>
-      statusFilter === "All Status"
-        ? true
-        : statusFilter === "Published"
-        ? c.status === "published"
-        : c.status === "draft"
-    )
-    .sort((a, b) => {
-      if (sortBy === "Newest") return b.id.localeCompare(a.id);
-      if (sortBy === "Oldest") return a.id.localeCompare(b.id);
-      if (sortBy === "Name") return a.title.localeCompare(b.title);
-      if (sortBy === "Students") return b.students - a.students;
-      if (sortBy === "Rating") return b.rating - a.rating;
-      return 0;
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ["courses", { search, statusFilter }],
+    queryFn: async () => {
+      const params: any = {};
+      if (search) params.search = search;
+      if (statusFilter === "Published") params.status = "published";
+      if (statusFilter === "Draft") params.status = "draft";
+      const res = await coursesService.getAllCourses(params);
+      return res;
+    },
+  });
+
+  React.useEffect(() => {
+    if (isError) {
+      const message =
+        error && error instanceof Error
+          ? error.message
+          : "Failed to load courses";
+      push({ type: "error", message });
+    }
+  }, [isError, error, push]);
+
+  const courses: Course[] = React.useMemo(() => {
+    const list = (data as any)?.courses || [];
+    return list.map((c: any) => ({
+      ...c,
+      id: c._id || c.id,
+      enrollmentCount: c.studentCount || c.enrollmentCount || 0,
+      totalRatings: c.totalRatings || c.ratingsCount || c.reviewCount || 0,
+      maxStudents: c.maxStudents || 100,
+      rating: c.rating || 0,
+      price: c.price || 0,
+      duration: c.duration || c.durationHours || 0,
+      status: c.status || (c.isPublished ? "published" : "draft"),
+      categories: Array.isArray(c.categories) ? c.categories : [],
+      thumbnail: c.thumbnail || "",
+    }));
+  }, [data]);
+
+  const roleCanManage =
+    user?.role === "super_admin" ||
+    user?.role === "admin" ||
+    user?.role === "instructor";
+
+  const categoryOptions = React.useMemo(() => {
+    const set = new Set<string>();
+    courses.forEach((c) => {
+      if (c.categories && Array.isArray(c.categories)) {
+        c.categories.forEach((cat) => set.add(cat));
+      }
     });
+    return ["All Categories", ...Array.from(set).sort()];
+  }, [courses]);
 
-  return (
-    <main className="">
-      <div className="p-6">
-        <div className="mb-8">
-          <div className="flex justify-between items-center">
-            <div>
-              <h2 className="text-3xl font-bold text-secondary mb-2">Courses</h2>
-              <p className="text-gray-600">Manage and organize your learning courses</p>
-            </div>
-            <Button onClick={() => setCreateOpen(true)} className="bg-primary hover:bg-primary/90 text-white">
-              <Plus className="w-4 h-4 mr-2" />
-              Create Course
-            </Button>
+  const filteredCourses = React.useMemo(() => {
+    let filtered = [...courses];
+
+    if (categoryFilter !== "All Categories") {
+      filtered = filtered.filter(
+        (c) => c.categories && c.categories.includes(categoryFilter)
+      );
+    }
+
+    if (statusFilter !== "All Status") {
+      filtered = filtered.filter((c) => {
+        const status = c.status || (c.isPublished ? "published" : "draft");
+        return status === statusFilter.toLowerCase();
+      });
+    }
+
+    if (search) {
+      filtered = filtered.filter(
+        (c) =>
+          c.title.toLowerCase().includes(search.toLowerCase()) ||
+          (c.description || "").toLowerCase().includes(search.toLowerCase())
+      );
+    }
+
+    // Sort
+    if (sortBy === "Newest") {
+      filtered.sort(
+        (a, b) =>
+          new Date(b.createdAt || 0).getTime() -
+          new Date(a.createdAt || 0).getTime()
+      );
+    } else if (sortBy === "Oldest") {
+      filtered.sort(
+        (a, b) =>
+          new Date(a.createdAt || 0).getTime() -
+          new Date(b.createdAt || 0).getTime()
+      );
+    } else if (sortBy === "Most Popular") {
+      filtered.sort(
+        (a, b) => (b.enrollmentCount || 0) - (a.enrollmentCount || 0)
+      );
+    } else if (sortBy === "Highest Rated") {
+      filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    }
+
+    return filtered;
+  }, [courses, categoryFilter, statusFilter, search, sortBy]);
+
+  const stats = React.useMemo(() => {
+    const totalCourses = courses.length;
+    const totalStudents = courses.reduce(
+      (sum, c) => sum + (c.enrollmentCount || 0),
+      0
+    );
+    const avgRating =
+      courses.length > 0
+        ? courses.reduce((sum, c) => sum + (c.rating || 0), 0) / courses.length
+        : 0;
+    const published = courses.filter((c) => c.isPublished).length;
+
+    return { totalCourses, totalStudents, avgRating, published };
+  }, [courses]);
+
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    setActionLoading(deleteId);
+    try {
+      await coursesService.deleteCourse(deleteId);
+      push({ type: "success", message: "Course deleted successfully" });
+      qc.invalidateQueries({ queryKey: ["courses"] });
+      setDeleteId(null);
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Failed to delete course";
+      push({ type: "error", message: msg });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleDuplicate = async (courseId: string) => {
+    setActionLoading(courseId);
+    try {
+      await coursesService.duplicateCourse(courseId);
+      push({ type: "success", message: "Course duplicated successfully" });
+      qc.invalidateQueries({ queryKey: ["courses"] });
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Failed to duplicate course";
+      push({ type: "error", message: msg });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handlePublish = async (courseId: string) => {
+    setActionLoading(courseId);
+    try {
+      await coursesService.publishCourse(courseId);
+      push({ type: "success", message: "Course published successfully" });
+      qc.invalidateQueries({ queryKey: ["courses"] });
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Failed to publish course";
+      push({ type: "error", message: msg });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleUnpublish = async (courseId: string) => {
+    setActionLoading(courseId);
+    try {
+      await coursesService.unpublishCourse(courseId);
+      push({ type: "success", message: "Course unpublished successfully" });
+      qc.invalidateQueries({ queryKey: ["courses"] });
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Failed to unpublish course";
+      push({ type: "error", message: msg });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleEdit = (course: Course) => {
+    router.push(`/courses/${course.id}/edit`);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="p-8">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 className="text-3xl font-bold text-secondary mb-2">
+              Courses Management
+            </h2>
+            <p className="text-gray-600">Loading courses...</p>
           </div>
         </div>
-
-        <div className="bg-card rounded-xl p-4 shadow-sm border border-gray-100 mb-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0">
-            <div className="flex flex-wrap gap-2">
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm w-48">
-                  <SelectValue placeholder="All Categories" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="All Categories">All Categories</SelectItem>
-                  <SelectItem value="Web Development">Web Development</SelectItem>
-                  <SelectItem value="Data Science">Data Science</SelectItem>
-                  <SelectItem value="Digital Marketing">Digital Marketing</SelectItem>
-                  <SelectItem value="UI/UX Design">UI/UX Design</SelectItem>
-                  <SelectItem value="Business">Business</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm w-40">
-                  <SelectValue placeholder="All Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="All Status">All Status</SelectItem>
-                  <SelectItem value="Published">Published</SelectItem>
-                  <SelectItem value="Draft">Draft</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm w-56">
-                  <SelectValue placeholder="Sort by: Newest" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Newest">Sort by: Newest</SelectItem>
-                  <SelectItem value="Oldest">Sort by: Oldest</SelectItem>
-                  <SelectItem value="Name">Sort by: Name</SelectItem>
-                  <SelectItem value="Students">Sort by: Students</SelectItem>
-                  <SelectItem value="Rating">Sort by: Rating</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button variant="ghost" size="icon" className="text-gray-600 hover:text-primary">
-                <Filter className="w-5 h-5" />
-              </Button>
-              <Button variant="ghost" size="icon" className="text-gray-600 hover:text-primary">
-                <LayoutGrid className="w-5 h-5" />
-              </Button>
-              <Button variant="ghost" size="icon" className="text-gray-600 hover:text-primary">
-                <List className="w-5 h-5" />
-              </Button>
-            </div>
-          </div>
-        </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm font-medium">Total Courses</p>
-                <p className="text-2xl font-bold text-secondary mt-1">{courses.length}</p>
-                <p className="text-accent text-sm mt-1">
-                  <ArrowUp className="inline w-3 h-3" /> +5% from last month
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                <Book className="text-primary w-6 h-6" />
-              </div>
-            </div>
-          </div>
-          <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm font-medium">Published</p>
-                <p className="text-2xl font-bold text-secondary mt-1">
-                  {courses.filter((c) => c.status === "published").length}
-                </p>
-                <p className="text-accent text-sm mt-1">
-                  <CheckCircle className="inline w-3 h-3" /> good ratio
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
-                <CheckCircle className="text-accent w-6 h-6" />
-              </div>
-            </div>
-          </div>
-          <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm font-medium">Total Students</p>
-                <p className="text-2xl font-bold text-secondary mt-1">
-                  {courses.reduce((sum, c) => sum + c.students, 0)}
-                </p>
-                <p className="text-accent text-sm mt-1">
-                  <ArrowUp className="inline w-3 h-3" /> +12% from last month
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                <Users className="text-yellow-600 w-6 h-6" />
-              </div>
-            </div>
-          </div>
-          <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm font-medium">Avg. Completion</p>
-                <p className="text-2xl font-bold text-secondary mt-1">
-                  {Math.round(courses.reduce((sum, c) => sum + c.completion, 0) / courses.length)}%
-                </p>
-                <p className="text-accent text-sm mt-1">
-                  <ArrowUp className="inline w-3 h-3" /> +8% from last month
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                <ChartLine className="text-purple-600 w-6 h-6" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-card rounded-xl p-4 shadow-sm border border-gray-100 mb-6">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search courses... (Cmd+K)"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="bg-gray-100 rounded-xl p-6 animate-pulse h-32"
             />
-            <Book className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-          </div>
+          ))}
         </div>
-
-        {filtered.length === 0 ? (
-          <div className="bg-card rounded-xl p-12 shadow-sm border border-gray-100 text-center">
-            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Book className="text-gray-400 w-8 h-8" />
-            </div>
-            <h3 className="text-xl font-semibold text-secondary mb-2">No courses yet</h3>
-            <p className="text-gray-600 mb-6 max-w-md mx-auto">
-              Create your first course to start organizing your learning content.
-            </p>
-            <Button className="bg-primary hover:bg-primary/90 text-white" onClick={() => setCreateOpen(true)}>
-              <Plus className="w-4 h-4 mr-2" /> Create Your First Course
-            </Button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {filtered.map((c) => (
-              <div key={c.id} className="course-card bg-card rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300">
-                <div className="relative">
-                  <img src={c.image} alt={c.title} className="w-full h-40 object-cover" />
-                  <div className="absolute top-3 right-3">
-                    <span className={`text-xs font-medium px-2 py-1 rounded-full ${c.status === "published" ? "bg-accent/90 text-white" : "bg-yellow-100 text-yellow-800"}`}>
-                      {c.status === "published" ? "Published" : "Draft"}
-                    </span>
-                  </div>
-                  <div className="absolute bottom-3 left-3">
-                    <span className="bg-blue-500 text-white text-xs font-medium px-2 py-1 rounded-full">{c.category}</span>
-                  </div>
-                </div>
-                <div className="p-6">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="font-semibold text-secondary text-lg mb-1">{c.title}</h3>
-                      <p className="text-gray-500 text-sm">{c.description}</p>
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="text-gray-400 hover:text-primary">
-                          <EllipsisVertical className="w-5 h-5" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuItem onSelect={() => setEditCourse(c)}>
-                          <Pencil className="w-4 h-4 mr-2" /> Edit Course
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onSelect={() => {
-                            const copy: CourseItem = { ...c, id: `c${Date.now()}` };
-                            setCourses((prev) => [copy, ...prev]);
-                          }}
-                        >
-                          <Layers className="w-4 h-4 mr-2" /> Duplicate
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => setPreviewCourse(c)}>
-                          <Eye className="w-4 h-4 mr-2" /> Preview
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600" onSelect={() => setDeleteId(c.id)}>
-                          <Trash className="w-4 h-4 mr-2" /> Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-
-                  <div className="mb-4">
-                    <div className="flex justify-between text-sm text-gray-600 mb-1">
-                      <span>Completion Rate</span>
-                      <span>{c.completion}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-accent h-2 rounded-full" style={{ width: `${c.completion}%` }} />
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center space-x-4 text-sm text-gray-500">
-                      <span className="flex items-center">
-                        <Users className="w-4 h-4 mr-1" /> {c.students}
-                      </span>
-                      <span className="flex items-center">
-                        <Star className="w-4 h-4 mr-1" /> {c.rating.toFixed(1)}
-                      </span>
-                      <span className="flex items-center">
-                        <Book className="w-4 h-4 mr-1" /> {c.duration}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <img
-                        src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg"
-                        alt="Instructor"
-                        className="w-6 h-6 rounded-full"
-                      />
-                      <span className="text-sm text-gray-600">{c.instructor}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end space-x-2 mt-4">
-                    <Button variant="ghost" className="text-primary hover:text-primary/80 text-sm font-medium" onClick={() => setEditCourse(c)}>
-                      <Pencil className="w-4 h-4 mr-1" /> Edit
-                    </Button>
-                  </div>
-                </div>
-              </div>
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-6">
+          <div className="h-10 bg-gray-100 rounded animate-pulse" />
+        </div>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+          <div className="p-6 space-y-4">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="h-20 bg-gray-100 rounded animate-pulse" />
             ))}
           </div>
-        )}
+        </div>
+      </div>
+    );
+  }
 
-        <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create New Course</DialogTitle>
-              <DialogDescription>Add details for your course.</DialogDescription>
-            </DialogHeader>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const form = e.currentTarget as HTMLFormElement;
-                const fd = new FormData(form);
-                const title = String(fd.get("title") || "");
-                const category = String(fd.get("category") || "");
-                const duration = String(fd.get("duration") || "");
-                const status = String(fd.get("status") || "draft");
-                const instructor = String(fd.get("instructor") || "");
-                const image = String(fd.get("image") || initialCourses[0].image);
-                const newItem: CourseItem = {
-                  id: `c${Date.now()}`,
-                  title,
-                  category,
-                  description: "",
-                  students: 0,
-                  rating: 0,
-                  duration,
-                  status: status === "published" ? "published" : "draft",
-                  completion: 0,
-                  image,
-                  instructor,
-                };
-                setCourses((prev) => [newItem, ...prev]);
-                setCreateOpen(false);
-              }}
-              className="space-y-4"
-            >
-              <input
-                name="title"
-                placeholder="Course Title"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                required
-              />
-              <select
-                name="category"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                required
-              >
-                <option value="">Select a category</option>
-                <option value="Web Development">Web Development</option>
-                <option value="Data Science">Data Science</option>
-                <option value="Digital Marketing">Digital Marketing</option>
-                <option value="UI/UX Design">UI/UX Design</option>
-                <option value="Business">Business</option>
-              </select>
-              <textarea
-                name="description"
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                placeholder="Describe course content"
-              />
-              <div className="grid grid-cols-2 gap-4">
-                <input
-                  name="duration"
-                  placeholder="e.g., 12h"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                />
-                <select
-                  name="status"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                >
-                  <option value="draft">Draft</option>
-                  <option value="published">Published</option>
-                </select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <input
-                  name="instructor"
-                  placeholder="Instructor name"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                />
-                <input
-                  name="image"
-                  placeholder="Image URL"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                />
-              </div>
-              <div className="flex justify-end gap-2 pt-2">
-                <Button type="button" variant="ghost" onClick={() => setCreateOpen(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" className="bg-primary hover:bg-primary/90 text-white">
-                  Create Course
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+  return (
+    <div className="p-8">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h2 className="text-3xl font-bold text-secondary mb-2">
+            Courses Management
+          </h2>
+          <p className="text-gray-600">
+            Manage your aviation training courses and enrollments
+          </p>
+        </div>
+        {roleCanManage && (
+          <Button
+            onClick={() => router.push("/courses/create")}
+            className="bg-primary hover:bg-primary/90 text-white"
+          >
+            <Plus className="w-5 h-5 mr-2" />
+            Create Course
+          </Button>
+        )}
       </div>
 
-      <Dialog open={!!editCourse} onOpenChange={(v) => !v && setEditCourse(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Course</DialogTitle>
-            <DialogDescription>Update course details.</DialogDescription>
-          </DialogHeader>
-          {editCourse && (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const fd = new FormData(e.currentTarget as HTMLFormElement);
-                const title = String(fd.get("title") || editCourse.title);
-                const category = String(fd.get("category") || editCourse.category);
-                const duration = String(fd.get("duration") || editCourse.duration);
-                const status = String(fd.get("status") || editCourse.status);
-                setCourses((prev) =>
-                  prev.map((cc) =>
-                    cc.id === editCourse.id
-                      ? {
-                          ...cc,
-                          title,
-                          category,
-                          duration,
-                          status: status === "published" ? "published" : "draft",
-                        }
-                      : cc
-                  )
-                );
-                setEditCourse(null);
-              }}
-              className="space-y-4"
-            >
-              <input name="title" defaultValue={editCourse.title} className="w-full px-3 py-2 border rounded-lg" />
-              <input name="category" defaultValue={editCourse.category} className="w-full px-3 py-2 border rounded-lg" />
-              <div className="grid grid-cols-2 gap-4">
-                <input name="duration" defaultValue={editCourse.duration} className="w-full px-3 py-2 border rounded-lg" />
-                <select name="status" defaultValue={editCourse.status} className="w-full px-3 py-2 border rounded-lg">
-                  <option value="draft">Draft</option>
-                  <option value="published">Published</option>
-                </select>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button type="button" variant="ghost" onClick={() => setEditCourse(null)}>
-                  Cancel
-                </Button>
-                <Button type="submit" className="bg-primary hover:bg-primary/90 text-white">
-                  Save
-                </Button>
-              </div>
-            </form>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={!!previewCourse} onOpenChange={(v) => !v && setPreviewCourse(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Preview Course</DialogTitle>
-            <DialogDescription>Quick overview of the course.</DialogDescription>
-          </DialogHeader>
-          {previewCourse && (
-            <div className="space-y-2">
-              <div className="font-semibold">{previewCourse.title}</div>
-              <div className="text-sm text-gray-600">{previewCourse.category}</div>
-              <div className="text-sm">Students: {previewCourse.students}</div>
-              <div className="text-sm">Duration: {previewCourse.duration}</div>
-              <div className="text-sm">Status: {previewCourse.status}</div>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="bg-linear-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
+          <div className="flex items-center justify-between mb-4">
+            <div className="bg-white/20 p-3 rounded-lg">
+              <Book className="w-6 h-6" />
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
+            <div className="bg-white/20 px-3 py-1 rounded-full text-sm flex items-center gap-1">
+              <ArrowUp className="w-4 h-4" />
+              <span>12%</span>
+            </div>
+          </div>
+          <p className="text-sm opacity-90 mb-1">Total Courses</p>
+          <p className="text-3xl font-bold">{stats.totalCourses}</p>
+        </div>
 
-      <AlertDialog open={!!deleteId} onOpenChange={(v) => !v && setDeleteId(null)}>
+        <div className="bg-linear-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg">
+          <div className="flex items-center justify-between mb-4">
+            <div className="bg-white/20 p-3 rounded-lg">
+              <Users className="w-6 h-6" />
+            </div>
+            <div className="bg-white/20 px-3 py-1 rounded-full text-sm flex items-center gap-1">
+              <ArrowUp className="w-4 h-4" />
+              <span>8%</span>
+            </div>
+          </div>
+          <p className="text-sm opacity-90 mb-1">Total Students</p>
+          <p className="text-3xl font-bold">{stats.totalStudents}</p>
+        </div>
+
+        <div className="bg-linear-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-white shadow-lg">
+          <div className="flex items-center justify-between mb-4">
+            <div className="bg-white/20 p-3 rounded-lg">
+              <Star className="w-6 h-6" />
+            </div>
+            <div className="bg-white/20 px-3 py-1 rounded-full text-sm flex items-center gap-1">
+              <CheckCircle className="w-4 h-4" />
+            </div>
+          </div>
+          <p className="text-sm opacity-90 mb-1">Average Rating</p>
+          <p className="text-3xl font-bold">{stats.avgRating.toFixed(1)}</p>
+        </div>
+
+        <div className="bg-linear-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
+          <div className="flex items-center justify-between mb-4">
+            <div className="bg-white/20 p-3 rounded-lg">
+              <ChartLine className="w-6 h-6" />
+            </div>
+            <div className="bg-white/20 px-3 py-1 rounded-full text-sm flex items-center gap-1">
+              <ArrowUp className="w-4 h-4" />
+              <span>15%</span>
+            </div>
+          </div>
+          <p className="text-sm opacity-90 mb-1">Published Courses</p>
+          <p className="text-3xl font-bold">{stats.published}</p>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-6">
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex-1 min-w-[200px]">
+            <input
+              type="text"
+              placeholder="Search courses..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Filter className="w-5 h-5 text-gray-400" />
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {categoryOptions.map((opt) => (
+                  <SelectItem key={opt} value={opt}>
+                    {opt}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="All Status">All Status</SelectItem>
+              <SelectItem value="Published">Published</SelectItem>
+              <SelectItem value="Draft">Draft</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Newest">Newest</SelectItem>
+              <SelectItem value="Oldest">Oldest</SelectItem>
+              <SelectItem value="Most Popular">Most Popular</SelectItem>
+              <SelectItem value="Highest Rated">Highest Rated</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Data Table */}
+      <CoursesTable
+        courses={filteredCourses}
+        onEdit={handleEdit}
+        onDelete={(id) => setDeleteId(id)}
+        onDuplicate={handleDuplicate}
+        onPublish={handlePublish}
+        onUnpublish={handleUnpublish}
+        actionLoading={actionLoading}
+      />
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete course?</AlertDialogTitle>
-            <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              course and all associated data.
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={!!actionLoading}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
-                setCourses((prev) => prev.filter((c) => c.id !== deleteId));
-                setDeleteId(null);
-              }}
+              onClick={handleDelete}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={!!actionLoading}
             >
-              Delete
+              {actionLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </main>
+    </div>
   );
 }
-

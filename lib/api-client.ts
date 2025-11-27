@@ -52,10 +52,15 @@ export async function apiFetch<T>(endpoint: string, options: RequestInit = {}): 
 }
 
 // Minimal axios-like client for existing services that expect `{ data }`
-function buildHeaders(options: RequestInit = {}) {
+function buildHeaders(options: RequestInit = {}, isFormData: boolean = false) {
   const headers: Record<string, string> = { ...(options.headers as Record<string, string>) };
-  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
-  if (!isFormData) headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+  // For FormData, don't set Content-Type - let browser set it with boundary
+  if (!isFormData) {
+    headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+  } else {
+    // Remove Content-Type if it exists for FormData
+    delete headers['Content-Type'];
+  }
   return headers;
 }
 
@@ -68,12 +73,13 @@ async function withAuthHeaders(headers: Record<string, string>) {
   return headers;
 }
 
+type QueryParams = Record<string, string | number | boolean | undefined>;
 type RequestOpts = RequestInit & {
-  params?: Record<string, any>;
+  params?: QueryParams;
   onUploadProgress?: (progressEvent: { loaded: number; total?: number }) => void;
 };
 
-function withParams(url: string, params?: Record<string, any>) {
+function withParams(url: string, params?: QueryParams) {
   if (!params || Object.keys(params).length === 0) return url;
   const usp = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) if (v !== undefined) usp.append(k, String(v));
@@ -81,10 +87,10 @@ function withParams(url: string, params?: Record<string, any>) {
   return `${url}${sep}${usp.toString()}`;
 }
 
-async function http<T>(method: string, url: string, body?: any, options: RequestOpts = {}) {
-  let headers = buildHeaders(options);
-  headers = await withAuthHeaders(headers);
+async function http<T>(method: string, url: string, body?: unknown, options: RequestOpts = {}) {
   const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+  let headers = buildHeaders(options, isFormData);
+  headers = await withAuthHeaders(headers);
   const fullUrl = withParams(url, options.params);
   const res = await fetch(`${BASE_URL}${fullUrl}`, {
     method,
@@ -95,23 +101,23 @@ async function http<T>(method: string, url: string, body?: any, options: Request
   const json = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(json?.error || json?.message || `HTTP ${res.status}`);
   if (options.onUploadProgress) options.onUploadProgress({ loaded: 1, total: 1 });
-  return { data: json } as { data: T };
+  return { data: json as T };
 }
 
 export const apiClient = {
-  get<T = any>(url: string, options?: RequestOpts) {
+  get<T = unknown>(url: string, options?: RequestOpts) {
     return http<T>('GET', url, undefined, options);
   },
-  post<T = any>(url: string, data?: any, options?: RequestOpts) {
+  post<T = unknown>(url: string, data?: unknown, options?: RequestOpts) {
     return http<T>('POST', url, data, options);
   },
-  put<T = any>(url: string, data?: any, options?: RequestOpts) {
+  put<T = unknown>(url: string, data?: unknown, options?: RequestOpts) {
     return http<T>('PUT', url, data, options);
   },
-  patch<T = any>(url: string, data?: any, options?: RequestOpts) {
+  patch<T = unknown>(url: string, data?: unknown, options?: RequestOpts) {
     return http<T>('PATCH', url, data, options);
   },
-  delete<T = any>(url: string, options?: RequestOpts) {
+  delete<T = unknown>(url: string, options?: RequestOpts) {
     return http<T>('DELETE', url, undefined, options);
   },
 };

@@ -1,6 +1,11 @@
 "use client";
 
 import * as React from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/context/ToastContext";
+import { certificatesService } from "@/services/certificates.service";
+import { coursesService } from "@/services/courses.service";
+import CertificateEditorCanva from "./CertificateEditorCanva";
 import {
   Award,
   EllipsisVertical,
@@ -52,52 +57,55 @@ type CertificateItem = {
   avatarUrl: string;
 };
 
-const initialCertificates: CertificateItem[] = [
-  {
-    id: "c1",
-    student: "Sarah Johnson",
-    email: "sarah.j@example.com",
-    course: "Web Development",
-    courseDetail: "Bootcamp",
-    certificateId: "CER-2023-WEB-0012",
-    status: "issued",
-    issuedText: "Oct 10, 2023",
-    avatarUrl:
-      "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg",
-  },
-  {
-    id: "c2",
-    student: "Michael Chen",
-    email: "michael.c@example.com",
-    course: "Data Science",
-    courseDetail: "Advanced Course",
-    certificateId: "CER-2023-DS-0098",
-    status: "revoked",
-    issuedText: "Sep 22, 2023",
-    avatarUrl:
-      "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg",
-  },
-  {
-    id: "c3",
-    student: "Emma Wilson",
-    email: "emma.w@example.com",
-    course: "UI/UX Design",
-    courseDetail: "Advanced Course",
-    certificateId: "CER-2023-UI-0028",
-    status: "pending",
-    issuedText: "Oct 10, 2023",
-    avatarUrl:
-      "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-4.jpg",
-  },
-];
-
 export default function Certificates() {
-  const [items] = React.useState<CertificateItem[]>(initialCertificates);
+  const queryClient = useQueryClient();
+  const { push } = useToast();
+  const {
+    data: myCerts,
+    isLoading,
+    isFetching,
+  } = useQuery({
+    queryKey: ["my-certificates"],
+    queryFn: () => certificatesService.getMyCertificates(),
+  });
+  const { data: coursesData } = useQuery({
+    queryKey: ["courses", { page: 1, limit: 50, isPublished: true }],
+    queryFn: () =>
+      coursesService.getAllCourses({ page: 1, limit: 50, isPublished: true }),
+  });
+  const courseList: any[] = React.useMemo(() => {
+    const raw: any = coursesData as any;
+    if (Array.isArray(raw)) return raw;
+    if (Array.isArray(raw?.data)) return raw.data;
+    if (Array.isArray(raw?.courses)) return raw.courses;
+    return [];
+  }, [coursesData]);
+  const [selectedCourseId, setSelectedCourseId] = React.useState<string>("");
+  const generateMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedCourseId) throw new Error("Select a course to generate");
+      return certificatesService.generateCertificate(selectedCourseId);
+    },
+    onMutate() {
+      push({ type: "loading", message: "Generating certificate..." });
+    },
+    onSuccess() {
+      push({ type: "success", message: "Certificate generated" });
+      queryClient.invalidateQueries({ queryKey: ["my-certificates"] });
+    },
+    onError(err: any) {
+      push({
+        type: "error",
+        message: String(err?.message || "Failed to generate"),
+      });
+    },
+  });
   const [search, setSearch] = React.useState("");
   const [courseFilter, setCourseFilter] = React.useState("All Courses");
   const [statusFilter, setStatusFilter] = React.useState("All Status");
   const [templateFilter, setTemplateFilter] = React.useState("All Templates");
   const [previewOpen, setPreviewOpen] = React.useState(false);
+  const [createTemplateOpen, setCreateTemplateOpen] = React.useState(false);
   const [selected, setSelected] = React.useState<CertificateItem | null>(null);
 
   React.useEffect(() => {
@@ -114,6 +122,38 @@ export default function Certificates() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
+  const items: CertificateItem[] = React.useMemo(() => {
+    const raw: any = myCerts as any;
+    const list: any[] = Array.isArray(raw)
+      ? raw
+      : Array.isArray(raw?.data)
+      ? raw.data
+      : Array.isArray(raw?.certificates)
+      ? raw.certificates
+      : [];
+    return list.map((c: any) => {
+      const studentName =
+        typeof c.student === "object" && c.student
+          ? `${c.student.firstName || ""} ${c.student.lastName || ""}`.trim()
+          : String(c.student || "");
+      const courseTitle =
+        typeof c.course === "object" && c.course
+          ? c.course.title || ""
+          : String(c.course || "");
+      return {
+        id: c._id,
+        student: studentName || "Student",
+        email: (c.student?.email as string) || "",
+        course: courseTitle || "Course",
+        courseDetail: "",
+        certificateId: c.certificateId,
+        status: "issued",
+        issuedText: c.issuedAt ? new Date(c.issuedAt).toLocaleDateString() : "",
+        avatarUrl: "",
+      } as CertificateItem;
+    });
+  }, [myCerts]);
+
   const filtered = items.filter((it) => {
     const matchesSearch =
       search === "" ||
@@ -127,7 +167,7 @@ export default function Certificates() {
   });
 
   return (
-    <main className="p-6">
+    <main className="">
       <div className="mb-8">
         <h2 className="text-3xl font-bold text-secondary mb-2">Certificates</h2>
         <p className="text-gray-600">
@@ -140,7 +180,9 @@ export default function Certificates() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-600 text-sm font-medium">Total Issued</p>
-              <p className="text-2xl font-bold text-secondary mt-1">128</p>
+              <p className="text-2xl font-bold text-secondary mt-1">
+                {items.length}
+              </p>
               <p className="text-accent text-sm mt-1">
                 <ArrowUp className="inline w-3 h-3" /> +8% from last month
               </p>
@@ -197,12 +239,11 @@ export default function Certificates() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="All Courses">All Courses</SelectItem>
-                <SelectItem value="Web Development">Web Development</SelectItem>
-                <SelectItem value="Data Science">Data Science</SelectItem>
-                <SelectItem value="Digital Marketing">
-                  Digital Marketing
-                </SelectItem>
-                <SelectItem value="UI/UX Design">UI/UX Design</SelectItem>
+                {courseList.map((c: any) => (
+                  <SelectItem key={c._id} value={c.title}>
+                    {c.title}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -244,89 +285,128 @@ export default function Certificates() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        {filtered.map((it) => (
-          <div
-            key={it.id}
-            className="bg-card rounded-xl p-6 shadow-sm border border-gray-100 transition-all duration-300 hover:-translate-y-0.5"
-          >
-            <div className="flex justify-between items-start mb-4">
-              <div className="flex items-center space-x-2">
-                <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <Award className="text-purple-600 w-6 h-6" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-secondary">{it.student}</h3>
-                  <p className="text-sm text-gray-500">
-                    {it.course} {it.courseDetail}
-                  </p>
-                </div>
-              </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="p-1 text-gray-400 hover:text-primary rounded">
-                    <EllipsisVertical className="w-5 h-5" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-52">
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setSelected(it);
-                      setPreviewOpen(true);
-                    }}
-                  >
-                    <Eye className="w-4 h-4 mr-2" /> View Certificate
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Download className="w-4 h-4 mr-2" /> Download PDF
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Share2 className="w-4 h-4 mr-2" /> Share Link
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Mail className="w-4 h-4 mr-2" /> Email Student
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="text-red-600 focus:text-red-700">
-                    <Ban className="w-4 h-4 mr-2" /> Revoke Certificate
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-
-            <div className="mb-4">
-              <div className="rounded-2xl p-6 border-4 border-yellow-400 bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
-                <div className="text-center">
-                  <p className="text-sm">CERTIFICATE OF COMPLETION</p>
-                  <p className="text-lg font-semibold mt-1">{it.student}</p>
-                  <p className="text-sm opacity-90">
-                    {it.course} {it.courseDetail}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2 text-sm text-gray-600">
-                <span className="font-mono text-gray-900">
-                  {it.certificateId}
-                </span>
-                <span>•</span>
-                <span>{it.issuedText}</span>
-              </div>
-              <div>
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    setSelected(it);
-                    setPreviewOpen(true);
-                  }}
-                  className="text-sm"
-                >
-                  <Eye className="w-4 h-4 mr-1" /> Preview
-                </Button>
-              </div>
-            </div>
+        {isLoading ? (
+          <>
+            {[...Array(3)].map((_, i) => (
+              <div
+                key={`sk-${i}`}
+                className="bg-gray-100 animate-pulse rounded-xl h-40"
+              />
+            ))}
+          </>
+        ) : filtered.length === 0 ? (
+          <div className="col-span-1 md:col-span-2 lg:col-span-3 text-center text-sm text-gray-600 py-12">
+            No certificates
           </div>
-        ))}
+        ) : (
+          <>
+            {filtered.map((it) => (
+              <div
+                key={it.id}
+                className="bg-card rounded-xl p-6 shadow-sm border border-gray-100 transition-all duration-300 hover:-translate-y-0.5"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                      <Award className="text-purple-600 w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-secondary">
+                        {it.student}
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        {it.course} {it.courseDetail}
+                      </p>
+                    </div>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="p-1 text-gray-400 hover:text-primary rounded">
+                        <EllipsisVertical className="w-5 h-5" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-52">
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setSelected(it);
+                          setPreviewOpen(true);
+                        }}
+                      >
+                        <Eye className="w-4 h-4 mr-2" /> View Certificate
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <a
+                          href={
+                            (myCerts as any)?.find?.(
+                              (c: any) => c._id === it.id
+                            )?.certificateUrl || "#"
+                          }
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <Download className="w-4 h-4 mr-2" /> Download / Open
+                        </a>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          const url = (myCerts as any)?.find?.(
+                            (c: any) => c._id === it.id
+                          )?.certificateUrl;
+                          if (url)
+                            navigator.clipboard.writeText(url).then(() =>
+                              push({
+                                type: "success",
+                                message: "Link copied",
+                              })
+                            );
+                        }}
+                      >
+                        <Share2 className="w-4 h-4 mr-2" /> Copy Link
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="text-red-600 focus:text-red-700">
+                        <Ban className="w-4 h-4 mr-2" /> Revoke Certificate
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+
+                <div className="mb-4">
+                  <div className="rounded-2xl p-6 border-4 border-yellow-400 bg-gradient-to-br from-indigo-500 to-purple-600 text-white">
+                    <div className="text-center">
+                      <p className="text-sm">CERTIFICATE OF COMPLETION</p>
+                      <p className="text-lg font-semibold mt-1">{it.student}</p>
+                      <p className="text-sm opacity-90">
+                        {it.course} {it.courseDetail}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2 text-sm text-gray-600">
+                    <span className="font-mono text-gray-900">
+                      {it.certificateId}
+                    </span>
+                    <span>•</span>
+                    <span>{it.issuedText}</span>
+                  </div>
+                  <div>
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        setSelected(it);
+                        setPreviewOpen(true);
+                      }}
+                      className="text-sm"
+                    >
+                      <Eye className="w-4 h-4 mr-1" /> Preview
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </>
+        )}
       </div>
 
       <div className="bg-card rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-8">
@@ -419,12 +499,26 @@ export default function Certificates() {
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button className="text-primary hover:text-primary/80 mr-3">
+                    <button
+                      className="text-primary hover:text-primary/80 mr-3"
+                      onClick={() => {
+                        setSelected(it);
+                        setPreviewOpen(true);
+                      }}
+                    >
                       View
                     </button>
-                    <button className="text-gray-600 hover:text-primary">
+                    <a
+                      className="text-gray-600 hover:text-primary"
+                      href={
+                        (myCerts as any)?.find?.((c: any) => c._id === it.id)
+                          ?.certificateUrl || "#"
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       Download
-                    </button>
+                    </a>
                   </td>
                 </tr>
               ))}
@@ -439,48 +533,126 @@ export default function Certificates() {
         </div>
       </div>
 
-      <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
-        <h3 className="text-lg font-semibold text-secondary mb-4">
-          Quick Actions
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <button className="flex items-center space-x-3 p-4 bg-primary/5 hover:bg-primary/10 rounded-lg transition-colors">
-            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-              <Plus className="text-white" />
+      {/* Quick Actions Section */}
+      <div className="bg-card rounded-lg sm:rounded-xl p-4 sm:p-6 shadow-sm border border-border">
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
+          <div>
+            <h3 className="text-base sm:text-lg font-semibold text-secondary">
+              Quick Actions
+            </h3>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+              Manage certificate templates and generate new ones
+            </p>
+          </div>
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary/10 rounded-lg flex items-center justify-center">
+            <Bolt className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+          {/* Create Template */}
+          <button
+            onClick={() => setCreateTemplateOpen(true)}
+            className="group flex items-center gap-3 p-3 sm:p-4 bg-primary/5 hover:bg-primary/10 rounded-lg transition-all duration-200 border border-primary/10 hover:border-primary/30 hover:shadow-md"
+          >
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary rounded-lg flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+              <Plus className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
-            <div className="text-left">
-              <p className="font-medium text-secondary">Create Template</p>
-              <p className="text-sm text-gray-600">New design</p>
+            <div className="text-left flex-1 min-w-0">
+              <p className="font-semibold text-secondary text-sm sm:text-base truncate">
+                Create Template
+              </p>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                New design
+              </p>
             </div>
           </button>
 
-          <button className="flex items-center space-x-3 p-4 bg-accent/5 hover:bg-accent/10 rounded-lg transition-colors">
-            <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center">
-              <Bolt className="text-white" />
+          {/* Bulk Issue */}
+          <button className="group flex items-center gap-3 p-3 sm:p-4 bg-accent/5 hover:bg-accent/10 rounded-lg transition-all duration-200 border border-accent/10 hover:border-accent/30 hover:shadow-md">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-accent rounded-lg flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+              <Bolt className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
             </div>
-            <div className="text-left">
-              <p className="font-medium text-secondary">Bulk Issue</p>
-              <p className="text-sm text-gray-600">Multiple certificates</p>
-            </div>
-          </button>
-
-          <button className="flex items-center space-x-3 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
-            <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
-              <Download className="text-white" />
-            </div>
-            <div className="text-left">
-              <p className="font-medium text-secondary">Export Data</p>
-              <p className="text-sm text-gray-600">Download reports</p>
+            <div className="text-left flex-1 min-w-0">
+              <p className="font-semibold text-secondary text-sm sm:text-base truncate">
+                Bulk Issue
+              </p>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                Multiple certificates
+              </p>
             </div>
           </button>
 
-          <button className="flex items-center space-x-3 p-4 bg-yellow-50 hover:bg-yellow-100 rounded-lg transition-colors">
-            <div className="w-10 h-10 bg-yellow-500 rounded-lg flex items-center justify-center">
-              <SlidersHorizontal className="text-white" />
+          {/* Generate Certificate - Full Width on Mobile, 2 cols on larger screens */}
+          <div className="sm:col-span-2 lg:col-span-2 xl:col-span-1 flex flex-col gap-3 p-3 sm:p-4 bg-chart-2/5 rounded-lg border border-chart-2/10">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-chart-2 rounded-lg flex items-center justify-center shrink-0">
+                <Download className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+              </div>
+              <div className="text-left flex-1 min-w-0">
+                <p className="font-semibold text-secondary text-sm sm:text-base truncate">
+                  Generate Certificate
+                </p>
+                <p className="text-xs sm:text-sm text-muted-foreground">
+                  For selected course
+                </p>
+              </div>
             </div>
-            <div className="text-left">
-              <p className="font-medium text-secondary">Settings</p>
-              <p className="text-sm text-gray-600">Configure templates</p>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <Select
+                value={selectedCourseId}
+                onValueChange={setSelectedCourseId}
+              >
+                <SelectTrigger className="bg-card border-border text-xs sm:text-sm flex-1">
+                  <SelectValue placeholder="Select course" />
+                </SelectTrigger>
+                <SelectContent>
+                  {courseList.map((c: any) => (
+                    <SelectItem
+                      key={c._id}
+                      value={c._id}
+                      className="text-xs sm:text-sm"
+                    >
+                      <span className="truncate block max-w-[200px] sm:max-w-full">
+                        {c.title}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                onClick={() => generateMutation.mutate()}
+                disabled={generateMutation.isPending || !selectedCourseId}
+                className="bg-chart-2 hover:bg-chart-2/90 text-white text-xs sm:text-sm w-full sm:w-auto"
+                size="sm"
+              >
+                {generateMutation.isPending ? (
+                  <>
+                    <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin mr-1.5" />
+                    <span>Generating...</span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 mr-1.5" />
+                    <span>Generate</span>
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+
+          {/* Settings */}
+          <button className="group flex items-center gap-3 p-3 sm:p-4 bg-chart-4/5 hover:bg-chart-4/10 rounded-lg transition-all duration-200 border border-chart-4/10 hover:border-chart-4/30 hover:shadow-md sm:col-span-2 lg:col-span-1">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-chart-4 rounded-lg flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
+              <SlidersHorizontal className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+            </div>
+            <div className="text-left flex-1 min-w-0">
+              <p className="font-semibold text-secondary text-sm sm:text-base truncate">
+                Settings
+              </p>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                Configure templates
+              </p>
             </div>
           </button>
         </div>
@@ -534,6 +706,11 @@ export default function Certificates() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <CertificateEditorCanva
+        open={createTemplateOpen}
+        onOpenChange={setCreateTemplateOpen}
+      />
     </main>
   );
 }

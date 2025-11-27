@@ -36,6 +36,7 @@ import { motion } from "framer-motion";
 const navItems = {
   learningManagement: [
     { icon: Book, label: "Courses", href: "/courses" },
+    { icon: Tag, label: "Course Categories", href: "/course-categories" },
     { icon: Layers, label: "Modules", href: "/modules" },
     { icon: PlayCircle, label: "Lessons", href: "/lessons" },
     { icon: CircleHelp, label: "Quiz & Exams", href: "/quiz-exams" },

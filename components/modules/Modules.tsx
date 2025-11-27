@@ -1,6 +1,14 @@
 "use client";
 
 import * as React from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/context/ToastContext";
+import {
+  modulesService,
+  type ModuleDto,
+  type Lesson,
+} from "@/services/modules.service";
+import { coursesService } from "@/services/courses.service";
 import {
   Layers,
   PlayCircle,
@@ -18,6 +26,11 @@ import {
   Plus,
   Eye,
   Trash,
+  BookOpen,
+  TrendingUp,
+  Copy,
+  Plane,
+  Award,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +38,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
   Dialog,
@@ -50,65 +64,97 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 type ModuleItem = {
   id: string;
   title: string;
   course: string;
+  courseTitle?: string;
   lessons: number;
   duration: string;
-  status: "published" | "draft";
+  durationHours: number;
+  status: "published" | "draft" | "archived";
   completion: number;
+  description?: string;
   icon: React.ReactNode;
   accentClass: string;
   badgeClass: string;
+  type?: string;
+  level?: string;
+  price?: number;
+  thumbnail?: string;
+  instructor?: any;
 };
 
-const initialModules: ModuleItem[] = [
-  {
-    id: "m1",
-    title: "HTML & CSS Fundamentals",
-    course: "Web Development",
-    lessons: 8,
-    duration: "2h 15m",
-    status: "published",
-    completion: 85,
-    icon: <Layers className="text-primary" />,
-    accentClass: "bg-primary/10",
-    badgeClass: "bg-accent/10 text-accent",
-  },
-  {
-    id: "m2",
-    title: "Data Analysis with Python",
-    course: "Data Science",
-    lessons: 12,
-    duration: "4h 30m",
-    status: "draft",
-    completion: 72,
-    icon: <Database className="text-blue-600" />,
-    accentClass: "bg-blue-100",
-    badgeClass: "bg-yellow-100 text-yellow-800",
-  },
-  {
-    id: "m3",
-    title: "UI Design Principles",
-    course: "UI/UX Design",
-    lessons: 10,
-    duration: "3h 45m",
-    status: "published",
-    completion: 91,
-    icon: <Paintbrush className="text-purple-600" />,
-    accentClass: "bg-purple-100",
-    badgeClass: "bg-accent/10 text-accent",
-  },
-];
-
 export default function Modules() {
-  const [modules, setModules] = React.useState<ModuleItem[]>(initialModules);
+  const { push } = useToast();
+  const queryClient = useQueryClient();
+  const [page, setPage] = React.useState(1);
+  const [limit] = React.useState(50);
+
+  const { data, isLoading, isFetching, error } = useQuery({
+    queryKey: ["modules", page, limit],
+    queryFn: () => modulesService.getAllModules({ page, limit }),
+    staleTime: 30000,
+  });
+
+  const modules: ModuleItem[] = React.useMemo(() => {
+    const responseData: any = data;
+    const courses = Array.isArray(responseData?.data)
+      ? responseData.data
+      : Array.isArray(data)
+      ? data
+      : [];
+    return courses.map((m: any) => {
+      const lessonsCount = Array.isArray(m.lessons)
+        ? m.lessons.length
+        : m.lessonsCount || 0;
+      const durationHours = m.duration || m.durationHours || 0;
+      const durationStr =
+        durationHours >= 1
+          ? `${Math.floor(durationHours)}h ${Math.round(
+              (durationHours % 1) * 60
+            )}m`
+          : `${Math.round(durationHours * 60)}m`;
+
+      return {
+        id: m._id || m.id,
+        title: m.title,
+        course: m._id || m.id,
+        courseTitle: m.title,
+        lessons: lessonsCount,
+        duration: durationStr,
+        durationHours,
+        status: m.status || (m.isPublished ? "published" : "draft"),
+        completion: m.completionRate || m.completion || 0,
+        description: m.description || m.excerpt,
+        icon: <Plane className="text-blue-600" />,
+        accentClass: "bg-blue-50",
+        badgeClass:
+          m.status === "published" || m.isPublished
+            ? "bg-green-50 text-green-700"
+            : "bg-amber-50 text-amber-700",
+        type: m.type,
+        level: m.level,
+        price: m.price,
+        thumbnail: m.thumbnail,
+        instructor: m.instructor,
+      };
+    });
+  }, [data]);
+
+  React.useEffect(() => {
+    if (error) {
+      push({ type: "error", message: "Failed to load courses" });
+    }
+  }, [error, push]);
   const [search, setSearch] = React.useState("");
-  const [courseFilter, setCourseFilter] = React.useState<string>("All Courses");
-  const [statusFilter, setStatusFilter] = React.useState<string>("All Status");
-  const [sortBy, setSortBy] = React.useState<string>("Newest");
+  const [levelFilter, setLevelFilter] = React.useState<string>("all");
+  const [statusFilter, setStatusFilter] = React.useState<string>("all");
+  const [sortBy, setSortBy] = React.useState<string>("newest");
   const [createOpen, setCreateOpen] = React.useState(false);
   const [editModule, setEditModule] = React.useState<ModuleItem | null>(null);
   const [previewModule, setPreviewModule] = React.useState<ModuleItem | null>(
@@ -119,121 +165,160 @@ export default function Modules() {
   const [shareModule, setShareModule] = React.useState<ModuleItem | null>(null);
   const [deleteId, setDeleteId] = React.useState<string | null>(null);
 
-  const filtered = modules
-    .filter((m) =>
-      search
-        ? m.title.toLowerCase().includes(search.toLowerCase()) ||
-          m.course.toLowerCase().includes(search.toLowerCase())
-        : true
-    )
-    .filter((m) =>
-      courseFilter === "All Courses" ? true : m.course === courseFilter
-    )
-    .filter((m) =>
-      statusFilter === "All Status"
-        ? true
-        : statusFilter === "Published"
-        ? m.status === "published"
-        : m.status === "draft"
-    )
-    .sort((a, b) => {
-      if (sortBy === "Newest") return b.id.localeCompare(a.id);
-      if (sortBy === "Oldest") return a.id.localeCompare(b.id);
-      if (sortBy === "Name") return a.title.localeCompare(b.title);
-      if (sortBy === "Lessons Count") return b.lessons - a.lessons;
-      return 0;
-    });
+  const filtered = React.useMemo(() => {
+    return modules
+      .filter((m) => {
+        if (search) {
+          const searchLower = search.toLowerCase();
+          return (
+            m.title.toLowerCase().includes(searchLower) ||
+            m.description?.toLowerCase().includes(searchLower) ||
+            m.type?.toLowerCase().includes(searchLower)
+          );
+        }
+        return true;
+      })
+      .filter((m) => {
+        if (levelFilter === "all") return true;
+        return m.level?.toLowerCase() === levelFilter;
+      })
+      .filter((m) => {
+        if (statusFilter === "all") return true;
+        return m.status === statusFilter;
+      })
+      .sort((a, b) => {
+        switch (sortBy) {
+          case "newest":
+            return b.id.localeCompare(a.id);
+          case "oldest":
+            return a.id.localeCompare(b.id);
+          case "name":
+            return a.title.localeCompare(b.title);
+          case "lessons":
+            return b.lessons - a.lessons;
+          case "duration":
+            return b.durationHours - a.durationHours;
+          case "price":
+            return (b.price || 0) - (a.price || 0);
+          default:
+            return 0;
+        }
+      });
+  }, [modules, search, levelFilter, statusFilter, sortBy]);
 
-  const [draggedId, setDraggedId] = React.useState<string | null>(null);
+  const stats = React.useMemo(() => {
+    const published = modules.filter((m) => m.status === "published").length;
+    const totalLessons = modules.reduce((sum, m) => sum + m.lessons, 0);
+    const avgCompletion =
+      modules.length > 0
+        ? Math.round(
+            modules.reduce((sum, m) => sum + m.completion, 0) / modules.length
+          )
+        : 0;
+    const totalRevenue = modules.reduce((sum, m) => sum + (m.price || 0), 0);
 
-  function onDrop(targetId: string) {
-    if (!draggedId || draggedId === targetId) return;
-    const order = [...modules];
-    const from = order.findIndex((m) => m.id === draggedId);
-    const to = order.findIndex((m) => m.id === targetId);
-    const [moved] = order.splice(from, 1);
-    order.splice(to, 0, moved);
-    setModules(order);
-  }
+    return {
+      total: modules.length,
+      published,
+      totalLessons,
+      avgCompletion,
+      totalRevenue,
+    };
+  }, [modules]);
 
   return (
-    <main className="">
-      <div className="p-6">
+    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50">
+      <div className="p-6 max-w-[1800px] mx-auto">
+        {/* Header Section */}
         <div className="mb-8">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
-              <h2 className="text-3xl font-bold text-secondary mb-2">
-                Modules
-              </h2>
-              <p className="text-gray-600">
-                Manage and organize your course modules
-              </p>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
+                  <BookOpen className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+                    Aviation Training Courses
+                  </h1>
+                  <p className="text-slate-600 text-sm">
+                    Professional flight training modules for Personal Wings
+                  </p>
+                </div>
+              </div>
             </div>
             <Button
               onClick={() => setCreateOpen(true)}
-              className="bg-primary hover:bg-primary/90 text-white"
+              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
             >
               <Plus className="w-4 h-4 mr-2" />
-              Create Module
+              Create Training Course
             </Button>
           </div>
         </div>
 
-        <div className="bg-card rounded-xl p-4 shadow-sm border border-gray-100 mb-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0">
-            <div className="flex flex-wrap gap-2">
-              <Select value={courseFilter} onValueChange={setCourseFilter}>
-                <SelectTrigger className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm w-48">
-                  <SelectValue placeholder="All Courses" />
+        {/* Filters and Search */}
+        <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200 mb-6">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div className="flex flex-wrap gap-3">
+              <Select value={levelFilter} onValueChange={setLevelFilter}>
+                <SelectTrigger className="bg-slate-50 border-slate-200 rounded-lg px-4 py-2 text-sm w-44 hover:bg-slate-100 transition-colors">
+                  <SelectValue placeholder="All Levels" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="All Courses">All Courses</SelectItem>
-                  <SelectItem value="Web Development">
-                    Web Development
-                  </SelectItem>
-                  <SelectItem value="Data Science">Data Science</SelectItem>
-                  <SelectItem value="Digital Marketing">
-                    Digital Marketing
-                  </SelectItem>
-                  <SelectItem value="UI/UX Design">UI/UX Design</SelectItem>
+                  <SelectItem value="all">All Levels</SelectItem>
+                  <SelectItem value="beginner">Beginner</SelectItem>
+                  <SelectItem value="intermediate">Intermediate</SelectItem>
+                  <SelectItem value="advanced">Advanced</SelectItem>
+                  <SelectItem value="expert">Expert</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm w-40">
+                <SelectTrigger className="bg-slate-50 border-slate-200 rounded-lg px-4 py-2 text-sm w-40 hover:bg-slate-100 transition-colors">
                   <SelectValue placeholder="All Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="All Status">All Status</SelectItem>
-                  <SelectItem value="Published">Published</SelectItem>
-                  <SelectItem value="Draft">Draft</SelectItem>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="published">Published</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="archived">Archived</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm w-48">
-                  <SelectValue placeholder="Sort by: Newest" />
+                <SelectTrigger className="bg-slate-50 border-slate-200 rounded-lg px-4 py-2 text-sm w-52 hover:bg-slate-100 transition-colors">
+                  <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Newest">Sort by: Newest</SelectItem>
-                  <SelectItem value="Oldest">Sort by: Oldest</SelectItem>
-                  <SelectItem value="Name">Sort by: Name</SelectItem>
-                  <SelectItem value="Lessons Count">
-                    Sort by: Lessons Count
-                  </SelectItem>
+                  <SelectItem value="newest">Newest First</SelectItem>
+                  <SelectItem value="oldest">Oldest First</SelectItem>
+                  <SelectItem value="name">Name (A-Z)</SelectItem>
+                  <SelectItem value="lessons">Most Lessons</SelectItem>
+                  <SelectItem value="duration">Longest Duration</SelectItem>
+                  <SelectItem value="price">Highest Price</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1 lg:flex-initial lg:w-64">
+                <input
+                  type="text"
+                  placeholder="Search courses..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                />
+                <Database className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+              </div>
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-gray-600 hover:text-primary"
-              >
-                <Filter className="w-5 h-5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-gray-600 hover:text-primary"
+                className="text-slate-600 hover:text-blue-600 hover:bg-blue-50"
+                onClick={() => {
+                  push({
+                    type: "info",
+                    message: "Export functionality coming soon",
+                  });
+                }}
               >
                 <Download className="w-5 h-5" />
               </Button>
@@ -241,139 +326,171 @@ export default function Modules() {
           </div>
         </div>
 
+        {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm font-medium">
-                  Total Modules
+                <p className="text-slate-600 text-sm font-medium mb-1">
+                  Total Courses
                 </p>
-                <p className="text-2xl font-bold text-secondary mt-1">
-                  {modules.length}
+                <p className="text-3xl font-bold text-slate-900">
+                  {stats.total}
                 </p>
-                <p className="text-accent text-sm mt-1">
-                  <ArrowUp className="inline w-3 h-3" /> +5% from last month
+                <p className="text-blue-600 text-sm mt-2 flex items-center">
+                  <TrendingUp className="w-3 h-3 mr-1" />
+                  {stats.published} published
                 </p>
               </div>
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                <Layers className="text-primary w-6 h-6" />
+              <div className="w-14 h-14 bg-blue-50 rounded-xl flex items-center justify-center">
+                <BookOpen className="text-blue-600 w-7 h-7" />
               </div>
             </div>
           </div>
-          <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm font-medium">Published</p>
-                <p className="text-2xl font-bold text-secondary mt-1">
-                  {modules.filter((m) => m.status === "published").length}
+                <p className="text-slate-600 text-sm font-medium mb-1">
+                  Active Courses
                 </p>
-                <p className="text-accent text-sm mt-1">
-                  <CheckCircle className="inline w-3 h-3" /> 85.7% published
+                <p className="text-3xl font-bold text-slate-900">
+                  {stats.published}
+                </p>
+                <p className="text-green-600 text-sm mt-2 flex items-center">
+                  <CheckCircle className="w-3 h-3 mr-1" />
+                  {stats.total > 0
+                    ? Math.round((stats.published / stats.total) * 100)
+                    : 0}
+                  % of total
                 </p>
               </div>
-              <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center">
-                <CheckCircle className="text-accent w-6 h-6" />
+              <div className="w-14 h-14 bg-green-50 rounded-xl flex items-center justify-center">
+                <Award className="text-green-600 w-7 h-7" />
               </div>
             </div>
           </div>
-          <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm font-medium">
+                <p className="text-slate-600 text-sm font-medium mb-1">
                   Total Lessons
                 </p>
-                <p className="text-2xl font-bold text-secondary mt-1">
-                  {modules.reduce((sum, m) => sum + m.lessons, 0)}
+                <p className="text-3xl font-bold text-slate-900">
+                  {stats.totalLessons}
                 </p>
-                <p className="text-accent text-sm mt-1">
-                  <ArrowUp className="inline w-3 h-3" /> +12% from last month
+                <p className="text-amber-600 text-sm mt-2 flex items-center">
+                  <PlayCircle className="w-3 h-3 mr-1" />
+                  Across all courses
                 </p>
               </div>
-              <div className="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                <PlayCircle className="text-yellow-600 w-6 h-6" />
+              <div className="w-14 h-14 bg-amber-50 rounded-xl flex items-center justify-center">
+                <PlayCircle className="text-amber-600 w-7 h-7" />
               </div>
             </div>
           </div>
-          <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition-all duration-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-sm font-medium">
+                <p className="text-slate-600 text-sm font-medium mb-1">
                   Avg. Completion
                 </p>
-                <p className="text-2xl font-bold text-secondary mt-1">
-                  {Math.round(
-                    modules.reduce((sum, m) => sum + m.completion, 0) /
-                      modules.length
-                  )}
-                  %
+                <p className="text-3xl font-bold text-slate-900">
+                  {stats.avgCompletion}%
                 </p>
-                <p className="text-accent text-sm mt-1">
-                  <ArrowUp className="inline w-3 h-3" /> +8% from last month
+                <p className="text-purple-600 text-sm mt-2 flex items-center">
+                  <ChartLine className="w-3 h-3 mr-1" />
+                  Student progress
                 </p>
               </div>
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                <ChartLine className="text-purple-600 w-6 h-6" />
+              <div className="w-14 h-14 bg-purple-50 rounded-xl flex items-center justify-center">
+                <ChartLine className="text-purple-600 w-7 h-7" />
               </div>
             </div>
           </div>
         </div>
 
-        <div className="bg-card rounded-xl p-4 shadow-sm border border-gray-100 mb-6">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search modules... (Cmd+K)"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-            />
-            <PlayCircle className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+        {/* Loading State */}
+        {isLoading || isFetching ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={`skeleton-${i}`}
+                className="h-80 animate-pulse bg-slate-100 rounded-xl border border-slate-200"
+              >
+                <div className="p-6 space-y-4">
+                  <div className="h-12 bg-slate-200 rounded-lg w-12"></div>
+                  <div className="h-6 bg-slate-200 rounded w-3/4"></div>
+                  <div className="h-4 bg-slate-200 rounded w-full"></div>
+                  <div className="h-4 bg-slate-200 rounded w-2/3"></div>
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
-
-        {filtered.length === 0 ? (
-          <div className="bg-card rounded-xl p-12 shadow-sm border border-gray-100 text-center">
-            <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Layers className="text-gray-400 w-8 h-8" />
+        ) : filtered.length === 0 ? (
+          <div className="bg-white rounded-2xl p-16 shadow-sm border border-slate-200 text-center">
+            <div className="w-24 h-24 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <Plane className="text-slate-400 w-12 h-12" />
             </div>
-            <h3 className="text-xl font-semibold text-secondary mb-2">
-              No modules yet
+            <h3 className="text-2xl font-bold text-slate-900 mb-3">
+              {search || levelFilter !== "all" || statusFilter !== "all"
+                ? "No courses found"
+                : "No training courses yet"}
             </h3>
-            <p className="text-gray-600 mb-6 max-w-md mx-auto">
-              Create your first module to start organizing your course content
-              and lessons.
+            <p className="text-slate-600 mb-8 max-w-md mx-auto">
+              {search || levelFilter !== "all" || statusFilter !== "all"
+                ? "Try adjusting your filters to find what you're looking for"
+                : "Create your first aviation training course to start building your flight training program"}
             </p>
-            <Button
-              className="bg-primary hover:bg-primary/90 text-white"
-              onClick={() => setCreateOpen(true)}
-            >
-              <Plus className="w-4 h-4 mr-2" /> Create Your First Module
-            </Button>
+            {!search && levelFilter === "all" && statusFilter === "all" && (
+              <Button
+                onClick={() => setCreateOpen(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Create First Course
+              </Button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {filtered.map((m) => (
               <div
                 key={m.id}
-                className="module-card bg-card rounded-xl p-6 shadow-sm border border-gray-100 transition-all duration-300"
-                draggable
-                onDragStart={() => setDraggedId(m.id)}
-                onDragEnd={() => setDraggedId(null)}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={() => onDrop(m.id)}
+                className="group bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-xl hover:border-blue-300 transition-all duration-300 hover:-translate-y-1"
               >
+                {/* Course Thumbnail */}
+                {m.thumbnail && (
+                  <div className="mb-4 -mx-6 -mt-6 h-40 overflow-hidden rounded-t-xl">
+                    <img
+                      src={m.thumbnail}
+                      alt={m.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                )}
+
+                {/* Header */}
                 <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center space-x-2">
-                    <div
-                      className={`w-10 h-10 ${m.accentClass} rounded-lg flex items-center justify-center`}
-                    >
-                      {m.icon}
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-secondary">
-                        {m.title}
-                      </h3>
-                      <p className="text-sm text-gray-500">{m.course}</p>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div
+                        className={`w-10 h-10 ${m.accentClass} rounded-lg flex items-center justify-center flex-shrink-0`}
+                      >
+                        {m.icon}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-slate-900 text-lg leading-tight truncate">
+                          {m.title}
+                        </h3>
+                        {m.level && (
+                          <span className="text-xs font-medium text-slate-500 capitalize">
+                            {m.level} Level
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <DropdownMenu>
@@ -381,93 +498,142 @@ export default function Modules() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-gray-400 hover:text-primary"
+                        className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 -mr-2"
                       >
                         <EllipsisVertical className="w-5 h-5" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuContent align="end" className="w-52">
                       <DropdownMenuItem onSelect={() => setEditModule(m)}>
-                        <Pencil className="w-4 h-4 mr-2" /> Edit Module
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onSelect={() => {
-                          const copy = { ...m, id: `m${Date.now()}` };
-                          setModules((prev) => [copy, ...prev]);
-                        }}
-                      >
-                        <Layers className="w-4 h-4 mr-2" /> Duplicate
+                        <Pencil className="w-4 h-4 mr-2 text-blue-600" />
+                        <span>Edit Course</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem onSelect={() => setPreviewModule(m)}>
-                        <Eye className="w-4 h-4 mr-2" /> Preview
+                        <Eye className="w-4 h-4 mr-2 text-slate-600" />
+                        <span>Preview</span>
                       </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => setAnalyticsModule(m)}>
+                        <ChartLine className="w-4 h-4 mr-2 text-purple-600" />
+                        <span>View Analytics</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
                       <DropdownMenuItem
-                        className="text-red-600"
+                        onSelect={async () => {
+                          try {
+                            await modulesService.duplicateModule(m.id);
+                            push({
+                              type: "success",
+                              message: "Course duplicated successfully",
+                            });
+                            queryClient.invalidateQueries({
+                              queryKey: ["modules"],
+                            });
+                          } catch {
+                            push({
+                              type: "error",
+                              message: "Failed to duplicate course",
+                            });
+                          }
+                        }}
+                      >
+                        <Copy className="w-4 h-4 mr-2 text-slate-600" />
+                        <span>Duplicate</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => setShareModule(m)}>
+                        <Share2 className="w-4 h-4 mr-2 text-slate-600" />
+                        <span>Share</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-red-600 focus:text-red-600"
                         onSelect={() => setDeleteId(m.id)}
                       >
-                        <Trash className="w-4 h-4 mr-2" /> Delete
+                        <Trash className="w-4 h-4 mr-2" />
+                        <span>Delete</span>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
 
-                <p className="text-gray-600 text-sm mb-4">
-                  {m.status === "published"
-                    ? "Learn and explore module content."
-                    : "This module is in draft and not yet visible."}
-                </p>
+                {/* Description */}
+                {m.description && (
+                  <p className="text-slate-600 text-sm mb-4 line-clamp-2">
+                    {m.description}
+                  </p>
+                )}
 
-                <div className="flex justify-between items-center mb-4">
-                  <div className="flex items-center space-x-4 text-sm text-gray-500">
-                    <span className="flex items-center">
-                      <PlayCircle className="w-4 h-4 mr-1" /> {m.lessons}{" "}
-                      Lessons
-                    </span>
-                    <span className="flex items-center">
-                      <Clock className="w-4 h-4 mr-1" /> {m.duration}
-                    </span>
+                {/* Metadata */}
+                <div className="flex flex-wrap items-center gap-3 mb-4 pb-4 border-b border-slate-100">
+                  <div className="flex items-center text-sm text-slate-600">
+                    <PlayCircle className="w-4 h-4 mr-1.5 text-amber-500" />
+                    <span className="font-medium">{m.lessons}</span>
+                    <span className="ml-1">lessons</span>
                   </div>
+                  <div className="flex items-center text-sm text-slate-600">
+                    <Clock className="w-4 h-4 mr-1.5 text-blue-500" />
+                    <span className="font-medium">{m.duration}</span>
+                  </div>
+                  {m.type && (
+                    <div className="flex items-center text-sm text-slate-600 capitalize">
+                      <Layers className="w-4 h-4 mr-1.5 text-purple-500" />
+                      <span className="font-medium">{m.type}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Status Badge */}
+                <div className="flex items-center justify-between mb-4">
                   <span
-                    className={`text-xs font-medium px-2 py-1 rounded-full ${m.badgeClass}`}
+                    className={`text-xs font-semibold px-3 py-1.5 rounded-full ${m.badgeClass}`}
                   >
-                    {m.status === "published" ? "Published" : "Draft"}
+                    {m.status === "published"
+                      ? "✓ Published"
+                      : m.status === "draft"
+                      ? "Draft"
+                      : "Archived"}
                   </span>
+                  {m.price !== undefined && (
+                    <span className="text-lg font-bold text-blue-600">
+                      ${m.price.toFixed(2)}
+                    </span>
+                  )}
                 </div>
 
-                <div className="mb-4">
-                  <div className="flex justify-between text-sm text-gray-600 mb-1">
-                    <span>Completion Rate</span>
-                    <span>{m.completion}%</span>
+                {/* Progress Bar */}
+                {m.completion > 0 && (
+                  <div className="mb-4">
+                    <div className="flex justify-between text-xs text-slate-600 mb-1.5">
+                      <span className="font-medium">Completion Rate</span>
+                      <span className="font-semibold">{m.completion}%</span>
+                    </div>
+                    <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                      <div
+                        className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500"
+                        style={{ width: `${m.completion}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-accent h-2 rounded-full"
-                      style={{ width: `${m.completion}%` }}
-                    />
-                  </div>
-                </div>
+                )}
 
-                <div className="flex justify-between">
+                {/* Actions */}
+                <div className="flex gap-2 pt-2">
                   <Button
-                    variant="ghost"
-                    className="text-primary hover:text-primary/80 text-sm font-medium"
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300"
                     onClick={() => setEditModule(m)}
                   >
-                    <Pencil className="w-4 h-4 mr-1" /> Edit
+                    <Pencil className="w-3.5 h-3.5 mr-1.5" />
+                    Edit
                   </Button>
                   <Button
-                    variant="ghost"
-                    className="text-gray-600 hover:text-primary text-sm font-medium"
-                    onClick={() => setAnalyticsModule(m)}
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 border-slate-200 text-slate-600 hover:bg-slate-50"
+                    onClick={() => setPreviewModule(m)}
                   >
-                    <ChartLine className="w-4 h-4 mr-1" /> Analytics
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    className="text-gray-600 hover:text-primary text-sm font-medium"
-                    onClick={() => setShareModule(m)}
-                  >
-                    <Share2 className="w-4 h-4 mr-1" /> Share
+                    <Eye className="w-3.5 h-3.5 mr-1.5" />
+                    View
                   </Button>
                 </div>
               </div>
@@ -475,93 +641,214 @@ export default function Modules() {
           </div>
         )}
 
+        {/* Create Dialog */}
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-          <DialogContent>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Create New Module</DialogTitle>
-              <DialogDescription>
-                Add details for your module.
+              <DialogTitle className="text-2xl font-bold text-slate-900">
+                Create New Training Course
+              </DialogTitle>
+              <DialogDescription className="text-slate-600">
+                Create a professional aviation training course for Personal
+                Wings
               </DialogDescription>
             </DialogHeader>
             <form
-              onSubmit={(e) => {
+              onSubmit={async (e) => {
                 e.preventDefault();
-                const form = e.currentTarget as HTMLFormElement;
-                const fd = new FormData(form);
+                const fd = new FormData(e.currentTarget as HTMLFormElement);
                 const title = String(fd.get("title") || "");
-                const course = String(fd.get("course") || "");
-                const duration = String(fd.get("duration") || "");
+                const description = String(fd.get("description") || "");
+                const level = String(fd.get("level") || "beginner");
+                const type = String(fd.get("type") || "combined");
+                const durationHours = Number(fd.get("durationHours") || 0);
                 const status = String(fd.get("status") || "draft");
-                const newItem: ModuleItem = {
-                  id: `m${Date.now()}`,
-                  title,
-                  course,
-                  duration,
-                  lessons: 0,
-                  status: status === "published" ? "published" : "draft",
-                  completion: 0,
-                  icon: <Layers className="text-primary" />,
-                  accentClass: "bg-primary/10",
-                  badgeClass:
-                    status === "published"
-                      ? "bg-accent/10 text-accent"
-                      : "bg-yellow-100 text-yellow-800",
-                };
-                setModules((prev) => [newItem, ...prev]);
-                setCreateOpen(false);
+                const price = Number(fd.get("price") || 0);
+                const maxStudents = Number(fd.get("maxStudents") || 10);
+
+                try {
+                  await coursesService.createCourse({
+                    title,
+                    description,
+                    level: level as any,
+                    type: type as any,
+                    price,
+                    maxStudents,
+                    durationHours,
+                    isPublished: status === "published",
+                  });
+                  push({
+                    type: "success",
+                    message: "Training course created successfully",
+                  });
+                  setCreateOpen(false);
+                  queryClient.invalidateQueries({ queryKey: ["modules"] });
+                } catch {
+                  push({ type: "error", message: "Failed to create course" });
+                }
               }}
-              className="space-y-4"
+              className="space-y-5"
             >
-              <input
-                name="title"
-                placeholder="Module Title"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                required
-              />
-              <select
-                name="course"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                required
-              >
-                <option value="">Select a course</option>
-                <option value="Web Development">Web Development</option>
-                <option value="Data Science">Data Science</option>
-                <option value="Digital Marketing">Digital Marketing</option>
-                <option value="UI/UX Design">UI/UX Design</option>
-              </select>
-              <textarea
-                name="description"
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                placeholder="Describe what students will learn"
-              />
-              <div className="grid grid-cols-2 gap-4">
-                <input
-                  name="duration"
-                  placeholder="e.g., 2h 30m"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                />
-                <select
-                  name="status"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+              <div className="space-y-2">
+                <Label
+                  htmlFor="title"
+                  className="text-sm font-semibold text-slate-700"
                 >
-                  <option value="draft">Draft</option>
-                  <option value="published">Published</option>
-                </select>
+                  Course Title *
+                </Label>
+                <Input
+                  id="title"
+                  name="title"
+                  placeholder="e.g., Citation Jet Training Course"
+                  className="w-full"
+                  required
+                />
               </div>
-              <div className="flex justify-end gap-2 pt-2">
+
+              <div className="space-y-2">
+                <Label
+                  htmlFor="description"
+                  className="text-sm font-semibold text-slate-700"
+                >
+                  Description *
+                </Label>
+                <Textarea
+                  id="description"
+                  name="description"
+                  rows={4}
+                  placeholder="Describe the training course objectives and what pilots will learn..."
+                  className="w-full"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="level"
+                    className="text-sm font-semibold text-slate-700"
+                  >
+                    Level *
+                  </Label>
+                  <Select name="level" defaultValue="beginner">
+                    <SelectTrigger id="level">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="beginner">Beginner</SelectItem>
+                      <SelectItem value="intermediate">Intermediate</SelectItem>
+                      <SelectItem value="advanced">Advanced</SelectItem>
+                      <SelectItem value="expert">Expert</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="type"
+                    className="text-sm font-semibold text-slate-700"
+                  >
+                    Type *
+                  </Label>
+                  <Select name="type" defaultValue="combined">
+                    <SelectTrigger id="type">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="theoretical">Theoretical</SelectItem>
+                      <SelectItem value="practical">Practical</SelectItem>
+                      <SelectItem value="simulator">Simulator</SelectItem>
+                      <SelectItem value="combined">Combined</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="durationHours"
+                    className="text-sm font-semibold text-slate-700"
+                  >
+                    Duration (hours) *
+                  </Label>
+                  <Input
+                    id="durationHours"
+                    name="durationHours"
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    placeholder="40"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="price"
+                    className="text-sm font-semibold text-slate-700"
+                  >
+                    Price ($)
+                  </Label>
+                  <Input
+                    id="price"
+                    name="price"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="2999.00"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="maxStudents"
+                    className="text-sm font-semibold text-slate-700"
+                  >
+                    Max Students
+                  </Label>
+                  <Input
+                    id="maxStudents"
+                    name="maxStudents"
+                    type="number"
+                    min="1"
+                    defaultValue={10}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label
+                  htmlFor="status"
+                  className="text-sm font-semibold text-slate-700"
+                >
+                  Status
+                </Label>
+                <Select name="status" defaultValue="draft">
+                  <SelectTrigger id="status">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="published">Published</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t">
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="outline"
                   onClick={() => setCreateOpen(false)}
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-primary hover:bg-primary/90 text-white"
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
                 >
-                  Create Module
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Course
                 </Button>
               </div>
             </form>
@@ -573,78 +860,221 @@ export default function Modules() {
         open={!!editModule}
         onOpenChange={(v) => !v && setEditModule(null)}
       >
-        <DialogContent>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit Module</DialogTitle>
-            <DialogDescription>Update module details.</DialogDescription>
+            <DialogTitle className="text-2xl font-bold text-slate-900">
+              Edit Training Course
+            </DialogTitle>
+            <DialogDescription className="text-slate-600">
+              Update course information and settings
+            </DialogDescription>
           </DialogHeader>
           {editModule && (
             <form
-              onSubmit={(e) => {
+              onSubmit={async (e) => {
                 e.preventDefault();
                 const fd = new FormData(e.currentTarget as HTMLFormElement);
                 const title = String(fd.get("title") || editModule.title);
-                const course = String(fd.get("course") || editModule.course);
-                const duration = String(
-                  fd.get("duration") || editModule.duration
+                const description = String(
+                  fd.get("description") || editModule.description || ""
+                );
+                const level = String(fd.get("level") || editModule.level);
+                const type = String(fd.get("type") || editModule.type);
+                const durationHours = Number(
+                  fd.get("durationHours") || editModule.durationHours
                 );
                 const status = String(fd.get("status") || editModule.status);
-                setModules((prev) =>
-                  prev.map((mm) =>
-                    mm.id === editModule.id
-                      ? {
-                          ...mm,
-                          title,
-                          course,
-                          duration,
-                          status:
-                            status === "published" ? "published" : "draft",
-                        }
-                      : mm
-                  )
-                );
-                setEditModule(null);
+                const price = Number(fd.get("price") || editModule.price);
+                const maxStudents = Number(fd.get("maxStudents") || 10);
+
+                try {
+                  await coursesService.updateCourse(editModule.id, {
+                    title,
+                    description,
+                    level: level as any,
+                    type: type as any,
+                    durationHours,
+                    price,
+                    maxStudents,
+                    isPublished: status === "published",
+                  });
+                  push({
+                    type: "success",
+                    message: "Course updated successfully",
+                  });
+                  setEditModule(null);
+                  queryClient.invalidateQueries({ queryKey: ["modules"] });
+                } catch {
+                  push({ type: "error", message: "Failed to update course" });
+                }
               }}
-              className="space-y-4"
+              className="space-y-5"
             >
-              <input
-                name="title"
-                defaultValue={editModule.title}
-                className="w-full px-3 py-2 border rounded-lg"
-              />
-              <input
-                name="course"
-                defaultValue={editModule.course}
-                className="w-full px-3 py-2 border rounded-lg"
-              />
-              <div className="grid grid-cols-2 gap-4">
-                <input
-                  name="duration"
-                  defaultValue={editModule.duration}
-                  className="w-full px-3 py-2 border rounded-lg"
-                />
-                <select
-                  name="status"
-                  defaultValue={editModule.status}
-                  className="w-full px-3 py-2 border rounded-lg"
+              <div className="space-y-2">
+                <Label
+                  htmlFor="edit-title"
+                  className="text-sm font-semibold text-slate-700"
                 >
-                  <option value="draft">Draft</option>
-                  <option value="published">Published</option>
-                </select>
+                  Course Title *
+                </Label>
+                <Input
+                  id="edit-title"
+                  name="title"
+                  defaultValue={editModule.title}
+                  className="w-full"
+                  required
+                />
               </div>
-              <div className="flex justify-end gap-2">
+
+              <div className="space-y-2">
+                <Label
+                  htmlFor="edit-description"
+                  className="text-sm font-semibold text-slate-700"
+                >
+                  Description
+                </Label>
+                <Textarea
+                  id="edit-description"
+                  name="description"
+                  rows={4}
+                  defaultValue={editModule.description || ""}
+                  className="w-full"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="edit-level"
+                    className="text-sm font-semibold text-slate-700"
+                  >
+                    Level
+                  </Label>
+                  <Select
+                    name="level"
+                    defaultValue={editModule.level || "beginner"}
+                  >
+                    <SelectTrigger id="edit-level">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="beginner">Beginner</SelectItem>
+                      <SelectItem value="intermediate">Intermediate</SelectItem>
+                      <SelectItem value="advanced">Advanced</SelectItem>
+                      <SelectItem value="expert">Expert</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="edit-type"
+                    className="text-sm font-semibold text-slate-700"
+                  >
+                    Type
+                  </Label>
+                  <Select
+                    name="type"
+                    defaultValue={editModule.type || "combined"}
+                  >
+                    <SelectTrigger id="edit-type">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="theoretical">Theoretical</SelectItem>
+                      <SelectItem value="practical">Practical</SelectItem>
+                      <SelectItem value="simulator">Simulator</SelectItem>
+                      <SelectItem value="combined">Combined</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="edit-duration"
+                    className="text-sm font-semibold text-slate-700"
+                  >
+                    Duration (hours)
+                  </Label>
+                  <Input
+                    id="edit-duration"
+                    name="durationHours"
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    defaultValue={editModule.durationHours}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="edit-price"
+                    className="text-sm font-semibold text-slate-700"
+                  >
+                    Price ($)
+                  </Label>
+                  <Input
+                    id="edit-price"
+                    name="price"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    defaultValue={editModule.price || 0}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="edit-maxStudents"
+                    className="text-sm font-semibold text-slate-700"
+                  >
+                    Max Students
+                  </Label>
+                  <Input
+                    id="edit-maxStudents"
+                    name="maxStudents"
+                    type="number"
+                    min="1"
+                    defaultValue={10}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label
+                  htmlFor="edit-status"
+                  className="text-sm font-semibold text-slate-700"
+                >
+                  Status
+                </Label>
+                <Select name="status" defaultValue={editModule.status}>
+                  <SelectTrigger id="edit-status">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="published">Published</SelectItem>
+                    <SelectItem value="archived">Archived</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t">
                 <Button
                   type="button"
-                  variant="ghost"
+                  variant="outline"
                   onClick={() => setEditModule(null)}
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-primary hover:bg-primary/90 text-white"
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
                 >
-                  Save
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Save Changes
                 </Button>
               </div>
             </form>
@@ -657,20 +1087,67 @@ export default function Modules() {
         open={!!previewModule}
         onOpenChange={(v) => !v && setPreviewModule(null)}
       >
-        <DialogContent>
+        <DialogContent className="max-w-3xl">
           <DialogHeader>
-            <DialogTitle>Preview Module</DialogTitle>
-            <DialogDescription>Quick overview of the module.</DialogDescription>
+            <DialogTitle className="text-2xl font-bold text-slate-900">
+              Course Preview
+            </DialogTitle>
+            <DialogDescription className="text-slate-600">
+              Complete overview of the training course
+            </DialogDescription>
           </DialogHeader>
           {previewModule && (
-            <div className="space-y-2">
-              <div className="font-semibold">{previewModule.title}</div>
-              <div className="text-sm text-gray-600">
-                {previewModule.course}
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-xl font-bold text-slate-900 mb-2">
+                  {previewModule.title}
+                </h3>
+                {previewModule.description && (
+                  <p className="text-slate-600">{previewModule.description}</p>
+                )}
               </div>
-              <div className="text-sm">Lessons: {previewModule.lessons}</div>
-              <div className="text-sm">Duration: {previewModule.duration}</div>
-              <div className="text-sm">Status: {previewModule.status}</div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-slate-50 rounded-lg p-4">
+                  <p className="text-sm text-slate-600 mb-1">Level</p>
+                  <p className="text-lg font-semibold text-slate-900 capitalize">
+                    {previewModule.level || "N/A"}
+                  </p>
+                </div>
+                <div className="bg-slate-50 rounded-lg p-4">
+                  <p className="text-sm text-slate-600 mb-1">Type</p>
+                  <p className="text-lg font-semibold text-slate-900 capitalize">
+                    {previewModule.type || "N/A"}
+                  </p>
+                </div>
+                <div className="bg-slate-50 rounded-lg p-4">
+                  <p className="text-sm text-slate-600 mb-1">Duration</p>
+                  <p className="text-lg font-semibold text-slate-900">
+                    {previewModule.duration}
+                  </p>
+                </div>
+                <div className="bg-slate-50 rounded-lg p-4">
+                  <p className="text-sm text-slate-600 mb-1">Lessons</p>
+                  <p className="text-lg font-semibold text-slate-900">
+                    {previewModule.lessons}
+                  </p>
+                </div>
+                <div className="bg-slate-50 rounded-lg p-4">
+                  <p className="text-sm text-slate-600 mb-1">Status</p>
+                  <p className="text-lg font-semibold text-slate-900 capitalize">
+                    {previewModule.status}
+                  </p>
+                </div>
+                <div className="bg-slate-50 rounded-lg p-4">
+                  <p className="text-sm text-slate-600 mb-1">Price</p>
+                  <p className="text-lg font-semibold text-blue-600">
+                    $
+                    {previewModule.price
+                      ? previewModule.price.toFixed(2)
+                      : "0.00"}
+                  </p>
+                </div>
+              </div>
             </div>
           )}
         </DialogContent>
@@ -681,18 +1158,55 @@ export default function Modules() {
         open={!!analyticsModule}
         onOpenChange={(v) => !v && setAnalyticsModule(null)}
       >
-        <DialogContent>
+        <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Module Analytics</DialogTitle>
-            <DialogDescription>
-              Summary of performance metrics.
+            <DialogTitle className="text-2xl font-bold text-slate-900">
+              Course Analytics
+            </DialogTitle>
+            <DialogDescription className="text-slate-600">
+              Performance metrics and insights
             </DialogDescription>
           </DialogHeader>
           {analyticsModule && (
-            <div className="space-y-2 text-sm">
-              <div>Completion: {analyticsModule.completion}%</div>
-              <div>Lessons: {analyticsModule.lessons}</div>
-              <div>Duration: {analyticsModule.duration}</div>
+            <div className="space-y-6">
+              <div className="grid grid-cols-3 gap-4">
+                <div className="bg-blue-50 rounded-lg p-5 text-center">
+                  <p className="text-sm text-blue-600 font-medium mb-2">
+                    Completion Rate
+                  </p>
+                  <p className="text-3xl font-bold text-blue-700">
+                    {analyticsModule.completion}%
+                  </p>
+                </div>
+                <div className="bg-amber-50 rounded-lg p-5 text-center">
+                  <p className="text-sm text-amber-600 font-medium mb-2">
+                    Total Lessons
+                  </p>
+                  <p className="text-3xl font-bold text-amber-700">
+                    {analyticsModule.lessons}
+                  </p>
+                </div>
+                <div className="bg-purple-50 rounded-lg p-5 text-center">
+                  <p className="text-sm text-purple-600 font-medium mb-2">
+                    Duration
+                  </p>
+                  <p className="text-3xl font-bold text-purple-700">
+                    {analyticsModule.durationHours}h
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-slate-50 rounded-lg p-5">
+                <h4 className="font-semibold text-slate-900 mb-3">
+                  Course Progress
+                </h4>
+                <div className="w-full bg-slate-200 rounded-full h-4 overflow-hidden">
+                  <div
+                    className="bg-blue-600 h-4 rounded-full transition-all duration-500"
+                    style={{ width: `${analyticsModule.completion}%` }}
+                  />
+                </div>
+              </div>
             </div>
           )}
         </DialogContent>
@@ -705,28 +1219,41 @@ export default function Modules() {
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Share Module</DialogTitle>
-            <DialogDescription>
-              Copy link to share with others.
+            <DialogTitle className="text-xl font-bold text-slate-900">
+              Share Course
+            </DialogTitle>
+            <DialogDescription className="text-slate-600">
+              Share this training course with others
             </DialogDescription>
           </DialogHeader>
           {shareModule && (
-            <div className="flex items-center gap-2">
-              <input
-                readOnly
-                value={`https://example.com/modules/${shareModule.id}`}
-                className="flex-1 px-3 py-2 border rounded-lg"
-              />
-              <Button
-                onClick={() =>
-                  navigator.clipboard.writeText(
-                    `https://example.com/modules/${shareModule.id}`
-                  )
-                }
-                className="bg-primary hover:bg-primary/90 text-white"
-              >
-                Copy
-              </Button>
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Input
+                  readOnly
+                  value={`${window.location.origin}/courses/${shareModule.id}`}
+                  className="flex-1"
+                />
+                <Button
+                  onClick={() => {
+                    navigator.clipboard.writeText(
+                      `${window.location.origin}/courses/${shareModule.id}`
+                    );
+                    push({
+                      type: "success",
+                      message: "Link copied to clipboard",
+                    });
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copy
+                </Button>
+              </div>
+              <p className="text-sm text-slate-600">
+                Share this link with pilots interested in:{" "}
+                <strong>{shareModule.title}</strong>
+              </p>
             </div>
           )}
         </DialogContent>
@@ -739,20 +1266,34 @@ export default function Modules() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete module?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone.
+            <AlertDialogTitle className="text-xl font-bold text-slate-900">
+              Delete Training Course?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-600">
+              This action cannot be undone. This will permanently delete the
+              course and all associated lessons and progress data.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
-                setModules((prev) => prev.filter((m) => m.id !== deleteId));
-                setDeleteId(null);
+              onClick={async () => {
+                if (!deleteId) return;
+                try {
+                  await modulesService.deleteModule(deleteId);
+                  push({
+                    type: "success",
+                    message: "Course deleted successfully",
+                  });
+                  setDeleteId(null);
+                  queryClient.invalidateQueries({ queryKey: ["modules"] });
+                } catch {
+                  push({ type: "error", message: "Failed to delete course" });
+                }
               }}
+              className="bg-red-600 hover:bg-red-700"
             >
-              Delete
+              Delete Course
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -3,7 +3,6 @@
 import * as React from "react";
 import {
   Search as SearchIcon,
-  EllipsisVertical,
   Eye,
   Edit,
   Trash,
@@ -13,17 +12,10 @@ import {
   Download,
   Plus,
   ShieldCheck,
-  UserCog,
   Check,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -130,7 +122,7 @@ export default function Users() {
   const [search, setSearch] = React.useState("");
   const [roleFilter, setRoleFilter] = React.useState("All Roles");
   const [statusFilter, setStatusFilter] = React.useState("All Status");
-  const [page, setPage] = React.useState(1);
+  // const [page, setPage] = React.useState(1);
   const [addUserOpen, setAddUserOpen] = React.useState(false);
   const [addRoleOpen, setAddRoleOpen] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState("All Users");
