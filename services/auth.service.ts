@@ -41,6 +41,15 @@ export async function getProfile() {
   return apiFetch<AuthUser>('/auth/profile', { headers: { Authorization: `Bearer ${getAccessToken()}` } })
 }
 
+export async function verifyEmailCode(code: string) {
+  return apiFetch('/auth/verify-email-code', { method: 'POST', body: JSON.stringify({ code }) })
+}
+
+export async function resendVerification(token: string) {
+  const qs = '?token=' + encodeURIComponent(token)
+  return apiFetch('/auth/resend-verification' + qs, { method: 'POST' })
+}
+
 export async function logout() {
   clearTokens()
   return { success: true }

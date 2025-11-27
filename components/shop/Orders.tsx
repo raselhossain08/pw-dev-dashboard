@@ -89,7 +89,7 @@ const initialOrders: Order[] = [
     total: "$49.99",
     status: "pending",
     itemsLabel: "1 item",
-    itemsDetail: "EduSaaS Hoodie",
+    itemsDetail: "Personal Wings Hoodie",
   },
   {
     id: "#ORD-7838",
@@ -392,4 +392,3 @@ export default function Orders() {
     </main>
   );
 }
-

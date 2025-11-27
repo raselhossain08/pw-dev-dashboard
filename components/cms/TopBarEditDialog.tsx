@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/context/ToastContext";
 import {
   Dialog,
   DialogContent,
@@ -37,7 +37,7 @@ export function TopBarEditDialog({
   onOpenChange,
 }: TopBarEditDialogProps) {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
+  const { push } = useToast();
   const [uploadProgress, setUploadProgress] = useState<{
     [key: string]: number;
   }>({});
@@ -57,10 +57,7 @@ export function TopBarEditDialog({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["top-bar"] });
-      toast({
-        title: "Success",
-        description: "News icon uploaded successfully",
-      });
+      push({ message: "News icon uploaded successfully", type: "success" });
       setUploadProgress((prev) => {
         const newProgress = { ...prev };
         delete newProgress.newsIcon;
@@ -68,10 +65,9 @@ export function TopBarEditDialog({
       });
     },
     onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: `Failed to upload news icon: ${error.message}`,
-        variant: "destructive",
+      push({
+        message: `Failed to upload news icon: ${error.message}`,
+        type: "error",
       });
     },
   });
@@ -99,10 +95,7 @@ export function TopBarEditDialog({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["top-bar"] });
-      toast({
-        title: "Success",
-        description: "Language flag uploaded successfully",
-      });
+      push({ message: "Language flag uploaded successfully", type: "success" });
       setUploadProgress((prev) => {
         const newProgress = { ...prev };
         Object.keys(newProgress)
@@ -112,10 +105,9 @@ export function TopBarEditDialog({
       });
     },
     onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: `Failed to upload flag: ${error.message}`,
-        variant: "destructive",
+      push({
+        message: `Failed to upload flag: ${error.message}`,
+        type: "error",
       });
     },
   });

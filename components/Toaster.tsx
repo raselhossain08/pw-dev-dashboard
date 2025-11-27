@@ -1,6 +1,6 @@
 "use client";
 import { useToast } from "@/context/ToastContext";
-import { CheckCircle2, XCircle, X } from "lucide-react";
+import { CheckCircle2, XCircle, X, Info, Loader2 } from "lucide-react";
 
 export default function Toaster() {
   const { toasts, remove } = useToast();
@@ -16,6 +16,10 @@ export default function Toaster() {
             ${
               t.type === "error"
                 ? "bg-destructive/95 text-white border-destructive"
+                : t.type === "loading"
+                ? "bg-gray-900 text-white border-gray-700"
+                : t.type === "info"
+                ? "bg-primary/95 text-white border-primary"
                 : "bg-accent/95 text-white border-accent"
             }
           `}
@@ -25,6 +29,10 @@ export default function Toaster() {
           <div className="shrink-0 mt-0.5">
             {t.type === "error" ? (
               <XCircle className="w-5 h-5" />
+            ) : t.type === "loading" ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : t.type === "info" ? (
+              <Info className="w-5 h-5" />
             ) : (
               <CheckCircle2 className="w-5 h-5" />
             )}

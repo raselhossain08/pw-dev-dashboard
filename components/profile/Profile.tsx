@@ -3,7 +3,6 @@
 import * as React from "react";
 import Image from "next/image";
 import {
-  Search as SearchIcon,
   Download,
   Save,
   Camera,
@@ -11,12 +10,6 @@ import {
   Mail,
   Calendar,
   UserCheck,
-  Lock,
-  ChartLine,
-  Users as UsersIcon,
-  Github,
-  Linkedin,
-  Chrome,
   Trash,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,441 +20,760 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useProfile } from "@/hooks/useProfile";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 export default function Profile() {
   const [activeTab, setActiveTab] = React.useState("Profile");
-  const [firstName, setFirstName] = React.useState("Alex");
-  const [lastName, setLastName] = React.useState("Johnson");
-  const [email, setEmail] = React.useState("alex.johnson@edusaas.com");
-  const [phone, setPhone] = React.useState("+1 (555) 123-4567");
-  const [bio, setBio] = React.useState(
-    "Experienced educational administrator with over 8 years in the EdTech industry. Passionate about creating engaging learning experiences and driving educational innovation through technology."
-  );
-  const [position, setPosition] = React.useState("Administrator");
-  const [department, setDepartment] = React.useState("Academic Operations");
+  const { state, actions } = useProfile();
+  const { user } = useAuth();
+  const router = useRouter();
+  const {
+    firstName,
+    lastName,
+    email,
+    phone,
+    bio,
+    avatar,
+    saving,
+    uploadProgress,
+    country,
+    state: userState,
+    city,
+    flightHours,
+    certifications,
+    notifications,
+    unreadCount,
+    invoices,
+    orders,
+    loadingTab,
+  } = state;
+  const {
+    setFirstName,
+    setLastName,
+    setEmail,
+    setPhone,
+    setBio,
+    setCountry,
+    setState,
+    setCity,
+    setFlightHours,
+    setCertifications,
+    save,
+    changeAvatar,
+    updatePassword,
+    loadNotifications,
+    markRead,
+    markAllRead,
+    removeNotification,
+    loadBilling,
+    deleteAccount,
+  } = actions;
+  const [position, setPosition] = React.useState("Pilot");
+  const [department, setDepartment] = React.useState("Flight Operations");
+  const [currentPwd, setCurrentPwd] = React.useState("");
+  const [newPwd, setNewPwd] = React.useState("");
+  const firstNameRef = React.useRef<HTMLInputElement | null>(null);
+
+  function exportData() {
+    const data = {
+      id: user?.id,
+      email,
+      firstName,
+      lastName,
+      phone,
+      bio,
+      avatar,
+      location: { country, state: userState, city },
+      flightHours,
+      certifications,
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `profile-${user?.id || "me"}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  React.useEffect(() => {
+    const roleMap: Record<string, string> = {
+      super_admin: "Super Admin",
+      admin: "Administrator",
+      instructor: "Instructor",
+      student: "Student",
+      affiliate: "Affiliate",
+    };
+    if (user?.role) {
+      setPosition(roleMap[user.role] || user.role);
+    }
+    if (activeTab === "Notifications") {
+      loadNotifications();
+    }
+    if (activeTab === "Billing") {
+      loadBilling();
+    }
+  }, [activeTab, loadNotifications, loadBilling]);
 
   return (
     <main className="p-6">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8 gap-4">
         <div>
-          <h2 className="text-3xl font-bold text-secondary mb-2">My Profile</h2>
+          <h2 className="text-3xl font-bold text-secondary mb-2">
+            Pilot Profile
+          </h2>
           <p className="text-gray-600">
-            Manage your personal information, preferences, and account settings.
+            Manage your aviation details, certifications, and account settings.
           </p>
         </div>
         <div className="flex space-x-3">
-          <Button variant="outline" className="border-gray-300">
+          <Button
+            variant="outline"
+            className="border-gray-300"
+            onClick={exportData}
+          >
             <Download className="w-4 h-4 mr-2" /> Export Data
           </Button>
-          <Button>
-            <Save className="w-4 h-4 mr-2" /> Save Changes
+          <Button onClick={save} disabled={saving}>
+            <Save className="w-4 h-4 mr-2" />{" "}
+            {saving ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </div>
 
-      <div className="bg-card rounded-xl p-1 shadow-sm border border-gray-100 mb-8 inline-flex">
-        {["Profile", "Security", "Preferences", "Billing", "Notifications"].map(
-          (t) => (
-            <button
-              key={t}
-              onClick={() => setActiveTab(t)}
-              className={`px-6 py-2 rounded-lg text-sm font-medium transition-colors ${
-                activeTab === t
-                  ? "bg-primary text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              {t}
-            </button>
-          )
-        )}
-      </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
+        <TabsList>
+          <TabsTrigger value="Profile">Profile</TabsTrigger>
+          <TabsTrigger value="Security">Security</TabsTrigger>
+          <TabsTrigger value="Preferences">Preferences</TabsTrigger>
+          <TabsTrigger value="Billing">Billing</TabsTrigger>
+          <TabsTrigger value="Notifications">Notifications</TabsTrigger>
+        </TabsList>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        <div className="lg:col-span-1 space-y-6">
-          <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
-            <div className="text-center">
-              <div className="relative inline-block mb-4">
-                <div className="relative">
-                  <Image
-                    src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg"
-                    alt="Profile"
-                    width={96}
-                    height={96}
-                    className="rounded-full border-4 border-white shadow-lg"
-                    unoptimized
-                  />
-                  <div className="absolute bottom-2 right-2 w-6 h-6 rounded-full border-2 border-white bg-green-500" />
-                </div>
-                <button className="absolute bottom-0 right-0 w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-lg">
-                  <Camera className="text-white w-4 h-4" />
-                </button>
-              </div>
-              <h3 className="text-xl font-bold text-secondary mb-1">
-                Alex Johnson
-              </h3>
-              <p className="text-gray-600 mb-2">Administrator</p>
-              <div className="flex items-center justify-center space-x-1 text-sm text-gray-500 mb-4">
-                <MapPin className="w-3 h-3" />
-                <span>San Francisco, CA</span>
-              </div>
-              <div className="inline-flex items-center space-x-2 px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm mb-4">
-                <div className="w-2 h-2 rounded-full bg-green-500" />
-                <span>Active now</span>
-              </div>
-              <div className="grid grid-cols-3 gap-4 mt-6">
+        <TabsContent value="Profile">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div className="lg:col-span-1 space-y-6">
+              <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
                 <div className="text-center">
-                  <div className="text-lg font-bold text-secondary">142</div>
-                  <div className="text-xs text-gray-500">Courses</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-secondary">2.8K</div>
-                  <div className="text-xs text-gray-500">Students</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-secondary">98%</div>
-                  <div className="text-xs text-gray-500">Satisfaction</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
-            <h4 className="text-lg font-semibold text-secondary mb-4">
-              Contact Information
-            </h4>
-            <div className="space-y-3">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Mail className="text-blue-600 w-4 h-4" />
-                </div>
-                <div>
-                  <div className="text-sm text-gray-500">Email</div>
-                  <div className="text-sm font-medium">
-                    alex.johnson@edusaas.com
+                  <div className="relative inline-block mb-4">
+                    <div className="relative">
+                      <Image
+                        src={
+                          avatar ||
+                          "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg"
+                        }
+                        alt="Profile"
+                        width={96}
+                        height={96}
+                        className="rounded-full border-4 border-white shadow-lg"
+                        unoptimized
+                      />
+                      <div className="absolute bottom-2 right-2 w-6 h-6 rounded-full border-2 border-white bg-green-500" />
+                    </div>
+                    <label className="absolute bottom-0 right-0 w-8 h-8 bg-primary rounded-full flex items-center justify-center shadow-lg cursor-pointer">
+                      <Camera className="text-white w-4 h-4" />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) changeAvatar(f);
+                        }}
+                      />
+                    </label>
+                  </div>
+                  {uploadProgress > 0 && uploadProgress < 100 && (
+                    <div className="mt-2">
+                      <div className="text-xs text-gray-500 mb-1">
+                        Uploading {uploadProgress}%
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-primary rounded-full h-2"
+                          style={{ width: `${uploadProgress}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  <h3 className="text-xl font-bold text-secondary mb-1">
+                    {[firstName, lastName].filter(Boolean).join(" ") || email}
+                  </h3>
+                  <p className="text-gray-600 mb-2">{user?.role || ""}</p>
+                  <div className="flex items-center justify-center space-x-1 text-sm text-gray-500 mb-4">
+                    <MapPin className="w-3 h-3" />
+                    <span>
+                      {[city, userState, country].filter(Boolean).join(", ") ||
+                        "Not set"}
+                    </span>
+                  </div>
+                  <div className="inline-flex items-center space-x-2 px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm mb-4">
+                    <div className="w-2 h-2 rounded-full bg-green-500" />
+                    <span>Active now</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4 mt-6">
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-secondary">
+                        {certifications.length}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Certifications
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-secondary">
+                        {flightHours ?? 0}
+                      </div>
+                      <div className="text-xs text-gray-500">Flight Hours</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-lg font-bold text-secondary">
+                        {unreadCount}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Unread Notices
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                  <PhoneIcon />
-                </div>
-                <div>
-                  <div className="text-sm text-gray-500">Phone</div>
-                  <div className="text-sm font-medium">+1 (555) 123-4567</div>
+
+              <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                <h4 className="text-lg font-semibold text-secondary mb-4">
+                  Contact Information
+                </h4>
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <Mail className="text-blue-600 w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-sm text-gray-500">Email</div>
+                      <div className="text-sm font-medium">{email}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                      <PhoneIcon />
+                    </div>
+                    <div>
+                      <div className="text-sm text-gray-500">Phone</div>
+                      <div className="text-sm font-medium">
+                        {phone || "Not set"}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                      <Calendar className="text-purple-600 w-4 h-4" />
+                    </div>
+                    <div>
+                      <div className="text-sm text-gray-500">Joined</div>
+                      <div className="text-sm font-medium">
+                        {state.createdAt
+                          ? new Date(state.createdAt).toLocaleDateString()
+                          : ""}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                  <Calendar className="text-purple-600 w-4 h-4" />
-                </div>
-                <div>
-                  <div className="text-sm text-gray-500">Joined</div>
-                  <div className="text-sm font-medium">January 15, 2022</div>
+
+              <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                <h4 className="text-lg font-semibold text-secondary mb-4">
+                  Certifications
+                </h4>
+                <div className="space-y-2">
+                  {certifications.length > 0 ? (
+                    certifications.map((c) => (
+                      <div key={c} className="text-sm">
+                        {c}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-sm text-gray-500">
+                      No certifications
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
-            <h4 className="text-lg font-semibold text-secondary mb-4">
-              Skills & Expertise
-            </h4>
-            <div className="space-y-4">
-              {[
-                { label: "Educational Technology", level: "95%" },
-                { label: "Curriculum Development", level: "88%" },
-                { label: "Online Teaching", level: "92%" },
-                { label: "Student Assessment", level: "85%" },
-              ].map((s) => (
-                <div key={s.label}>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>{s.label}</span>
-                    <span className="font-medium">{s.level}</span>
+            <div className="lg:col-span-2 space-y-6">
+              <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                <div className="flex justify-between items-center mb-6">
+                  <h4 className="text-lg font-semibold text-secondary">
+                    Personal Information
+                  </h4>
+                  <button
+                    className="text-primary hover:text-primary/80 text-sm font-medium"
+                    onClick={() => firstNameRef.current?.focus()}
+                  >
+                    Edit
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      First Name
+                    </label>
+                    <input
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      type="text"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 bg-gray-50"
+                      ref={firstNameRef}
+                    />
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-accent rounded-full h-2"
-                      style={{ width: s.level }}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Last Name
+                    </label>
+                    <input
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      type="text"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 bg-gray-50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Email Address
+                    </label>
+                    <input
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      type="email"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 bg-gray-50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Phone Number
+                    </label>
+                    <input
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      type="tel"
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 bg-gray-50"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Bio
+                    </label>
+                    <textarea
+                      value={bio}
+                      onChange={(e) => setBio(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 bg-gray-50"
+                      rows={4}
                     />
                   </div>
                 </div>
-              ))}
+              </div>
+
+              <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                <div className="flex justify-between items-center mb-6">
+                  <h4 className="text-lg font-semibold text-secondary">
+                    Professional Details
+                  </h4>
+                  <button className="text-primary hover:text-primary/80 text-sm font-medium">
+                    Edit
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Role
+                    </label>
+                    <Select value={position} onValueChange={setPosition}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Pilot">Pilot</SelectItem>
+                        <SelectItem value="Instructor">Instructor</SelectItem>
+                        <SelectItem value="Student">Student</SelectItem>
+                        <SelectItem value="Crew">Crew</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Operation
+                    </label>
+                    <Select value={department} onValueChange={setDepartment}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Flight Operations">
+                          Flight Operations
+                        </SelectItem>
+                        <SelectItem value="Training">Training</SelectItem>
+                        <SelectItem value="Maintenance">Maintenance</SelectItem>
+                        <SelectItem value="Dispatch">Dispatch</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Certificate ID
+                    </label>
+                    <input
+                      value={certifications[0] || ""}
+                      placeholder="Not set"
+                      readOnly
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 bg-gray-50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Member Since
+                    </label>
+                    <input
+                      value={
+                        state.createdAt
+                          ? new Date(state.createdAt).toLocaleDateString()
+                          : ""
+                      }
+                      readOnly
+                      className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 bg-gray-50"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+                <h4 className="text-lg font-semibold text-secondary mb-4">
+                  Recent Activity
+                </h4>
+                <div className="space-y-4">
+                  {notifications.length === 0 && (
+                    <div className="text-sm text-gray-500">
+                      No recent activity
+                    </div>
+                  )}
+                  {notifications.slice(0, 6).map((n: any) => (
+                    <div
+                      key={n._id}
+                      className="flex items-start space-x-4 p-3 bg-gray-50 rounded-lg"
+                    >
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center shrink-0">
+                        <UserCheck className="text-blue-600 w-4 h-4" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-sm text-secondary">
+                          <span className="font-medium">
+                            {n.title || "Notification"}
+                          </span>
+                          {n.message ? ` - ${n.message}` : ""}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {n.createdAt
+                            ? new Date(n.createdAt).toLocaleString()
+                            : ""}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
-            <div className="flex justify-between items-center mb-6">
-              <h4 className="text-lg font-semibold text-secondary">
-                Personal Information
-              </h4>
-              <button className="text-primary hover:text-primary/80 text-sm font-medium">
-                Edit
-              </button>
+          <div className="bg-card rounded-xl p-6 shadow-sm border border-red-200">
+            <h4 className="text-lg font-semibold text-red-700 mb-4">
+              Danger Zone
+            </h4>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+              <div>
+                <div className="font-medium text-secondary mb-1">
+                  Delete Account
+                </div>
+                <div className="text-sm text-gray-600">
+                  Permanently delete your account and all associated data
+                </div>
+              </div>
+              <Button
+                className="bg-red-600 hover:bg-red-700 text-white"
+                onClick={async () => {
+                  if (!window.confirm("Delete account permanently?")) return;
+                  const ok = await deleteAccount();
+                  if (ok) {
+                    router.push("/login");
+                  }
+                }}
+              >
+                <Trash className="w-4 h-4 mr-2" /> Delete Account
+              </Button>
             </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="Security">
+          <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+            <h4 className="text-lg font-semibold text-secondary mb-4">
+              Security
+            </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  First Name
+                  Current Password
                 </label>
                 <input
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  type="text"
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 bg-gray-50"
+                  type="password"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50"
+                  value={currentPwd}
+                  onChange={(e) => setCurrentPwd(e.target.value)}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Last Name
+                  New Password
                 </label>
                 <input
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  type="text"
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 bg-gray-50"
+                  type="password"
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50"
+                  value={newPwd}
+                  onChange={(e) => setNewPwd(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="mt-4">
+              <Button
+                onClick={() => updatePassword(currentPwd, newPwd)}
+                disabled={!currentPwd || !newPwd}
+              >
+                Update Password
+              </Button>
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="Preferences">
+          <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
+            <h4 className="text-lg font-semibold text-secondary mb-4">
+              Preferences
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Country
+                </label>
+                <input
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address
+                  State
                 </label>
                 <input
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  type="email"
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 bg-gray-50"
+                  value={userState}
+                  onChange={(e) => setState(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Phone Number
+                  City
                 </label>
                 <input
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  type="tel"
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 bg-gray-50"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Flight Hours
+                </label>
+                <input
+                  type="number"
+                  value={flightHours ?? ""}
+                  onChange={(e) =>
+                    setFlightHours(
+                      e.target.value ? Number(e.target.value) : undefined
+                    )
+                  }
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50"
                 />
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Bio
-                </label>
-                <textarea
-                  value={bio}
-                  onChange={(e) => setBio(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 bg-gray-50"
-                  rows={4}
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
-            <div className="flex justify-between items-center mb-6">
-              <h4 className="text-lg font-semibold text-secondary">
-                Professional Details
-              </h4>
-              <button className="text-primary hover:text-primary/80 text-sm font-medium">
-                Edit
-              </button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Position
-                </label>
-                <Select value={position} onValueChange={setPosition}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Administrator">Administrator</SelectItem>
-                    <SelectItem value="Instructor">Instructor</SelectItem>
-                    <SelectItem value="Content Manager">
-                      Content Manager
-                    </SelectItem>
-                    <SelectItem value="Support Staff">Support Staff</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Department
-                </label>
-                <Select value={department} onValueChange={setDepartment}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Academic Operations">
-                      Academic Operations
-                    </SelectItem>
-                    <SelectItem value="Curriculum Development">
-                      Curriculum Development
-                    </SelectItem>
-                    <SelectItem value="Student Success">
-                      Student Success
-                    </SelectItem>
-                    <SelectItem value="Technology">Technology</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Employee ID
+                  Certifications (comma separated)
                 </label>
                 <input
-                  value="EMP-2022-001"
-                  readOnly
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 bg-gray-50"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Join Date
-                </label>
-                <input
-                  value="January 15, 2022"
-                  readOnly
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 bg-gray-50"
+                  value={certifications.join(", ")}
+                  onChange={(e) =>
+                    setCertifications(
+                      e.target.value
+                        .split(",")
+                        .map((s) => s.trim())
+                        .filter(Boolean)
+                    )
+                  }
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50"
                 />
               </div>
             </div>
+            <div className="mt-4">
+              <Button onClick={save} disabled={saving}>
+                <Save className="w-4 h-4 mr-2" />{" "}
+                {saving ? "Saving..." : "Save Preferences"}
+              </Button>
+            </div>
           </div>
+        </TabsContent>
 
+        <TabsContent value="Billing">
           <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
-            <h4 className="text-lg font-semibold text-secondary mb-4">
-              Recent Activity
-            </h4>
-            <div className="space-y-4">
-              {[
-                {
-                  iconBg: "bg-green-100",
-                  Icon: UserCheck,
-                  title: "Profile updated",
-                  desc: "Updated personal information",
-                  time: "2 hours ago",
-                  color: "text-green-600",
-                },
-                {
-                  iconBg: "bg-blue-100",
-                  Icon: Lock,
-                  title: "Password changed",
-                  desc: "Updated account security",
-                  time: "1 day ago",
-                  color: "text-blue-600",
-                },
-                {
-                  iconBg: "bg-purple-100",
-                  Icon: ChartLine,
-                  title: "Report generated",
-                  desc: "Monthly analytics report",
-                  time: "3 days ago",
-                  color: "text-purple-600",
-                },
-                {
-                  iconBg: "bg-yellow-100",
-                  Icon: UsersIcon,
-                  title: "Team management",
-                  desc: "Added new team member",
-                  time: "1 week ago",
-                  color: "text-yellow-600",
-                },
-              ].map((a, i) => (
-                <div
-                  key={i}
-                  className="flex items-start space-x-4 p-3 bg-gray-50 rounded-lg"
-                >
-                  <div
-                    className={`w-8 h-8 ${a.iconBg} rounded-full flex items-center justify-center flex-shrink-0`}
-                  >
-                    <a.Icon className={`${a.color} w-4 h-4`} />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-secondary">
-                      <span className="font-medium">{a.title}</span> - {a.desc}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">{a.time}</p>
-                  </div>
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-lg font-semibold text-secondary">Billing</h4>
+              {loadingTab === "Billing" && (
+                <div className="text-sm text-gray-500">Loading...</div>
+              )}
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div>
+                <h5 className="font-semibold mb-3">Invoices</h5>
+                <div className="border border-gray-200 rounded-lg overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-3 py-2 text-left">Date</th>
+                        <th className="px-3 py-2 text-left">Order</th>
+                        <th className="px-3 py-2 text-left">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {invoices.map((inv) => (
+                        <tr key={inv._id} className="border-t">
+                          <td className="px-3 py-2">{inv.invoiceDate || ""}</td>
+                          <td className="px-3 py-2">
+                            {inv.order?.orderNumber || ""}
+                          </td>
+                          <td className="px-3 py-2">
+                            ${inv.order?.total || 0}
+                          </td>
+                        </tr>
+                      ))}
+                      {invoices.length === 0 && (
+                        <tr>
+                          <td className="px-3 py-3 text-gray-500" colSpan={3}>
+                            No invoices
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
-              ))}
+              </div>
+              <div>
+                <h5 className="font-semibold mb-3">Orders</h5>
+                <div className="border border-gray-200 rounded-lg overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-3 py-2 text-left">Order #</th>
+                        <th className="px-3 py-2 text-left">Status</th>
+                        <th className="px-3 py-2 text-left">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {orders.map((ord) => (
+                        <tr key={ord._id} className="border-t">
+                          <td className="px-3 py-2">{ord.orderNumber || ""}</td>
+                          <td className="px-3 py-2">{ord.status || ""}</td>
+                          <td className="px-3 py-2">${ord.total || 0}</td>
+                        </tr>
+                      ))}
+                      {orders.length === 0 && (
+                        <tr>
+                          <td className="px-3 py-3 text-gray-500" colSpan={3}>
+                            No orders
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
+        </TabsContent>
 
+        <TabsContent value="Notifications">
           <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
-            <h4 className="text-lg font-semibold text-secondary mb-4">
-              Connected Accounts
-            </h4>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
-                    <Chrome className="text-white w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="font-medium text-sm">Google Account</div>
-                    <div className="text-xs text-gray-500">
-                      alex.johnson@gmail.com
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-lg font-semibold text-secondary">
+                Notifications
+              </h4>
+              <div className="flex items-center gap-3">
+                <span className="px-2 py-1 bg-gray-100 rounded text-sm">
+                  Unread: {unreadCount}
+                </span>
+                <Button variant="outline" onClick={markAllRead}>
+                  Mark all read
+                </Button>
+              </div>
+            </div>
+            {loadingTab === "Notifications" ? (
+              <div className="text-sm text-gray-500">Loading...</div>
+            ) : (
+              <div className="space-y-3">
+                {notifications.map((n) => (
+                  <div
+                    key={n._id}
+                    className="flex items-start justify-between p-3 border border-gray-200 rounded-lg"
+                  >
+                    <div className="flex-1">
+                      <div className="font-medium text-sm">
+                        {n.title || "Notification"}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {n.message || ""}
+                      </div>
+                      <div className="text-xs text-gray-400 mt-1">
+                        {n.createdAt || ""}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {!n.isRead && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => markRead(n._id)}
+                        >
+                          Mark read
+                        </Button>
+                      )}
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => removeNotification(n._id)}
+                      >
+                        Delete
+                      </Button>
                     </div>
                   </div>
-                </div>
-                <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">
-                  Connected
-                </span>
+                ))}
+                {notifications.length === 0 && (
+                  <div className="text-sm text-gray-500">No notifications</div>
+                )}
               </div>
-
-              <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center">
-                    <Github className="text-white w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="font-medium text-sm">GitHub</div>
-                    <div className="text-xs text-gray-500">@alexjohnson</div>
-                  </div>
-                </div>
-                <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">
-                  Connected
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-blue-400 rounded-lg flex items-center justify-center">
-                    <Linkedin className="text-white w-5 h-5" />
-                  </div>
-                  <div>
-                    <div className="font-medium text-sm">LinkedIn</div>
-                    <div className="text-xs text-gray-500">Not connected</div>
-                  </div>
-                </div>
-                <Button className="bg-primary text-white">Connect</Button>
-              </div>
-            </div>
+            )}
           </div>
-        </div>
-      </div>
-
-      <div className="bg-card rounded-xl p-6 shadow-sm border border-red-200">
-        <h4 className="text-lg font-semibold text-red-700 mb-4">Danger Zone</h4>
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-          <div>
-            <div className="font-medium text-secondary mb-1">
-              Delete Account
-            </div>
-            <div className="text-sm text-gray-600">
-              Permanently delete your account and all associated data
-            </div>
-          </div>
-          <Button className="bg-red-600 hover:bg-red-700 text-white">
-            <Trash className="w-4 h-4 mr-2" /> Delete Account
-          </Button>
-        </div>
-      </div>
+        </TabsContent>
+      </Tabs>
     </main>
   );
 }

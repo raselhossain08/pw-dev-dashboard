@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/context/ToastContext";
 import {
   Dialog,
   DialogContent,
@@ -30,7 +30,7 @@ export function HeaderEditDialog({
   onOpenChange,
 }: HeaderEditDialogProps) {
   const queryClient = useQueryClient();
-  const { toast } = useToast();
+  const { push } = useToast();
   const [uploadProgress, setUploadProgress] = useState<{
     [key: string]: number;
   }>({});
@@ -58,7 +58,7 @@ export function HeaderEditDialog({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["header-navigation"] });
-      toast({ title: "Success", description: "Logo uploaded successfully" });
+      push({ message: "Logo uploaded successfully", type: "success" });
       setUploadProgress((prev) => {
         const newProgress = { ...prev };
         delete newProgress["logo-dark"];
@@ -67,10 +67,9 @@ export function HeaderEditDialog({
       });
     },
     onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: `Failed to upload logo: ${error.message}`,
-        variant: "destructive",
+      push({
+        message: `Failed to upload logo: ${error.message}`,
+        type: "error",
       });
     },
   });
@@ -87,7 +86,7 @@ export function HeaderEditDialog({
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["header-navigation"] });
-      toast({ title: "Success", description: "Avatar uploaded successfully" });
+      push({ message: "Avatar uploaded successfully", type: "success" });
       setUploadProgress((prev) => {
         const newProgress = { ...prev };
         delete newProgress.avatar;
@@ -95,10 +94,9 @@ export function HeaderEditDialog({
       });
     },
     onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: `Failed to upload avatar: ${error.message}`,
-        variant: "destructive",
+      push({
+        message: `Failed to upload avatar: ${error.message}`,
+        type: "error",
       });
     },
   });

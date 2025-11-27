@@ -91,7 +91,7 @@ const initialProducts: ProductItem[] = [
   },
   {
     id: "p3",
-    title: "EduSaaS Hoodie",
+    title: "Personal Wings Hoodie",
     description: "Comfortable hoodie with embroidered logo",
     price: 49.99,
     category: "Merchandise",
@@ -544,4 +544,3 @@ export default function Shop() {
     </main>
   );
 }
-

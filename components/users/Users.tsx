@@ -82,7 +82,7 @@ const initialUsers: UserItem[] = [
   {
     id: "u1",
     name: "Alex Johnson",
-    email: "alex.johnson@edusaas.com",
+    email: "alex.johnson@personalwings.com",
     role: "Administrator",
     status: "active",
     courses: 42,
@@ -93,7 +93,7 @@ const initialUsers: UserItem[] = [
   {
     id: "u2",
     name: "Sarah Williams",
-    email: "sarah.williams@edusaas.com",
+    email: "sarah.williams@personalwings.com",
     role: "Instructor",
     status: "active",
     courses: 12,
@@ -104,7 +104,7 @@ const initialUsers: UserItem[] = [
   {
     id: "u3",
     name: "Michael Chen",
-    email: "michael.chen@edusaas.com",
+    email: "michael.chen@personalwings.com",
     role: "Student",
     status: "pending",
     courses: 7,
@@ -115,7 +115,7 @@ const initialUsers: UserItem[] = [
   {
     id: "u4",
     name: "Priya Patel",
-    email: "priya.patel@edusaas.com",
+    email: "priya.patel@personalwings.com",
     role: "Content Manager",
     status: "inactive",
     courses: 18,

@@ -30,7 +30,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   >([
     {
       sender: "agent",
-      text: "Hello! Welcome to EduSaaS Support. I\u2019m Sarah, how can I help you today?",
+      text: "Hello! Welcome to Personal Wings Support. I\u2019m Sarah, how can I help you today?",
       at: "10:30 AM",
     },
     {

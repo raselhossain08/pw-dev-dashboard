@@ -34,7 +34,7 @@ export interface CreateProductDto {
     isFeatured?: boolean;
 }
 
-export interface UpdateProductDto extends Partial<CreateProductDto> { }
+export type UpdateProductDto = Partial<CreateProductDto>
 
 class ProductsService {
     async getAllProducts(params: {

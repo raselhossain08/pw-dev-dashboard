@@ -40,7 +40,7 @@ export interface CreateCourseDto {
     isFeatured?: boolean;
 }
 
-export interface UpdateCourseDto extends Partial<CreateCourseDto> { }
+export type UpdateCourseDto = Partial<CreateCourseDto>
 
 class CoursesService {
     async getAllCourses(params: {

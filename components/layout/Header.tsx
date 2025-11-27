@@ -12,9 +12,7 @@ import {
   User,
   Settings,
   LogOut,
-  CheckCircle2,
   Clock,
-  DollarSign,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,7 +24,6 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { SidebarMobile } from "./Sidebar";
 import { motion } from "framer-motion";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,12 +33,63 @@ import {
   AlertDialogFooter,
 } from "@/components/ui/alert-dialog";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { apiFetch } from "@/lib/api-client";
+import type { NotificationItem } from "@/services/profile.service";
 
 const MotionButton = motion(Button);
 
 export default function Header() {
   const router = useRouter();
+  const { user, logout } = useAuth();
   const [logoutOpen, setLogoutOpen] = React.useState(false);
+  const [notifications, setNotifications] = React.useState<NotificationItem[]>(
+    []
+  );
+  const [unreadCount, setUnreadCount] = React.useState(0);
+
+  React.useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      const res = await apiFetch<{
+        notifications: NotificationItem[];
+        total?: number;
+      }>("/notifications");
+      const list = (res.data?.notifications ??
+        res.data ??
+        []) as NotificationItem[];
+      if (mounted) setNotifications(Array.isArray(list) ? list : []);
+      const uc = await apiFetch<{ count: number }>(
+        "/notifications/unread-count"
+      );
+      if (mounted) setUnreadCount(Number(uc.data?.count ?? 0));
+    };
+    load();
+    const id = setInterval(load, 30000);
+    return () => {
+      mounted = false;
+      clearInterval(id);
+    };
+  }, []);
+
+  const displayName =
+    [user?.firstName, user?.lastName].filter(Boolean).join(" ") || "User";
+  const avatarUrl =
+    user?.avatar ||
+    "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg";
+  const email = user?.email || "";
+
+  const formatTime = (iso?: string) => {
+    try {
+      const d = iso ? new Date(iso) : new Date();
+      return d.toLocaleString(undefined, {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return "";
+    }
+  };
   return (
     <motion.header
       className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-b border-gray-200 z-50"
@@ -74,7 +122,7 @@ export default function Header() {
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center shadow-sm">
               <GraduationCap className="text-primary-foreground w-4 h-4" />
             </div>
-            <h1 className="text-xl font-bold text-secondary">EduSaaS</h1>
+            <h1 className="text-xl font-bold text-secondary">Personal Wings</h1>
           </div>
         </div>
 
@@ -100,7 +148,9 @@ export default function Header() {
                 whileTap={{ scale: 0.95 }}
               >
                 <Bell className="w-5 h-5" />
-                <span className="absolute -mt-1 -mr-1 w-2 h-2 bg-destructive rounded-full right-1 top-1 animate-pulse" />
+                {unreadCount > 0 && (
+                  <span className="absolute -mt-1 -mr-1 w-2 h-2 bg-destructive rounded-full right-1 top-1 animate-pulse" />
+                )}
               </MotionButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80">
@@ -109,69 +159,48 @@ export default function Header() {
                   Notifications
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  You have 3 unread messages
+                  {unreadCount > 0
+                    ? `You have ${unreadCount} unread`
+                    : "All caught up"}
                 </p>
               </div>
               <div className="max-h-80 overflow-y-auto">
-                <DropdownMenuItem className="cursor-pointer hover:bg-primary/5 focus:bg-primary/10 px-4 py-3">
-                  <div className="flex gap-3 w-full">
-                    <div className="shrink-0 w-10 h-10 bg-accent/10 rounded-full flex items-center justify-center">
-                      <CheckCircle2 className="w-5 h-5 text-accent" />
-                    </div>
-                    <div className="flex-1 space-y-1">
-                      <p className="text-sm font-medium text-foreground">
-                        New enrollment confirmed
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Sarah Johnson enrolled in Advanced React Course
-                      </p>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Clock className="w-3 h-3" />2 minutes ago
-                      </p>
-                    </div>
+                {notifications.length === 0 ? (
+                  <div className="px-4 py-6 text-center text-xs text-muted-foreground">
+                    No notifications
                   </div>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer hover:bg-primary/5 focus:bg-primary/10 px-4 py-3">
-                  <div className="flex gap-3 w-full">
-                    <div className="shrink-0 w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                      <Bell className="w-5 h-5 text-primary" />
-                    </div>
-                    <div className="flex-1 space-y-1">
-                      <p className="text-sm font-medium text-foreground">
-                        Assignment due today
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Complete Module 5 quiz before 11:59 PM
-                      </p>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Clock className="w-3 h-3" />1 hour ago
-                      </p>
-                    </div>
-                  </div>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer hover:bg-primary/5 focus:bg-primary/10 px-4 py-3">
-                  <div className="flex gap-3 w-full">
-                    <div className="shrink-0 w-10 h-10 bg-accent/10 rounded-full flex items-center justify-center">
-                      <DollarSign className="w-5 h-5 text-accent" />
-                    </div>
-                    <div className="flex-1 space-y-1">
-                      <p className="text-sm font-medium text-foreground">
-                        Payment received
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        $299.00 from John Smith for Pro Plan
-                      </p>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Clock className="w-3 h-3" />3 hours ago
-                      </p>
-                    </div>
-                  </div>
-                </DropdownMenuItem>
+                ) : (
+                  notifications.map((n, i) => (
+                    <DropdownMenuItem
+                      key={i}
+                      className="cursor-pointer hover:bg-primary/5 focus:bg-primary/10 px-4 py-3"
+                    >
+                      <div className="flex gap-3 w-full">
+                        <div className="shrink-0 w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                          <Bell className="w-5 h-5 text-primary" />
+                        </div>
+                        <div className="flex-1 space-y-1">
+                          <p className="text-sm font-medium text-foreground">
+                            {n.title || "Notification"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {n.message}
+                          </p>
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {formatTime(n.createdAt)}
+                          </p>
+                        </div>
+                      </div>
+                    </DropdownMenuItem>
+                  ))
+                )}
               </div>
               <div className="px-4 py-2 border-t border-border">
                 <Button
                   variant="ghost"
                   className="w-full text-xs font-medium text-primary hover:text-white hover:bg-primary transition-all duration-200"
+                  onClick={() => router.push("/activity-logs")}
                 >
                   View all notifications
                 </Button>
@@ -191,15 +220,9 @@ export default function Header() {
           </MotionButton>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <MotionButton
-                variant="ghost"
-                size="sm"
-                className="gap-2  hover:text-white transition-all duration-200"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
+              <MotionButton variant="link" size="sm" className="gap-2">
                 <Image
-                  src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg"
+                  src={avatarUrl}
                   alt="User"
                   width={28}
                   height={28}
@@ -207,7 +230,7 @@ export default function Header() {
                   unoptimized
                 />
                 <span className="hidden sm:inline text-sm font-medium text-secondary">
-                  John Doe
+                  {displayName}
                 </span>
                 <ChevronDown className="text-muted-foreground w-4 h-4" />
               </MotionButton>
@@ -216,7 +239,7 @@ export default function Header() {
               <div className="px-3 py-3 border-b border-border">
                 <div className="flex items-center gap-3">
                   <Image
-                    src="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg"
+                    src={avatarUrl}
                     alt="User"
                     width={40}
                     height={40}
@@ -225,27 +248,25 @@ export default function Header() {
                   />
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-foreground">
-                      John Doe
+                      {displayName}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      john@example.com
-                    </p>
+                    <p className="text-xs text-muted-foreground">{email}</p>
                   </div>
                 </div>
               </div>
               <div className="py-1">
-                <DropdownMenuItem className="cursor-pointer hover:bg-primary/10 hover:text-primary focus:bg-primary/10 focus:text-primary transition-colors px-3 py-2">
+                <DropdownMenuItem className="cursor-pointer px-3 py-2">
                   <User className="w-4 h-4 mr-3" />
                   <span className="text-sm">My Profile</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer hover:bg-primary/10 hover:text-primary focus:bg-primary/10 focus:text-primary transition-colors px-3 py-2">
+                <DropdownMenuItem className="cursor-pointer px-3 py-2">
                   <Settings className="w-4 h-4 mr-3" />
                   <span className="text-sm">Settings</span>
                 </DropdownMenuItem>
               </div>
               <div className="border-t border-border py-1">
                 <DropdownMenuItem
-                  className="cursor-pointer hover:bg-destructive/10 hover:text-destructive focus:bg-destructive/10 focus:text-destructive transition-colors px-3 py-2"
+                  className="cursor-pointer px-3 py-2"
                   onSelect={() => setLogoutOpen(true)}
                 >
                   <LogOut className="w-4 h-4 mr-3" />
@@ -273,9 +294,9 @@ export default function Header() {
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
-                console.log("logout");
-                // Add your logout logic here
+              onClick={async () => {
+                await logout();
+                router.replace("/login");
               }}
               className="bg-destructive hover:bg-destructive/90 text-white"
             >

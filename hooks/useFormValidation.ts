@@ -1,28 +1,28 @@
 "use client"
 import { useState } from 'react'
 
-export type ValidationRules = {
+export type ValidationRules<T extends Record<string, unknown> = Record<string, unknown>> = {
     required?: boolean | string
     minLength?: { value: number; message?: string }
     maxLength?: { value: number; message?: string }
     pattern?: { value: RegExp; message?: string }
     email?: boolean | string
-    match?: { field: string; message?: string }
-    custom?: (value: any, formData?: any) => string | undefined
+    match?: { field: keyof T extends string ? keyof T : string; message?: string }
+    custom?: (value: unknown, formData?: T) => string | undefined
 }
 
-export type FieldRules = Record<string, ValidationRules>
+export type FieldRules<T extends Record<string, unknown>> = Partial<Record<keyof T, ValidationRules<T>>>
 
-export function useFormValidation<T extends Record<string, any>>(
+export function useFormValidation<T extends Record<string, unknown>>(
     initialValues: T,
-    rules: FieldRules
+    rules: FieldRules<T>
 ) {
     const [values, setValues] = useState<T>(initialValues)
     const [errors, setErrors] = useState<Partial<Record<keyof T, string>>>({})
     const [touched, setTouched] = useState<Partial<Record<keyof T, boolean>>>({})
 
-    const validateField = (name: keyof T, value: any, allValues?: T): string | undefined => {
-        const fieldRules = rules[name as string]
+    const validateField = (name: keyof T, value: unknown, allValues?: T): string | undefined => {
+        const fieldRules = rules[name]
         if (!fieldRules) return undefined
 
         // Required validation
@@ -37,7 +37,7 @@ export function useFormValidation<T extends Record<string, any>>(
         // Email validation
         if (fieldRules.email && value) {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-            if (!emailRegex.test(value)) {
+            if (typeof value !== 'string' || !emailRegex.test(value)) {
                 return typeof fieldRules.email === 'string'
                     ? fieldRules.email
                     : 'Please enter a valid email address'
@@ -45,7 +45,7 @@ export function useFormValidation<T extends Record<string, any>>(
         }
 
         // MinLength validation
-        if (fieldRules.minLength && value) {
+        if (fieldRules.minLength && typeof value === 'string') {
             if (value.length < fieldRules.minLength.value) {
                 return fieldRules.minLength.message ||
                     `Must be at least ${fieldRules.minLength.value} characters`
@@ -53,7 +53,7 @@ export function useFormValidation<T extends Record<string, any>>(
         }
 
         // MaxLength validation
-        if (fieldRules.maxLength && value) {
+        if (fieldRules.maxLength && typeof value === 'string') {
             if (value.length > fieldRules.maxLength.value) {
                 return fieldRules.maxLength.message ||
                     `Must be no more than ${fieldRules.maxLength.value} characters`
@@ -61,18 +61,19 @@ export function useFormValidation<T extends Record<string, any>>(
         }
 
         // Pattern validation
-        if (fieldRules.pattern && value) {
+        if (fieldRules.pattern && typeof value === 'string') {
             if (!fieldRules.pattern.value.test(value)) {
                 return fieldRules.pattern.message || 'Invalid format'
             }
         }
 
         // Match validation (for confirm password)
-        if (fieldRules.match && value) {
-            const matchValue = allValues?.[fieldRules.match.field as keyof T]
-            if (value !== matchValue) {
+        if (fieldRules.match && value !== undefined) {
+            const matchField = fieldRules.match.field as keyof T
+            const matchValue = allValues?.[matchField]
+            if (String(value) !== String(matchValue)) {
                 return fieldRules.match.message ||
-                    `Must match ${fieldRules.match.field}`
+                    `Must match ${String(fieldRules.match.field)}`
             }
         }
 
@@ -100,7 +101,7 @@ export function useFormValidation<T extends Record<string, any>>(
         return isValid
     }
 
-    const handleChange = (name: keyof T, value: any) => {
+    const handleChange = (name: keyof T, value: unknown) => {
         const newValues = { ...values, [name]: value }
         setValues(newValues)
 

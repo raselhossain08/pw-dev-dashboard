@@ -180,16 +180,23 @@ export function FooterEditor({
   });
   const [activeTab, setActiveTab] = useState("sections");
 
-  const updateNestedValue = (path: string[], value: any) => {
+  const updateNestedValue = (path: string[], value: unknown) => {
     setFooterData((prev) => {
-      const newData = { ...prev };
-      let current: any = newData;
+      const newData: FooterData = { ...prev };
+      let current: unknown = newData as unknown;
 
       for (let i = 0; i < path.length - 1; i++) {
-        current = current[path[i]];
+        const key = path[i];
+        if (typeof current === "object" && current !== null) {
+          const obj = current as Record<string, unknown>;
+          current = obj[key];
+        }
       }
 
-      current[path[path.length - 1]] = value;
+      const lastKey = path[path.length - 1];
+      if (typeof current === "object" && current !== null) {
+        (current as Record<string, unknown>)[lastKey] = value;
+      }
       return newData;
     });
   };
