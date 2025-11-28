@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Card,
   CardContent,
@@ -8,538 +8,501 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import {
+  Upload,
+  Save,
+  RefreshCw,
+  Image as ImageIcon,
+  Share2,
+  List,
+  Mail,
+  Phone,
+  Building2,
+  Link as LinkIcon,
+  Globe,
   Plus,
   Trash2,
-  Save,
-  Eye,
-  Settings,
-  MoveUp,
-  MoveDown,
 } from "lucide-react";
-
-// Types
-interface FooterLink {
-  label: string;
-  href: string;
-}
-
-interface FooterSection {
-  title: string;
-  links: FooterLink[];
-}
-
-interface SocialMediaLink {
-  platform: string;
-  icon: string;
-  href: string;
-  label: string;
-}
-
-interface FooterData {
-  logo: {
-    src: string;
-    alt: string;
-    width: number;
-    height: number;
-  };
-  socialMedia: {
-    title: string;
-    links: SocialMediaLink[];
-  };
-  sections: FooterSection[];
-  newsletter: {
-    title: string;
-    description: string;
-    placeholder: string;
-    buttonText: string;
-  };
-  bottomLinks: FooterLink[];
-  languageSelector: {
-    currentLanguage: string;
-    languages: { code: string; name: string }[];
-  };
-}
+import type { Footer } from "@/types/cms";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { footerApi } from "@/services/cms.service";
+import { useToast } from "@/context/ToastContext";
 
 interface FooterEditorProps {
-  initialData?: Partial<FooterData>;
-  onSave?: (data: FooterData) => void;
-  onPreview?: () => void;
+  footerId?: string;
+  initialData?: Partial<Footer>;
+  onSave?: (data: Footer) => void;
 }
 
-const defaultFooterData: FooterData = {
-  logo: {
-    src: "/footer-logo.webp",
-    alt: "Personal Wings Logo",
-    width: 140,
-    height: 50,
-  },
-  socialMedia: {
-    title: "Follow us on social media",
-    links: [
-      {
-        platform: "facebook",
-        icon: "Facebook",
-        href: "https://facebook.com",
-        label: "Follow us on Facebook",
-      },
-      {
-        platform: "twitter",
-        icon: "Twitter",
-        href: "https://twitter.com",
-        label: "Follow us on Twitter",
-      },
-      {
-        platform: "instagram",
-        icon: "Instagram",
-        href: "https://instagram.com",
-        label: "Follow us on Instagram",
-      },
-      {
-        platform: "linkedin",
-        icon: "Linkedin",
-        href: "https://linkedin.com",
-        label: "Follow us on LinkedIn",
-      },
-    ],
-  },
-  sections: [
-    {
-      title: "LEARNING",
-      links: [
-        { label: "All Courses", href: "/course" },
-        { label: "Lessons", href: "/lesson" },
-        { label: "Events", href: "/events" },
-      ],
-    },
-    {
-      title: "SHOP",
-      links: [
-        { label: "Browse Shop", href: "/shop" },
-        { label: "My Wishlist", href: "/dashboard/wishlist" },
-        { label: "Order History", href: "/dashboard/order-history" },
-      ],
-    },
-    {
-      title: "COMPANY",
-      links: [
-        { label: "About Us", href: "/about-us" },
-        { label: "Blog", href: "/blog" },
-        { label: "Contact", href: "/contact" },
-        { label: "FAQs", href: "/faqs" },
-      ],
-    },
-    {
-      title: "MY ACCOUNT",
-      links: [
-        { label: "Dashboard", href: "/dashboard" },
-        { label: "Profile", href: "/dashboard/profile" },
-        { label: "Enrolled Courses", href: "/dashboard/enrolled-courses" },
-        { label: "Reviews", href: "/dashboard/reviews" },
-        { label: "Settings", href: "/dashboard/settings" },
-      ],
-    },
-  ],
-  newsletter: {
-    title: "GET IN TOUCH",
-    description: "We don't send spam so don't worry.",
-    placeholder: "Email...",
-    buttonText: "Subscribe",
-  },
-  bottomLinks: [
-    { label: "FAQs", href: "/faqs" },
-    { label: "Privacy Policy", href: "/privacy-policy" },
-    { label: "Refund Policy", href: "/refund-policy" },
-    { label: "Terms & Conditions", href: "/terms-conditions" },
-  ],
-  languageSelector: {
-    currentLanguage: "English",
-    languages: [
-      { code: "en", name: "English" },
-      { code: "fr", name: "Français" },
-      { code: "es", name: "Español" },
-      { code: "de", name: "Deutsch" },
-    ],
-  },
-};
-
 export function FooterEditor({
+  footerId,
   initialData,
   onSave,
-  onPreview,
 }: FooterEditorProps) {
-  const [footerData, setFooterData] = useState<FooterData>({
-    ...defaultFooterData,
-    ...initialData,
+  const queryClient = useQueryClient();
+  const { push } = useToast();
+
+  const {
+    data: activeFooter,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["activeFooter"],
+    queryFn: footerApi.getActive,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
   });
-  const [activeTab, setActiveTab] = useState("sections");
 
-  const updateNestedValue = (path: string[], value: unknown) => {
-    setFooterData((prev) => {
-      const newData: FooterData = { ...prev };
-      let current: unknown = newData as unknown;
+  // Debug logging
+  useEffect(() => {
+    console.log("FooterEditor - activeFooter:", activeFooter);
+    console.log("FooterEditor - isLoading:", isLoading);
+    console.log("FooterEditor - error:", error);
+  }, [activeFooter, isLoading, error]);
 
-      for (let i = 0; i < path.length - 1; i++) {
-        const key = path[i];
-        if (typeof current === "object" && current !== null) {
-          const obj = current as Record<string, unknown>;
-          current = obj[key];
+  const effectiveFooter = useMemo<Footer | null>(() => {
+    if (initialData && initialData.logo && initialData.socialMedia) {
+      return initialData as Footer;
+    }
+    return activeFooter ?? null;
+  }, [initialData, activeFooter]);
+
+  const [data, setData] = useState<Footer | null>(null);
+  const [activeTab, setActiveTab] = useState("logo");
+  const [uploadProgress, setUploadProgress] = useState<{
+    [key: string]: number;
+  }>({});
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Sync data when effectiveFooter loads
+  useEffect(() => {
+    if (effectiveFooter) {
+      setData(effectiveFooter);
+    }
+  }, [effectiveFooter]);
+
+  // Image Upload Field Component
+  const ImageUploadField = ({
+    label,
+    value,
+    onUpload,
+    field,
+    className = "",
+  }: {
+    label: string;
+    value: string;
+    onUpload: (file: File) => void;
+    field: string;
+    className?: string;
+  }) => {
+    const progress = uploadProgress[field];
+    const isUploading = progress !== undefined && progress < 100;
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        onUpload(file);
+      }
+    };
+
+    return (
+      <div className={`space-y-2 ${className}`}>
+        <Label htmlFor={field}>{label}</Label>
+        <div
+          className={`relative border-2 border-dashed rounded-lg p-4 text-center transition-colors ${
+            isUploading
+              ? "border-blue-400 bg-blue-50 dark:bg-blue-950"
+              : "border-gray-300 hover:border-gray-400 cursor-pointer"
+          }`}
+        >
+          {isUploading ? (
+            <div className="space-y-3">
+              <RefreshCw className="mx-auto h-8 w-8 text-blue-500 animate-spin" />
+              <div>
+                <p className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                  Uploading...
+                </p>
+                <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                  {progress}%
+                </p>
+              </div>
+              <Progress value={progress} className="w-full h-2" />
+            </div>
+          ) : value ? (
+            <div className="space-y-2 pointer-events-none">
+              <img
+                src={value}
+                alt="Preview"
+                className="mx-auto h-20 w-20 object-contain rounded"
+              />
+              <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                {value}
+              </p>
+            </div>
+          ) : (
+            <div className="text-center pointer-events-none">
+              <Upload className="mx-auto h-8 w-8 text-gray-400" />
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Click to upload
+              </p>
+            </div>
+          )}
+          {!isUploading && (
+            <Input
+              id={field}
+              type="file"
+              accept="image/*"
+              onChange={handleFileChange}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            />
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const updateMutation = useMutation({
+    mutationFn: (payload: Partial<Footer>) => {
+      const id = data?._id || footerId;
+      if (!id) throw new Error("Footer ID is required");
+      return footerApi.update(id, payload);
+    },
+    onSuccess: (updatedData) => {
+      queryClient.invalidateQueries({ queryKey: ["activeFooter"] });
+      push({
+        message: "Footer updated successfully",
+        type: "success",
+      });
+      setData(updatedData);
+      setIsSaving(false);
+    },
+    onError: (error: any) => {
+      push({
+        message: error?.message || "Failed to update footer",
+        type: "error",
+      });
+      setIsSaving(false);
+    },
+  });
+
+  // Helper function to recursively remove _id fields from nested objects
+  const cleanFooterData = (data: Footer): any => {
+    const clean = (obj: any): any => {
+      if (Array.isArray(obj)) {
+        return obj.map((item) => clean(item));
+      }
+      if (obj && typeof obj === "object") {
+        const cleaned: any = {};
+        for (const [key, value] of Object.entries(obj)) {
+          if (key !== "_id" && key !== "publicId") {
+            cleaned[key] = clean(value);
+          }
         }
+        return cleaned;
       }
+      return obj;
+    };
 
-      const lastKey = path[path.length - 1];
-      if (typeof current === "object" && current !== null) {
-        (current as Record<string, unknown>)[lastKey] = value;
-      }
-      return newData;
-    });
+    const { _id, createdAt, updatedAt, ...rest } = data;
+    return clean(rest);
   };
 
-  const addSection = () => {
-    setFooterData((prev) => ({
-      ...prev,
-      sections: [
-        ...prev.sections,
-        {
-          title: "NEW SECTION",
-          links: [{ label: "New Link", href: "/" }],
-        },
-      ],
-    }));
+  const handleSave = () => {
+    if (!data) return;
+    setIsSaving(true);
+    const cleanedData = cleanFooterData(data);
+    updateMutation.mutate(cleanedData);
   };
 
-  const removeSection = (index: number) => {
-    setFooterData((prev) => ({
-      ...prev,
-      sections: prev.sections.filter((_, i) => i !== index),
-    }));
-  };
-
-  const moveSection = (index: number, direction: "up" | "down") => {
-    if (
-      (direction === "up" && index === 0) ||
-      (direction === "down" && index === footerData.sections.length - 1)
-    ) {
+  const handleLogoUpload = async (file: File) => {
+    if (!data?._id && !footerId) {
+      push({
+        message: "Footer must be saved before uploading logo",
+        type: "error",
+      });
       return;
     }
 
-    const newIndex = direction === "up" ? index - 1 : index + 1;
-    const newSections = [...footerData.sections];
-    [newSections[index], newSections[newIndex]] = [
-      newSections[newIndex],
-      newSections[index],
-    ];
+    const field = "logo";
 
-    setFooterData((prev) => ({ ...prev, sections: newSections }));
-  };
-
-  const addLinkToSection = (sectionIndex: number) => {
-    setFooterData((prev) => {
-      const newSections = [...prev.sections];
-      newSections[sectionIndex].links.push({
-        label: "New Link",
-        href: "/",
-      });
-      return { ...prev, sections: newSections };
-    });
-  };
-
-  const removeLinkFromSection = (sectionIndex: number, linkIndex: number) => {
-    setFooterData((prev) => {
-      const newSections = [...prev.sections];
-      newSections[sectionIndex].links = newSections[sectionIndex].links.filter(
-        (_, i) => i !== linkIndex
+    try {
+      // Initialize progress at 0
+      setUploadProgress((prev) => ({ ...prev, [field]: 0 }));
+      const id = data?._id || footerId!;
+      const updatedFooter = await footerApi.uploadLogo(
+        id,
+        file,
+        {
+          alt: data?.logo?.alt || "Footer Logo",
+          width: data?.logo?.width || 140,
+          height: data?.logo?.height || 50,
+        },
+        (progress) => {
+          setUploadProgress((prev) => ({ ...prev, [field]: progress }));
+        }
       );
-      return { ...prev, sections: newSections };
-    });
+
+      setData(updatedFooter);
+      queryClient.invalidateQueries({ queryKey: ["activeFooter"] });
+      // Clear progress after short delay to show completion
+      setTimeout(() => {
+        setUploadProgress((prev) => {
+          const newProgress = { ...prev };
+          delete newProgress[field];
+          return newProgress;
+        });
+      }, 1000);
+      push({
+        message: "Logo uploaded successfully",
+        type: "success",
+      });
+    } catch (error: any) {
+      // Clear progress on error
+      setUploadProgress((prev) => {
+        const newProgress = { ...prev };
+        delete newProgress[field];
+        return newProgress;
+      });
+      push({
+        message: error?.message || "Failed to upload logo",
+        type: "error",
+      });
+    }
   };
 
-  const addSocialLink = () => {
-    setFooterData((prev) => ({
-      ...prev,
-      socialMedia: {
-        ...prev.socialMedia,
-        links: [
-          ...prev.socialMedia.links,
-          {
-            platform: "new-platform",
-            icon: "Link",
-            href: "https://example.com",
-            label: "Follow us on New Platform",
-          },
-        ],
-      },
-    }));
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleLogoUpload(file);
+    }
   };
 
-  const removeSocialLink = (index: number) => {
-    setFooterData((prev) => ({
-      ...prev,
-      socialMedia: {
-        ...prev.socialMedia,
-        links: prev.socialMedia.links.filter((_, i) => i !== index),
-      },
-    }));
-  };
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-3">
+        <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-sm text-muted-foreground">Loading footer data...</p>
+      </div>
+    );
+  }
 
-  const addBottomLink = () => {
-    setFooterData((prev) => ({
-      ...prev,
-      bottomLinks: [...prev.bottomLinks, { label: "New Link", href: "/" }],
-    }));
-  };
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <p className="text-destructive">
+            Error loading footer: {(error as Error).message}
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
-  const removeBottomLink = (index: number) => {
-    setFooterData((prev) => ({
-      ...prev,
-      bottomLinks: prev.bottomLinks.filter((_, i) => i !== index),
-    }));
-  };
-
-  const addLanguage = () => {
-    setFooterData((prev) => ({
-      ...prev,
-      languageSelector: {
-        ...prev.languageSelector,
-        languages: [
-          ...prev.languageSelector.languages,
-          { code: "new", name: "New Language" },
-        ],
-      },
-    }));
-  };
-
-  const removeLanguage = (index: number) => {
-    setFooterData((prev) => ({
-      ...prev,
-      languageSelector: {
-        ...prev.languageSelector,
-        languages: prev.languageSelector.languages.filter(
-          (_, i) => i !== index
-        ),
-      },
-    }));
-  };
+  if (!data) {
+    return (
+      <Card>
+        <CardContent className="p-6 space-y-3">
+          <p className="text-muted-foreground">No footer data available</p>
+          <Button
+            onClick={() => {
+              console.log("Refetching footer data...");
+              queryClient.invalidateQueries({ queryKey: ["activeFooter"] });
+            }}
+          >
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Retry
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Header Actions */}
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 w-full container mx-auto px-3 sm:px-4 lg:px-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Footer Editor</h2>
-          <p className="text-gray-600">
-            Customize your footer content and layout
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+            Footer CMS
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Manage your website footer content
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={onPreview}>
-            <Eye className="w-4 h-4 mr-2" />
-            Preview
-          </Button>
-          <Button onClick={() => onSave?.(footerData)}>
-            <Save className="w-4 h-4 mr-2" />
-            Save Changes
-          </Button>
-        </div>
+        <Button
+          onClick={handleSave}
+          disabled={isSaving}
+          size="lg"
+          className="w-full sm:w-auto"
+        >
+          {isSaving ? (
+            <>
+              <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            <>
+              <Save className="mr-2 h-4 w-4" />
+              Save Changes
+            </>
+          )}
+        </Button>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="sections">Sections</TabsTrigger>
-          <TabsTrigger value="logo">Logo</TabsTrigger>
-          <TabsTrigger value="social">Social Media</TabsTrigger>
-          <TabsTrigger value="newsletter">Newsletter</TabsTrigger>
-          <TabsTrigger value="advanced">Advanced</TabsTrigger>
-        </TabsList>
-
-        {/* Sections Tab */}
-        <TabsContent value="sections">
-          <Card>
-            <CardHeader>
-              <CardTitle>Footer Sections</CardTitle>
-              <CardDescription>
-                Manage the sections and links in your footer
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex justify-between items-center">
-                <Label>Footer Sections ({footerData.sections.length})</Label>
-                <Button onClick={addSection} size="sm">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Section
-                </Button>
-              </div>
-
-              {footerData.sections.map((section, sectionIndex) => (
-                <Card key={sectionIndex} className="p-4">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-2 flex-1">
-                      <Input
-                        value={section.title}
-                        onChange={(e) =>
-                          updateNestedValue(
-                            ["sections", sectionIndex.toString(), "title"],
-                            e.target.value
-                          )
-                        }
-                        placeholder="Section Title"
-                        className="font-semibold"
-                      />
-                      <div className="flex gap-1">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => moveSection(sectionIndex, "up")}
-                          disabled={sectionIndex === 0}
-                        >
-                          <MoveUp className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => moveSection(sectionIndex, "down")}
-                          disabled={
-                            sectionIndex === footerData.sections.length - 1
-                          }
-                        >
-                          <MoveDown className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => removeSection(sectionIndex)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Links ({section.links.length})</Label>
-                    {section.links.map((link, linkIndex) => (
-                      <div key={linkIndex} className="flex gap-2 items-start">
-                        <Input
-                          value={link.label}
-                          onChange={(e) =>
-                            updateNestedValue(
-                              [
-                                "sections",
-                                sectionIndex.toString(),
-                                "links",
-                                linkIndex.toString(),
-                                "label",
-                              ],
-                              e.target.value
-                            )
-                          }
-                          placeholder="Link Label"
-                          className="flex-1"
-                        />
-                        <Input
-                          value={link.href}
-                          onChange={(e) =>
-                            updateNestedValue(
-                              [
-                                "sections",
-                                sectionIndex.toString(),
-                                "links",
-                                linkIndex.toString(),
-                                "href",
-                              ],
-                              e.target.value
-                            )
-                          }
-                          placeholder="/path"
-                          className="flex-1"
-                        />
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            removeLinkFromSection(sectionIndex, linkIndex)
-                          }
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ))}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => addLinkToSection(sectionIndex)}
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Link
-                    </Button>
-                  </div>
-                </Card>
-              ))}
-            </CardContent>
-          </Card>
-        </TabsContent>
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <div className="w-full overflow-x-auto pb-2 h-full">
+          <TabsList className="inline-flex lg:grid lg:w-full lg:grid-cols-8 gap-1 sm:gap-2 p-1 bg-white/80 backdrop-blur-sm rounded-xl min-w-max lg:min-w-0 h-full">
+            <TabsTrigger
+              value="logo"
+              className="flex items-center justify-center gap-1.5 data-[state=active]:bg-blue-500 data-[state=active]:text-white px-3 sm:px-4 h-full text-sm whitespace-nowrap"
+            >
+              <ImageIcon className="w-4 h-4" />
+              <span>Logo</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="social"
+              className="flex items-center justify-center gap-1.5 data-[state=active]:bg-purple-500 data-[state=active]:text-white px-3 sm:px-4 py-2.5 text-sm whitespace-nowrap"
+            >
+              <Share2 className="w-4 h-4" />
+              <span>Social</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="sections"
+              className="flex items-center justify-center gap-1.5 data-[state=active]:bg-green-500 data-[state=active]:text-white px-3 sm:px-4 py-2.5 text-sm whitespace-nowrap"
+            >
+              <List className="w-4 h-4" />
+              <span>Sections</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="newsletter"
+              className="flex items-center justify-center gap-1.5 data-[state=active]:bg-orange-500 data-[state=active]:text-white px-3 sm:px-4 py-2.5 text-sm whitespace-nowrap"
+            >
+              <Mail className="w-4 h-4" />
+              <span>Newsletter</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="contact"
+              className="flex items-center justify-center gap-1.5 data-[state=active]:bg-indigo-600 data-[state=active]:text-white px-3 sm:px-4 py-2.5 text-sm whitespace-nowrap"
+            >
+              <Phone className="w-4 h-4" />
+              <span>Contact</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="company"
+              className="flex items-center justify-center gap-1.5 data-[state=active]:bg-teal-500 data-[state=active]:text-white px-3 sm:px-4 py-2.5 text-sm whitespace-nowrap"
+            >
+              <Building2 className="w-4 h-4" />
+              <span>Company</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="bottom"
+              className="flex items-center justify-center gap-1.5 data-[state=active]:bg-gray-600 data-[state=active]:text-white px-3 sm:px-4 py-2.5 text-sm whitespace-nowrap"
+            >
+              <LinkIcon className="w-4 h-4" />
+              <span className="hidden xs:inline sm:hidden">Bottom</span>
+              <span className="hidden sm:inline">Bottom Links</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="language"
+              className="flex items-center justify-center gap-1.5 data-[state=active]:bg-violet-500 data-[state=active]:text-white px-3 sm:px-4 py-2.5 text-sm whitespace-nowrap"
+            >
+              <Globe className="w-4 h-4" />
+              <span>Language</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Logo Tab */}
-        <TabsContent value="logo">
-          <Card>
-            <CardHeader>
-              <CardTitle>Logo Settings</CardTitle>
-              <CardDescription>
-                Configure your footer logo and branding
+        <TabsContent value="logo" className="mt-4">
+          <Card className="border-0 shadow-lg pt-0">
+            <CardHeader className="bg-linear-to-r from-blue-500 to-cyan-600 text-white rounded-t-lg py-4">
+              <CardTitle className="flex items-center gap-2">
+                <ImageIcon className="w-6 h-6" />
+                Footer Logo
+              </CardTitle>
+              <CardDescription className="text-blue-100">
+                Upload and configure your footer logo
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Logo Source</Label>
-                  <Input
-                    value={footerData.logo.src}
-                    onChange={(e) =>
-                      updateNestedValue(["logo", "src"], e.target.value)
-                    }
-                    placeholder="/path/to/logo.png"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Alt Text</Label>
-                  <Input
-                    value={footerData.logo.alt}
-                    onChange={(e) =>
-                      updateNestedValue(["logo", "alt"], e.target.value)
-                    }
-                    placeholder="Logo alt text"
-                  />
-                </div>
+            <CardContent className="p-3 sm:p-6 space-y-4 sm:space-y-6">
+              <ImageUploadField
+                label="Footer Logo"
+                value={data.logo?.src || ""}
+                onUpload={handleLogoUpload}
+                field="logo"
+              />
+
+              <Separator />
+
+              {/* Logo Alt Text */}
+              <div className="space-y-2">
+                <Label htmlFor="logo-alt">Alt Text</Label>
+                <Input
+                  id="logo-alt"
+                  value={data.logo?.alt || ""}
+                  onChange={(e) =>
+                    setData((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            logo: { ...prev.logo, alt: e.target.value },
+                          }
+                        : prev
+                    )
+                  }
+                  placeholder="Footer logo description"
+                />
               </div>
+
+              {/* Logo Dimensions */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Width</Label>
+                  <Label htmlFor="logo-width">Width (px)</Label>
                   <Input
+                    id="logo-width"
                     type="number"
-                    value={footerData.logo.width}
+                    value={data.logo?.width || 140}
                     onChange={(e) =>
-                      updateNestedValue(
-                        ["logo", "width"],
-                        parseInt(e.target.value)
+                      setData((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              logo: {
+                                ...prev.logo,
+                                width: parseInt(e.target.value) || 140,
+                              },
+                            }
+                          : prev
                       )
                     }
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Height</Label>
+                  <Label htmlFor="logo-height">Height (px)</Label>
                   <Input
+                    id="logo-height"
                     type="number"
-                    value={footerData.logo.height}
+                    value={data.logo?.height || 50}
                     onChange={(e) =>
-                      updateNestedValue(
-                        ["logo", "height"],
-                        parseInt(e.target.value)
+                      setData((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              logo: {
+                                ...prev.logo,
+                                height: parseInt(e.target.value) || 50,
+                              },
+                            }
+                          : prev
                       )
                     }
                   />
@@ -550,123 +513,152 @@ export function FooterEditor({
         </TabsContent>
 
         {/* Social Media Tab */}
-        <TabsContent value="social">
-          <Card>
-            <CardHeader>
-              <CardTitle>Social Media Links</CardTitle>
-              <CardDescription>
-                Manage your social media profiles and links
+        <TabsContent value="social" className="mt-4">
+          <Card className="border-0 shadow-lg pt-0">
+            <CardHeader className="bg-linear-to-r from-purple-500 to-pink-600 text-white rounded-t-lg py-4">
+              <CardTitle className="flex items-center gap-2">
+                <Share2 className="w-6 h-6" />
+                Social Media
+              </CardTitle>
+              <CardDescription className="text-purple-100">
+                Manage social media links
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="p-3 sm:p-6 space-y-4">
+              {/* Social Title */}
               <div className="space-y-2">
-                <Label>Social Media Section Title</Label>
+                <Label htmlFor="social-title">Section Title</Label>
                 <Input
-                  value={footerData.socialMedia.title}
+                  id="social-title"
+                  value={data.socialMedia?.title || ""}
                   onChange={(e) =>
-                    updateNestedValue(["socialMedia", "title"], e.target.value)
+                    setData((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            socialMedia: {
+                              ...prev.socialMedia,
+                              title: e.target.value,
+                            },
+                          }
+                        : prev
+                    )
                   }
-                  placeholder="Follow us on social media"
+                  placeholder="FOLLOW US"
                 />
               </div>
 
+              <Separator />
+
+              {/* Social Links */}
               <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <Label>
-                    Social Links ({footerData.socialMedia.links.length})
-                  </Label>
-                  <Button onClick={addSocialLink} size="sm">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Social Link
+                <div className="flex items-center justify-between">
+                  <Label>Social Links</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (!data) return;
+                      const newLink = {
+                        platform: "Platform",
+                        href: "https://",
+                        label: "Follow us on Platform",
+                      };
+                      setData({
+                        ...data,
+                        socialMedia: {
+                          ...data.socialMedia,
+                          links: [...(data.socialMedia?.links || []), newLink],
+                        },
+                      });
+                    }}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Link
                   </Button>
                 </div>
 
-                {footerData.socialMedia.links.map((link, index) => (
+                {data.socialMedia?.links?.map((link, index) => (
                   <Card key={index} className="p-4">
-                    <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <Badge variant="outline">Link {index + 1}</Badge>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          if (!data) return;
+                          const links = [...(data.socialMedia?.links || [])];
+                          links.splice(index, 1);
+                          setData({
+                            ...data,
+                            socialMedia: { ...data.socialMedia, links },
+                          });
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                    <div className="space-y-3">
                       <div className="space-y-2">
                         <Label>Platform</Label>
                         <Input
                           value={link.platform}
-                          onChange={(e) =>
-                            updateNestedValue(
-                              [
-                                "socialMedia",
-                                "links",
-                                index.toString(),
-                                "platform",
-                              ],
-                              e.target.value
-                            )
-                          }
-                          placeholder="facebook"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Icon Name</Label>
-                        <Input
-                          value={link.icon}
-                          onChange={(e) =>
-                            updateNestedValue(
-                              [
-                                "socialMedia",
-                                "links",
-                                index.toString(),
-                                "icon",
-                              ],
-                              e.target.value
-                            )
-                          }
+                          onChange={(e) => {
+                            if (!data) return;
+                            const links = [...(data.socialMedia?.links || [])];
+                            links[index] = {
+                              ...links[index],
+                              platform: e.target.value,
+                            };
+                            setData({
+                              ...data,
+                              socialMedia: { ...data.socialMedia, links },
+                            });
+                          }}
                           placeholder="Facebook"
                         />
                       </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 mb-4">
                       <div className="space-y-2">
                         <Label>URL</Label>
                         <Input
                           value={link.href}
-                          onChange={(e) =>
-                            updateNestedValue(
-                              [
-                                "socialMedia",
-                                "links",
-                                index.toString(),
-                                "href",
-                              ],
-                              e.target.value
-                            )
-                          }
+                          onChange={(e) => {
+                            if (!data) return;
+                            const links = [...(data.socialMedia?.links || [])];
+                            links[index] = {
+                              ...links[index],
+                              href: e.target.value,
+                            };
+                            setData({
+                              ...data,
+                              socialMedia: { ...data.socialMedia, links },
+                            });
+                          }}
                           placeholder="https://facebook.com/yourpage"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Accessibility Label</Label>
+                        <Label>Label</Label>
                         <Input
                           value={link.label}
-                          onChange={(e) =>
-                            updateNestedValue(
-                              [
-                                "socialMedia",
-                                "links",
-                                index.toString(),
-                                "label",
-                              ],
-                              e.target.value
-                            )
-                          }
+                          onChange={(e) => {
+                            if (!data) return;
+                            const links = [...(data.socialMedia?.links || [])];
+                            links[index] = {
+                              ...links[index],
+                              label: e.target.value,
+                            };
+                            setData({
+                              ...data,
+                              socialMedia: { ...data.socialMedia, links },
+                            });
+                          }}
                           placeholder="Follow us on Facebook"
                         />
                       </div>
                     </div>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => removeSocialLink(index)}
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Remove Link
-                    </Button>
                   </Card>
                 ))}
               </div>
@@ -674,64 +666,541 @@ export function FooterEditor({
           </Card>
         </TabsContent>
 
-        {/* Newsletter Tab */}
-        <TabsContent value="newsletter">
-          <Card>
-            <CardHeader>
-              <CardTitle>Newsletter Settings</CardTitle>
-              <CardDescription>
-                Configure your newsletter subscription section
+        {/* Sections Tab */}
+        <TabsContent value="sections" className="mt-4">
+          <Card className="border-0 shadow-lg pt-0">
+            <CardHeader className="bg-linear-to-r from-green-500 to-emerald-600 text-white rounded-t-lg py-4">
+              <CardTitle className="flex items-center gap-2">
+                <List className="w-6 h-6" />
+                Footer Sections
+              </CardTitle>
+              <CardDescription className="text-green-100">
+                Organize footer navigation sections
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="p-3 sm:p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <Label>Sections</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (!data) return;
+                    const newSection = {
+                      title: "New Section",
+                      links: [],
+                    };
+                    setData({
+                      ...data,
+                      sections: [...(data.sections || []), newSection],
+                    });
+                  }}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Section
+                </Button>
+              </div>
+
+              {data.sections?.map((section, sectionIndex) => (
+                <Card key={sectionIndex} className="p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <Badge>Section {sectionIndex + 1}</Badge>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        if (!data) return;
+                        const sections = [...(data.sections || [])];
+                        sections.splice(sectionIndex, 1);
+                        setData({ ...data, sections });
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <Label>Section Title</Label>
+                      <Input
+                        value={section.title}
+                        onChange={(e) => {
+                          if (!data) return;
+                          const sections = [...(data.sections || [])];
+                          sections[sectionIndex] = {
+                            ...sections[sectionIndex],
+                            title: e.target.value,
+                          };
+                          setData({ ...data, sections });
+                        }}
+                        placeholder="LEARNING"
+                      />
+                    </div>
+
+                    <Separator />
+
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm">Links</Label>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            if (!data) return;
+                            const sections = [...(data.sections || [])];
+                            const newLink = { label: "New Link", href: "/" };
+                            sections[sectionIndex].links = [
+                              ...(sections[sectionIndex].links || []),
+                              newLink,
+                            ];
+                            setData({ ...data, sections });
+                          }}
+                        >
+                          <Plus className="mr-1 h-3 w-3" />
+                          Link
+                        </Button>
+                      </div>
+
+                      {section.links?.map((link, linkIndex) => (
+                        <div key={linkIndex} className="flex gap-2 items-end">
+                          <div className="flex-1 grid grid-cols-2 gap-2">
+                            <div className="space-y-1">
+                              <Label className="text-xs">Label</Label>
+                              <Input
+                                value={link.label}
+                                onChange={(e) => {
+                                  if (!data) return;
+                                  const sections = [...(data.sections || [])];
+                                  sections[sectionIndex].links[linkIndex] = {
+                                    ...sections[sectionIndex].links[linkIndex],
+                                    label: e.target.value,
+                                  };
+                                  setData({ ...data, sections });
+                                }}
+                                placeholder="Link text"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs">URL</Label>
+                              <Input
+                                value={link.href}
+                                onChange={(e) => {
+                                  if (!data) return;
+                                  const sections = [...(data.sections || [])];
+                                  sections[sectionIndex].links[linkIndex] = {
+                                    ...sections[sectionIndex].links[linkIndex],
+                                    href: e.target.value,
+                                  };
+                                  setData({ ...data, sections });
+                                }}
+                                placeholder="/path"
+                              />
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              if (!data) return;
+                              const sections = [...(data.sections || [])];
+                              sections[sectionIndex].links.splice(linkIndex, 1);
+                              setData({ ...data, sections });
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Newsletter Tab */}
+        <TabsContent value="newsletter" className="mt-4">
+          <Card className="border-0 shadow-lg pt-0">
+            <CardHeader className="bg-linear-to-r from-orange-500 to-red-600 text-white rounded-t-lg py-4">
+              <CardTitle className="flex items-center gap-2">
+                <Mail className="w-6 h-6" />
+                Newsletter
+              </CardTitle>
+              <CardDescription className="text-orange-100">
+                Configure newsletter subscription form
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-3 sm:p-6 space-y-4">
               <div className="space-y-2">
-                <Label>Title</Label>
+                <Label htmlFor="newsletter-title">Title</Label>
                 <Input
-                  value={footerData.newsletter.title}
+                  id="newsletter-title"
+                  value={data.newsletter?.title || ""}
                   onChange={(e) =>
-                    updateNestedValue(["newsletter", "title"], e.target.value)
+                    setData((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            newsletter: {
+                              ...prev.newsletter,
+                              title: e.target.value,
+                            },
+                          }
+                        : prev
+                    )
                   }
                   placeholder="GET IN TOUCH"
                 />
               </div>
+
               <div className="space-y-2">
-                <Label>Description</Label>
+                <Label htmlFor="newsletter-description">Description</Label>
                 <Textarea
-                  value={footerData.newsletter.description}
+                  id="newsletter-description"
+                  value={data.newsletter?.description || ""}
                   onChange={(e) =>
-                    updateNestedValue(
-                      ["newsletter", "description"],
-                      e.target.value
+                    setData((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            newsletter: {
+                              ...prev.newsletter,
+                              description: e.target.value,
+                            },
+                          }
+                        : prev
                     )
                   }
-                  placeholder="We don't send spam so don't worry."
+                  placeholder="Subscribe to our newsletter..."
+                  rows={3}
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+
+              <div className="space-y-2">
+                <Label htmlFor="newsletter-placeholder">
+                  Input Placeholder
+                </Label>
+                <Input
+                  id="newsletter-placeholder"
+                  value={data.newsletter?.placeholder || ""}
+                  onChange={(e) =>
+                    setData((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            newsletter: {
+                              ...prev.newsletter,
+                              placeholder: e.target.value,
+                            },
+                          }
+                        : prev
+                    )
+                  }
+                  placeholder="Enter your email"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="newsletter-button">Button Text</Label>
+                <Input
+                  id="newsletter-button"
+                  value={data.newsletter?.buttonText || ""}
+                  onChange={(e) =>
+                    setData((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            newsletter: {
+                              ...prev.newsletter,
+                              buttonText: e.target.value,
+                            },
+                          }
+                        : prev
+                    )
+                  }
+                  placeholder="Subscribe"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Contact Tab */}
+        <TabsContent value="contact" className="mt-4">
+          <Card className="border-0 shadow-lg pt-0">
+            <CardHeader className="bg-linear-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg py-4">
+              <CardTitle className="flex items-center gap-2">
+                <Phone className="w-6 h-6" />
+                Contact Information
+              </CardTitle>
+              <CardDescription className="text-blue-100">
+                Update contact details
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-3 sm:p-6 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Placeholder Text</Label>
+                  <Label htmlFor="contact-phone">Phone</Label>
                   <Input
-                    value={footerData.newsletter.placeholder}
+                    id="contact-phone"
+                    value={data.contact?.phone || ""}
                     onChange={(e) =>
-                      updateNestedValue(
-                        ["newsletter", "placeholder"],
-                        e.target.value
+                      setData((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              contact: {
+                                ...prev.contact,
+                                phone: e.target.value,
+                              },
+                            }
+                          : prev
                       )
                     }
-                    placeholder="Email..."
+                    placeholder="+1 (555) 123-4567"
                   />
                 </div>
+
                 <div className="space-y-2">
-                  <Label>Button Text</Label>
+                  <Label htmlFor="contact-phone-href">Phone Link</Label>
                   <Input
-                    value={footerData.newsletter.buttonText}
+                    id="contact-phone-href"
+                    value={data.contact?.phoneHref || ""}
                     onChange={(e) =>
-                      updateNestedValue(
-                        ["newsletter", "buttonText"],
-                        e.target.value
+                      setData((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              contact: {
+                                ...prev.contact,
+                                phoneHref: e.target.value,
+                              },
+                            }
+                          : prev
                       )
                     }
-                    placeholder="Subscribe"
+                    placeholder="tel:+15551234567"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="contact-email">Email</Label>
+                  <Input
+                    id="contact-email"
+                    type="email"
+                    value={data.contact?.email || ""}
+                    onChange={(e) =>
+                      setData((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              contact: {
+                                ...prev.contact,
+                                email: e.target.value,
+                              },
+                            }
+                          : prev
+                      )
+                    }
+                    placeholder="contact@example.com"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="contact-email-href">Email Link</Label>
+                  <Input
+                    id="contact-email-href"
+                    value={data.contact?.emailHref || ""}
+                    onChange={(e) =>
+                      setData((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              contact: {
+                                ...prev.contact,
+                                emailHref: e.target.value,
+                              },
+                            }
+                          : prev
+                      )
+                    }
+                    placeholder="mailto:contact@example.com"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="contact-address">Address</Label>
+                <Textarea
+                  id="contact-address"
+                  value={data.contact?.address || ""}
+                  onChange={(e) =>
+                    setData((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            contact: {
+                              ...prev.contact,
+                              address: e.target.value,
+                            },
+                          }
+                        : prev
+                    )
+                  }
+                  placeholder="123 Main St, City, State 12345"
+                  rows={2}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="contact-hours">Business Hours</Label>
+                <Input
+                  id="contact-hours"
+                  value={data.contact?.hours || ""}
+                  onChange={(e) =>
+                    setData((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            contact: { ...prev.contact, hours: e.target.value },
+                          }
+                        : prev
+                    )
+                  }
+                  placeholder="Mon-Fri: 9AM-5PM"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Company Info Tab */}
+        <TabsContent value="company" className="mt-4">
+          <Card className="border-0 shadow-lg pt-0">
+            <CardHeader className="bg-linear-to-r from-teal-500 to-cyan-600 text-white rounded-t-lg py-4">
+              <CardTitle className="flex items-center gap-2">
+                <Building2 className="w-6 h-6" />
+                Company Information
+              </CardTitle>
+              <CardDescription className="text-teal-100">
+                Configure company details and copyright
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-3 sm:p-6 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="company-description">Description</Label>
+                <Textarea
+                  id="company-description"
+                  value={data.companyInfo?.description || ""}
+                  onChange={(e) =>
+                    setData((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            companyInfo: {
+                              ...prev.companyInfo,
+                              description: e.target.value,
+                            },
+                          }
+                        : prev
+                    )
+                  }
+                  placeholder="Your company description..."
+                  rows={3}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="company-founded">Founded Year</Label>
+                  <Input
+                    id="company-founded"
+                    value={data.companyInfo?.foundedYear || ""}
+                    onChange={(e) =>
+                      setData((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              companyInfo: {
+                                ...prev.companyInfo,
+                                foundedYear: e.target.value,
+                              },
+                            }
+                          : prev
+                      )
+                    }
+                    placeholder="2024"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="company-name">Company Name</Label>
+                  <Input
+                    id="company-name"
+                    value={data.companyInfo?.companyName || ""}
+                    onChange={(e) =>
+                      setData((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              companyInfo: {
+                                ...prev.companyInfo,
+                                companyName: e.target.value,
+                              },
+                            }
+                          : prev
+                      )
+                    }
+                    placeholder="Your Company, Inc."
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="company-rights">Rights Text</Label>
+                  <Input
+                    id="company-rights"
+                    value={data.companyInfo?.rightsText || ""}
+                    onChange={(e) =>
+                      setData((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              companyInfo: {
+                                ...prev.companyInfo,
+                                rightsText: e.target.value,
+                              },
+                            }
+                          : prev
+                      )
+                    }
+                    placeholder="All Rights Reserved"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="company-contact-link">Contact Link</Label>
+                  <Input
+                    id="company-contact-link"
+                    value={data.companyInfo?.contactLink || ""}
+                    onChange={(e) =>
+                      setData((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              companyInfo: {
+                                ...prev.companyInfo,
+                                contactLink: e.target.value,
+                              },
+                            }
+                          : prev
+                      )
+                    }
+                    placeholder="/contact"
                   />
                 </div>
               </div>
@@ -739,146 +1208,236 @@ export function FooterEditor({
           </Card>
         </TabsContent>
 
-        {/* Advanced Tab */}
-        <TabsContent value="advanced">
-          <div className="grid gap-6">
-            {/* Bottom Links */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Bottom Links</CardTitle>
-                <CardDescription>
-                  Legal and additional links at the bottom of the footer
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <Label>Bottom Links ({footerData.bottomLinks.length})</Label>
-                  <Button onClick={addBottomLink} size="sm">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Link
+        {/* Bottom Links Tab */}
+        <TabsContent value="bottom" className="mt-4">
+          <Card className="border-0 shadow-lg pt-0">
+            <CardHeader className="bg-linear-to-r from-gray-600 to-gray-800 text-white rounded-t-lg py-4">
+              <CardTitle className="flex items-center gap-2">
+                <LinkIcon className="w-6 h-6" />
+                Bottom Links
+              </CardTitle>
+              <CardDescription className="text-gray-200">
+                Legal and policy links
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-3 sm:p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <Label>Links</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (!data) return;
+                    const newLink = { label: "New Link", href: "/" };
+                    setData({
+                      ...data,
+                      bottomLinks: [...(data.bottomLinks || []), newLink],
+                    });
+                  }}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Link
+                </Button>
+              </div>
+
+              {data.bottomLinks?.map((link, index) => (
+                <div key={index} className="flex gap-2 items-end">
+                  <div className="flex-1 grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Label</Label>
+                      <Input
+                        value={link.label}
+                        onChange={(e) => {
+                          if (!data) return;
+                          const links = [...(data.bottomLinks || [])];
+                          links[index] = {
+                            ...links[index],
+                            label: e.target.value,
+                          };
+                          setData({ ...data, bottomLinks: links });
+                        }}
+                        placeholder="Privacy Policy"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">URL</Label>
+                      <Input
+                        value={link.href}
+                        onChange={(e) => {
+                          if (!data) return;
+                          const links = [...(data.bottomLinks || [])];
+                          links[index] = {
+                            ...links[index],
+                            href: e.target.value,
+                          };
+                          setData({ ...data, bottomLinks: links });
+                        }}
+                        placeholder="/privacy"
+                      />
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      if (!data) return;
+                      const links = [...(data.bottomLinks || [])];
+                      links.splice(index, 1);
+                      setData({ ...data, bottomLinks: links });
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Language Tab */}
+        <TabsContent value="language" className="mt-4">
+          <Card className="border-0 shadow-lg pt-0">
+            <CardHeader className="bg-linear-to-r from-violet-500 to-purple-600 text-white rounded-t-lg py-4">
+              <CardTitle className="flex items-center gap-2">
+                <Globe className="w-6 h-6" />
+                Language Selector
+              </CardTitle>
+              <CardDescription className="text-violet-100">
+                Configure available languages
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-3 sm:p-6 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="current-language">Current Language Code</Label>
+                <Input
+                  id="current-language"
+                  value={data.languageSelector?.currentLanguage || ""}
+                  onChange={(e) =>
+                    setData((prev) =>
+                      prev
+                        ? {
+                            ...prev,
+                            languageSelector: {
+                              ...prev.languageSelector,
+                              currentLanguage: e.target.value,
+                            },
+                          }
+                        : prev
+                    )
+                  }
+                  placeholder="en"
+                />
+              </div>
+
+              <Separator />
+
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label>Available Languages</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (!data) return;
+                      const newLang = { code: "en", name: "English" };
+                      setData({
+                        ...data,
+                        languageSelector: {
+                          ...data.languageSelector,
+                          languages: [
+                            ...(data.languageSelector?.languages || []),
+                            newLang,
+                          ],
+                        },
+                      });
+                    }}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Language
                   </Button>
                 </div>
 
-                {footerData.bottomLinks.map((link, index) => (
-                  <div key={index} className="flex gap-2 items-center">
-                    <Input
-                      value={link.label}
-                      onChange={(e) =>
-                        updateNestedValue(
-                          ["bottomLinks", index.toString(), "label"],
-                          e.target.value
-                        )
-                      }
-                      placeholder="Link Label"
-                      className="flex-1"
-                    />
-                    <Input
-                      value={link.href}
-                      onChange={(e) =>
-                        updateNestedValue(
-                          ["bottomLinks", index.toString(), "href"],
-                          e.target.value
-                        )
-                      }
-                      placeholder="/path"
-                      className="flex-1"
-                    />
+                {data.languageSelector?.languages?.map((lang, index) => (
+                  <div key={index} className="flex gap-2 items-end">
+                    <div className="flex-1 grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Code</Label>
+                        <Input
+                          value={lang.code}
+                          onChange={(e) => {
+                            if (!data) return;
+                            const languages = [
+                              ...(data.languageSelector?.languages || []),
+                            ];
+                            languages[index] = {
+                              ...languages[index],
+                              code: e.target.value,
+                            };
+                            setData({
+                              ...data,
+                              languageSelector: {
+                                ...data.languageSelector,
+                                languages,
+                              },
+                            });
+                          }}
+                          placeholder="en"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Name</Label>
+                        <Input
+                          value={lang.name}
+                          onChange={(e) => {
+                            if (!data) return;
+                            const languages = [
+                              ...(data.languageSelector?.languages || []),
+                            ];
+                            languages[index] = {
+                              ...languages[index],
+                              name: e.target.value,
+                            };
+                            setData({
+                              ...data,
+                              languageSelector: {
+                                ...data.languageSelector,
+                                languages,
+                              },
+                            });
+                          }}
+                          placeholder="English"
+                        />
+                      </div>
+                    </div>
                     <Button
-                      variant="outline"
+                      type="button"
+                      variant="ghost"
                       size="sm"
-                      onClick={() => removeBottomLink(index)}
+                      onClick={() => {
+                        if (!data) return;
+                        const languages = [
+                          ...(data.languageSelector?.languages || []),
+                        ];
+                        languages.splice(index, 1);
+                        setData({
+                          ...data,
+                          languageSelector: {
+                            ...data.languageSelector,
+                            languages,
+                          },
+                        });
+                      }}
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
                 ))}
-              </CardContent>
-            </Card>
-
-            {/* Language Selector */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Language Selector</CardTitle>
-                <CardDescription>
-                  Configure available languages for the footer
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Current Language</Label>
-                  <Input
-                    value={footerData.languageSelector.currentLanguage}
-                    onChange={(e) =>
-                      updateNestedValue(
-                        ["languageSelector", "currentLanguage"],
-                        e.target.value
-                      )
-                    }
-                    placeholder="English"
-                  />
-                </div>
-
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <Label>
-                      Available Languages (
-                      {footerData.languageSelector.languages.length})
-                    </Label>
-                    <Button onClick={addLanguage} size="sm">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Language
-                    </Button>
-                  </div>
-
-                  {footerData.languageSelector.languages.map(
-                    (language, index) => (
-                      <div key={index} className="flex gap-2 items-center">
-                        <Input
-                          value={language.code}
-                          onChange={(e) =>
-                            updateNestedValue(
-                              [
-                                "languageSelector",
-                                "languages",
-                                index.toString(),
-                                "code",
-                              ],
-                              e.target.value
-                            )
-                          }
-                          placeholder="en"
-                          className="w-20"
-                        />
-                        <Input
-                          value={language.name}
-                          onChange={(e) =>
-                            updateNestedValue(
-                              [
-                                "languageSelector",
-                                "languages",
-                                index.toString(),
-                                "name",
-                              ],
-                              e.target.value
-                            )
-                          }
-                          placeholder="English"
-                          className="flex-1"
-                        />
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => removeLanguage(index)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    )
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

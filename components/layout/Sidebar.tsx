@@ -68,6 +68,8 @@ const navItems = {
   ],
   contentMedia: [
     { icon: FileText, label: "CMS", href: "/cms" },
+    { icon: ImageIcon, label: "Header", href: "/cms/header" },
+    { icon: ImageIcon, label: "Footer", href: "/cms/footer" },
     { icon: ImageIcon, label: "Media Library", href: "/media-library" },
   ],
   business: [

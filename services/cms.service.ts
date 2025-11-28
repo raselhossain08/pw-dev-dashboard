@@ -2,6 +2,7 @@ import api from '@/lib/axios';
 import type {
     HeaderNavigation,
     TopBar,
+    Footer,
     ApiResponse,
 } from '@/types/cms';
 
@@ -49,9 +50,11 @@ export const headerNavigationApi = {
         id: string,
         data: Partial<HeaderNavigation>
     ): Promise<HeaderNavigation> => {
+        // Strip out readonly fields
+        const { _id, createdAt, updatedAt, ...updateData } = data;
         const response = await api.put<ApiResponse<HeaderNavigation>>(
             `${CMS_BASE_URL}/header-navigation/${id}`,
-            data
+            updateData
         );
         return response.data.data;
     },
@@ -77,8 +80,7 @@ export const headerNavigationApi = {
         onProgress?: (progress: number) => void
     ): Promise<HeaderNavigation> => {
         const formData = new FormData();
-        formData.append('logo', file);
-        formData.append('type', type);
+        formData.append(type, file);
 
         const response = await api.post<ApiResponse<HeaderNavigation>>(
             `${CMS_BASE_URL}/header-navigation/${id}/logo`,
@@ -158,6 +160,35 @@ export const headerNavigationApi = {
         );
         return response.data.data;
     },
+
+    // Upload SEO OG image (admin)
+    uploadSeoImage: async (
+        id: string,
+        file: File,
+        onProgress?: (progress: number) => void
+    ): Promise<HeaderNavigation> => {
+        const formData = new FormData();
+        formData.append('ogImage', file);
+
+        const response = await api.post<ApiResponse<HeaderNavigation>>(
+            `${CMS_BASE_URL}/header-navigation/${id}/seo-image`,
+            formData,
+            {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+                onUploadProgress: (progressEvent: ProgressEvent) => {
+                    if (onProgress && progressEvent.total) {
+                        const percentCompleted = Math.round(
+                            (progressEvent.loaded * 100) / progressEvent.total
+                        );
+                        onProgress(percentCompleted);
+                    }
+                },
+            }
+        );
+        return response.data.data;
+    },
 };
 
 // Top Bar API
@@ -197,9 +228,11 @@ export const topBarApi = {
 
     // Update top bar (admin)
     update: async (id: string, data: Partial<TopBar>): Promise<TopBar> => {
+        // Strip out readonly fields
+        const { _id, createdAt, updatedAt, ...updateData } = data;
         const response = await api.put<ApiResponse<TopBar>>(
             `${CMS_BASE_URL}/top-bar/${id}`,
-            data
+            updateData
         );
         return response.data.data;
     },
@@ -274,5 +307,99 @@ export const topBarApi = {
             }
         );
         return response.data.data;
+    },
+};
+
+// Footer API
+export const footerApi = {
+    // Get active footer (public)
+    getActive: async (): Promise<Footer> => {
+        const response = await api.get<any>(
+            `${CMS_BASE_URL}/footer/active`
+        );
+        // Backend returns double-nested: { data: { data: footer } }
+        return response.data?.data?.data || response.data?.data || response.data;
+    },
+
+    // Get all footers (admin)
+    getAll: async (): Promise<Footer[]> => {
+        const response = await api.get<any>(
+            `${CMS_BASE_URL}/footer`
+        );
+        return response.data?.data?.data || response.data?.data || response.data;
+    },
+
+    // Get footer by ID (admin)
+    getById: async (id: string): Promise<Footer> => {
+        const response = await api.get<any>(
+            `${CMS_BASE_URL}/footer/${id}`
+        );
+        return response.data?.data?.data || response.data?.data || response.data;
+    },
+
+    // Create footer (admin)
+    create: async (data: Partial<Footer>): Promise<Footer> => {
+        const response = await api.post<any>(
+            `${CMS_BASE_URL}/footer`,
+            data
+        );
+        return response.data?.data?.data || response.data?.data || response.data;
+    },
+
+    // Update footer (admin)
+    update: async (id: string, data: Partial<Footer>): Promise<Footer> => {
+        // Strip out readonly fields
+        const { _id, createdAt, updatedAt, ...updateData } = data;
+        const response = await api.put<any>(
+            `${CMS_BASE_URL}/footer/${id}`,
+            updateData
+        );
+        return response.data?.data?.data || response.data?.data || response.data;
+    },
+
+    // Set footer as active (admin)
+    setActive: async (id: string): Promise<Footer> => {
+        const response = await api.put<any>(
+            `${CMS_BASE_URL}/footer/${id}/activate`
+        );
+        return response.data?.data?.data || response.data?.data || response.data;
+    },
+
+    // Delete footer (admin)
+    delete: async (id: string): Promise<void> => {
+        await api.delete(`${CMS_BASE_URL}/footer/${id}`);
+    },
+
+    // Upload footer logo (admin)
+    uploadLogo: async (
+        id: string,
+        file: File,
+        metadata?: { alt?: string; width?: number; height?: number },
+        onProgress?: (progress: number) => void
+    ): Promise<Footer> => {
+        const formData = new FormData();
+        formData.append('logo', file);
+        if (metadata?.alt) formData.append('alt', metadata.alt);
+        if (metadata?.width) formData.append('width', metadata.width.toString());
+        if (metadata?.height) formData.append('height', metadata.height.toString());
+
+        const response = await api.post<any>(
+            `${CMS_BASE_URL}/footer/${id}/logo`,
+            formData,
+            {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+                onUploadProgress: (progressEvent: ProgressEvent) => {
+                    if (onProgress && progressEvent.total) {
+                        const percentCompleted = Math.round(
+                            (progressEvent.loaded * 100) / progressEvent.total
+                        );
+                        onProgress(percentCompleted);
+                    }
+                },
+            }
+        );
+        return response.data?.data?.data || response.data?.data || response.data;
     },
 };

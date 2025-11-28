@@ -103,7 +103,7 @@ class LMSConnectionsService {
     async getCompleteHierarchy(): Promise<LMSHierarchy> {
         try {
             const { data } = await apiClient.get("/lms/hierarchy");
-            return data;
+            return data as LMSHierarchy;
         } catch (error) {
             console.error("Failed to fetch LMS hierarchy:", error);
             throw error;
@@ -116,7 +116,7 @@ class LMSConnectionsService {
     async getCourseStructure(courseId: string): Promise<CourseStructure> {
         try {
             const { data } = await apiClient.get(`/lms/course/${courseId}/structure`);
-            return data;
+            return data as CourseStructure;
         } catch (error) {
             console.error(`Failed to fetch course structure for ${courseId}:`, error);
             throw error;
@@ -137,7 +137,7 @@ class LMSConnectionsService {
                     params: { includeModules },
                 }
             );
-            return data;
+            return data as { category: string; courses: any[]; total: number };
         } catch (error) {
             console.error(
                 `Failed to fetch courses for category ${categoryId}:`,
@@ -168,7 +168,7 @@ class LMSConnectionsService {
             const { data } = await apiClient.get(
                 `/lms/student/progress/${courseId}`
             );
-            return data;
+            return data as StudentProgress;
         } catch (error) {
             console.error(
                 `Failed to fetch student progress for ${courseId}:`,
@@ -202,7 +202,7 @@ class LMSConnectionsService {
             const { data } = await apiClient.get(
                 `/lms/navigation/breadcrumb/${entityType}/${entityId}`
             );
-            return data;
+            return data as { breadcrumb: Breadcrumb[]; entityType: string; entityId: string };
         } catch (error) {
             console.error(
                 `Failed to fetch breadcrumb for ${entityType}/${entityId}:`,
@@ -222,7 +222,7 @@ class LMSConnectionsService {
             const { data } = await apiClient.get(
                 `/lms/certificate/eligible/${courseId}`
             );
-            return data;
+            return data as CertificateEligibility;
         } catch (error) {
             console.error(
                 `Failed to check certificate eligibility for ${courseId}:`,
@@ -266,7 +266,7 @@ class LMSConnectionsService {
                 params: { limit: 100 },
             });
             return (
-                data.courses?.map((course: any) => ({
+                (data as any).courses?.map((course: any) => ({
                     value: course._id || course.id,
                     label: course.title,
                 })) || []
@@ -284,7 +284,7 @@ class LMSConnectionsService {
         try {
             const { data } = await apiClient.get("/course-categories");
             return (
-                data.categories?.map((category: any) => ({
+                (data as any).categories?.map((category: any) => ({
                     value: category._id || category.id,
                     label: category.name,
                 })) || []
