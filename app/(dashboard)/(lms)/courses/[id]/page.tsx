@@ -1,18 +1,17 @@
 import AppLayout from "@/components/layout/AppLayout";
-import EditCourse from "../../../../../../components/courses/EditCourse";
+import CourseDetail from "@/components/courses/CourseDetail";
 import RequireAuth from "@/components/RequireAuth";
 
-export default async function EditCoursePage({
+export default async function CourseDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  console.log("EditCoursePage - Course ID:", id);
   return (
     <RequireAuth roles={["admin", "super_admin", "instructor"]}>
       <AppLayout>
-        <EditCourse courseId={id} />
+        <CourseDetail courseId={id} />
       </AppLayout>
     </RequireAuth>
   );

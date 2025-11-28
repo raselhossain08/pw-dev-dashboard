@@ -84,6 +84,7 @@ const navItems = {
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const isDashboard = pathname === "/";
 
   return (
     <motion.aside
@@ -98,9 +99,9 @@ export default function Sidebar() {
             <Link
               href="/"
               className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                pathname === "/"
+                isDashboard
                   ? "bg-primary shadow-lg shadow-primary/20"
-                  : "bg-primary/80 hover:bg-primary/90"
+                  : "text-sidebar-foreground/70 hover:bg-primary/10"
               }`}
             >
               <LayoutDashboard className="w-4 h-4" />
@@ -114,7 +115,8 @@ export default function Sidebar() {
             </div>
             {navItems.learningManagement.map((item) => {
               const Icon = item.icon;
-              const isActive = pathname === item.href;
+              const isActive =
+                pathname === item.href || pathname.startsWith(item.href + "/");
               return (
                 <Link
                   key={item.href}
@@ -283,6 +285,7 @@ export default function Sidebar() {
 
 export function SidebarMobile() {
   const pathname = usePathname();
+  const isDashboard = pathname === "/";
 
   return (
     <div className="bg-sidebar text-white h-full">
@@ -297,9 +300,9 @@ export function SidebarMobile() {
             <Link
               href="/"
               className={`flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
-                pathname === "/"
+                isDashboard
                   ? "bg-primary shadow-lg shadow-primary/20"
-                  : "bg-primary/80 hover:bg-primary/90"
+                  : "text-sidebar-foreground/70 hover:bg-primary/10"
               }`}
             >
               <LayoutDashboard className="w-4 h-4" />
@@ -313,7 +316,8 @@ export function SidebarMobile() {
             </div>
             {navItems.learningManagement.map((item) => {
               const Icon = item.icon;
-              const isActive = pathname === item.href;
+              const isActive =
+                pathname === item.href || pathname.startsWith(item.href + "/");
               return (
                 <Link
                   key={item.href}

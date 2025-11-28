@@ -234,7 +234,7 @@ export default function Modules() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
+                <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shadow-lg">
                   <BookOpen className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -249,7 +249,7 @@ export default function Modules() {
             </div>
             <Button
               onClick={() => setCreateOpen(true)}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200"
             >
               <Plus className="w-4 h-4 mr-2" />
               Create Training Course
@@ -305,14 +305,14 @@ export default function Modules() {
                   placeholder="Search courses..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                  className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 />
                 <Database className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
               </div>
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-slate-600 hover:text-blue-600 hover:bg-blue-50"
+                className="text-slate-600 hover:text-primary hover:bg-primary/10"
                 onClick={() => {
                   push({
                     type: "info",
@@ -337,13 +337,13 @@ export default function Modules() {
                 <p className="text-3xl font-bold text-slate-900">
                   {stats.total}
                 </p>
-                <p className="text-blue-600 text-sm mt-2 flex items-center">
+                <p className="text-primary text-sm mt-2 flex items-center">
                   <TrendingUp className="w-3 h-3 mr-1" />
                   {stats.published} published
                 </p>
               </div>
-              <div className="w-14 h-14 bg-blue-50 rounded-xl flex items-center justify-center">
-                <BookOpen className="text-blue-600 w-7 h-7" />
+              <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center">
+                <BookOpen className="text-primary w-7 h-7" />
               </div>
             </div>
           </div>
@@ -447,7 +447,7 @@ export default function Modules() {
             {!search && levelFilter === "all" && statusFilter === "all" && (
               <Button
                 onClick={() => setCreateOpen(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Create First Course
@@ -459,7 +459,7 @@ export default function Modules() {
             {filtered.map((m) => (
               <div
                 key={m.id}
-                className="group bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-xl hover:border-blue-300 transition-all duration-300 hover:-translate-y-1"
+                className="group bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-xl hover:border-primary/30 transition-all duration-300 hover:-translate-y-1"
               >
                 {/* Course Thumbnail */}
                 {m.thumbnail && (
@@ -498,14 +498,14 @@ export default function Modules() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 -mr-2"
+                        className="text-slate-400 hover:text-primary hover:bg-primary/10 -mr-2"
                       >
                         <EllipsisVertical className="w-5 h-5" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-52">
                       <DropdownMenuItem onSelect={() => setEditModule(m)}>
-                        <Pencil className="w-4 h-4 mr-2 text-blue-600" />
+                        <Pencil className="w-4 h-4 mr-2 text-primary" />
                         <span>Edit Course</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem onSelect={() => setPreviewModule(m)}>
@@ -593,7 +593,7 @@ export default function Modules() {
                       : "Archived"}
                   </span>
                   {m.price !== undefined && (
-                    <span className="text-lg font-bold text-blue-600">
+                    <span className="text-lg font-bold text-primary">
                       ${m.price.toFixed(2)}
                     </span>
                   )}
@@ -608,7 +608,7 @@ export default function Modules() {
                     </div>
                     <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
                       <div
-                        className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500"
+                        className="bg-primary h-2 rounded-full transition-all duration-500"
                         style={{ width: `${m.completion}%` }}
                       />
                     </div>
@@ -620,7 +620,7 @@ export default function Modules() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1 border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300"
+                    className="flex-1 border-primary/30 text-primary hover:bg-primary/10 hover:border-primary"
                     onClick={() => setEditModule(m)}
                   >
                     <Pencil className="w-3.5 h-3.5 mr-1.5" />
@@ -1140,7 +1140,7 @@ export default function Modules() {
                 </div>
                 <div className="bg-slate-50 rounded-lg p-4">
                   <p className="text-sm text-slate-600 mb-1">Price</p>
-                  <p className="text-lg font-semibold text-blue-600">
+                  <p className="text-lg font-semibold text-primary">
                     $
                     {previewModule.price
                       ? previewModule.price.toFixed(2)
@@ -1170,8 +1170,8 @@ export default function Modules() {
           {analyticsModule && (
             <div className="space-y-6">
               <div className="grid grid-cols-3 gap-4">
-                <div className="bg-blue-50 rounded-lg p-5 text-center">
-                  <p className="text-sm text-blue-600 font-medium mb-2">
+                <div className="bg-primary/10 rounded-lg p-5 text-center">
+                  <p className="text-sm text-primary font-medium mb-2">
                     Completion Rate
                   </p>
                   <p className="text-3xl font-bold text-blue-700">

@@ -392,7 +392,7 @@ export default function LessonsEnhanced() {
         <div className="mb-8 animate-fade-in">
           <div className="flex justify-between items-center">
             <div>
-              <h2 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent mb-2">
+              <h2 className="text-4xl font-bold text-primary mb-2">
                 Lesson Management
               </h2>
               <p className="text-gray-600 text-lg">
@@ -411,7 +411,7 @@ export default function LessonsEnhanced() {
                   setCreatePreset(null);
                   setCreateOpen(true);
                 }}
-                className="bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white shadow-lg transition-all hover:shadow-xl"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transition-all hover:shadow-xl"
               >
                 <Plus className="w-4 h-4 mr-2" /> Create Lesson
               </Button>
@@ -747,7 +747,7 @@ export default function LessonsEnhanced() {
                                 lesson.type === LessonType.TEXT
                                   ? "bg-gray-100"
                                   : lesson.type === LessonType.QUIZ
-                                  ? "bg-blue-50"
+                                  ? "bg-primary/10"
                                   : "bg-yellow-50"
                               }`}
                             >
@@ -1320,7 +1320,7 @@ export default function LessonsEnhanced() {
               </Button>
               <Button
                 type="submit"
-                className="bg-gradient-to-r from-primary to-accent text-white"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 disabled={createMutation.isPending}
               >
                 {createMutation.isPending ? (
@@ -1635,17 +1635,17 @@ export default function LessonsEnhanced() {
           {analyticsLesson && (
             <div className="space-y-6">
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-blue-50 rounded-lg p-4">
+                <div className="bg-primary/10 rounded-lg p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-blue-600 font-medium">
+                      <p className="text-sm text-primary font-medium">
                         Total Views
                       </p>
-                      <p className="text-2xl font-bold text-blue-900 mt-1">
+                      <p className="text-2xl font-bold text-primary mt-1">
                         {analyticsLesson.views}
                       </p>
                     </div>
-                    <Eye className="w-8 h-8 text-blue-500" />
+                    <Eye className="w-8 h-8 text-primary" />
                   </div>
                 </div>
 

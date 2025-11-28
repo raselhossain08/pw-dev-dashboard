@@ -60,7 +60,7 @@ class UploadService {
         }
 
         try {
-            const { data } = await apiClient.post<UploadApiPayload>("/uploads/upload", formData, {
+            const response = await apiClient.post<UploadApiPayload>("/uploads/upload", formData, {
                 onUploadProgress: (progressEvent) => {
                     if (options.onProgress && progressEvent.total) {
                         const progress: UploadProgress = {
@@ -74,6 +74,13 @@ class UploadService {
                     }
                 },
             });
+
+            console.log('Upload response:', response);
+            const responseData: any = response.data;
+            console.log('Upload data:', responseData);
+
+            // Handle nested response structure: {success: true, data: {...}}
+            const data = responseData.data || responseData;
 
             return {
                 id: data._id,

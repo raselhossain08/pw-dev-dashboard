@@ -127,7 +127,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="bg-background min-h-screen">
       <Header />
       <Sidebar />
-      <main className="pt-16 lg:ml-64">{children}</main>
+      <main className="pt-24 lg:ml-64 ">{children}</main>
 
       <button
         ref={toggleRef}

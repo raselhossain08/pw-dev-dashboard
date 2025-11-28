@@ -54,10 +54,11 @@ export default function Courses() {
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["courses", { search, statusFilter }],
     queryFn: async () => {
-      const params: any = {};
+      const params: any = { page: 1, limit: 100 };
       if (search) params.search = search;
       if (statusFilter === "Published") params.status = "published";
       if (statusFilter === "Draft") params.status = "draft";
+      // Don't filter by status when "All Status" is selected - fetch everything
       const res = await coursesService.getAllCourses(params);
       return res;
     },
@@ -74,7 +75,9 @@ export default function Courses() {
   }, [isError, error, push]);
 
   const courses: Course[] = React.useMemo(() => {
-    const list = (data as any)?.courses || [];
+    // API returns { success, data: { courses: [...], total }, meta }
+    const apiData = (data as any)?.data || data;
+    const list = apiData?.courses || [];
     return list.map((c: any) => ({
       ...c,
       id: c._id || c.id,
@@ -291,7 +294,7 @@ export default function Courses() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-linear-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
+        <div className="bg-gradient-to-br from-primary to-primary/80 rounded-xl p-6 text-white shadow-lg">
           <div className="flex items-center justify-between mb-4">
             <div className="bg-white/20 p-3 rounded-lg">
               <Book className="w-6 h-6" />
@@ -305,7 +308,7 @@ export default function Courses() {
           <p className="text-3xl font-bold">{stats.totalCourses}</p>
         </div>
 
-        <div className="bg-linear-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg">
+        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg">
           <div className="flex items-center justify-between mb-4">
             <div className="bg-white/20 p-3 rounded-lg">
               <Users className="w-6 h-6" />
@@ -319,7 +322,7 @@ export default function Courses() {
           <p className="text-3xl font-bold">{stats.totalStudents}</p>
         </div>
 
-        <div className="bg-linear-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-white shadow-lg">
+        <div className="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl p-6 text-white shadow-lg">
           <div className="flex items-center justify-between mb-4">
             <div className="bg-white/20 p-3 rounded-lg">
               <Star className="w-6 h-6" />
@@ -332,7 +335,7 @@ export default function Courses() {
           <p className="text-3xl font-bold">{stats.avgRating.toFixed(1)}</p>
         </div>
 
-        <div className="bg-linear-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
+        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
           <div className="flex items-center justify-between mb-4">
             <div className="bg-white/20 p-3 rounded-lg">
               <ChartLine className="w-6 h-6" />

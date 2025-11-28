@@ -122,7 +122,7 @@ export default function CourseCategories() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
+                <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shadow-lg">
                   <FolderTree className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -137,7 +137,7 @@ export default function CourseCategories() {
             </div>
             <Button
               onClick={() => setCreateOpen(true)}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Category
@@ -156,13 +156,13 @@ export default function CourseCategories() {
                 <p className="text-3xl font-bold text-slate-900">
                   {categories.length}
                 </p>
-                <p className="text-blue-600 text-sm mt-2 flex items-center">
+                <p className="text-primary text-sm mt-2 flex items-center">
                   <TrendingUp className="w-3 h-3 mr-1" />
                   Active categories
                 </p>
               </div>
-              <div className="w-14 h-14 bg-blue-50 rounded-xl flex items-center justify-center">
-                <FolderTree className="text-blue-600 w-7 h-7" />
+              <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center">
+                <FolderTree className="text-primary w-7 h-7" />
               </div>
             </div>
           </div>
@@ -223,7 +223,7 @@ export default function CourseCategories() {
               placeholder="Search categories..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
             />
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
           </div>
@@ -255,7 +255,7 @@ export default function CourseCategories() {
             {!search && (
               <Button
                 onClick={() => setCreateOpen(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Add First Category
@@ -267,12 +267,12 @@ export default function CourseCategories() {
             {filtered.map((category) => (
               <div
                 key={category.slug}
-                className="group bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-xl hover:border-blue-300 transition-all duration-300 hover:-translate-y-1"
+                className="group bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-xl hover:border-primary/30 transition-all duration-300 hover:-translate-y-1"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-blue-100 transition-colors">
-                      <Tag className="text-blue-600 w-6 h-6" />
+                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-primary/20 transition-colors">
+                      <Tag className="text-primary w-6 h-6" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-bold text-slate-900 text-lg truncate">
@@ -355,7 +355,7 @@ export default function CourseCategories() {
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Create Category

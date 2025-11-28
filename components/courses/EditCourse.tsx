@@ -52,13 +52,29 @@ function EditCourse({ courseId }: EditCourseProps) {
     "Aircraft Products",
   ];
 
-  const { data: course, isLoading } = useQuery<any>({
+  const { data: courseData, isLoading } = useQuery<any>({
     queryKey: ["course", courseId],
     queryFn: async () => {
       const res = await coursesService.getCourseById(courseId);
       return res;
     },
   });
+
+  const course = React.useMemo(() => {
+    if (!courseData) return null;
+    const raw: any = courseData;
+    const c = raw?.data || raw;
+    return {
+      ...c,
+      id: c._id || c.id,
+      categories: Array.isArray(c.categories) ? c.categories : [],
+      tags: Array.isArray(c.tags) ? c.tags : [],
+      prerequisites: Array.isArray(c.prerequisites) ? c.prerequisites : [],
+      learningObjectives: Array.isArray(c.learningObjectives)
+        ? c.learningObjectives
+        : [],
+    };
+  }, [courseData]);
 
   React.useEffect(() => {
     if (course) {
@@ -93,30 +109,17 @@ function EditCourse({ courseId }: EditCourseProps) {
 
   const clearThumbnail = () => {
     setThumbnailFile(null);
-    setThumbnailPreview("");
+    setThumbnailPreview(course?.thumbnail || "");
     setUploadProgress(0);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   };
 
-  if (isLoading) {
+  if (isLoading || !course) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (!course) {
-    return (
-      <div className="p-6">
-        <div className="text-center py-12">
-          <p className="text-gray-500">Course not found</p>
-          <Button onClick={() => router.push("/courses")} className="mt-4">
-            Back to Courses
-          </Button>
-        </div>
       </div>
     );
   }
@@ -170,22 +173,40 @@ function EditCourse({ courseId }: EditCourseProps) {
 
               if (thumbnailFile) {
                 setIsUploading(true);
-                const uploadResult = await uploadService.uploadFile(
-                  thumbnailFile,
-                  {
-                    type: "image",
-                    description: "Course thumbnail",
-                    tags: ["course", "thumbnail"],
-                    onProgress: (progress) => {
-                      setUploadProgress(progress.percentage);
-                    },
-                  }
-                );
-                thumbnailUrl = uploadResult.url;
-                setIsUploading(false);
+                try {
+                  console.log(
+                    "Uploading thumbnail:",
+                    thumbnailFile.name,
+                    thumbnailFile.size,
+                    "bytes"
+                  );
+                  const uploadResult = await uploadService.uploadFile(
+                    thumbnailFile,
+                    {
+                      type: "image",
+                      description: "Course thumbnail",
+                      tags: ["course", "thumbnail"],
+                      onProgress: (progress) => {
+                        setUploadProgress(progress.percentage);
+                      },
+                    }
+                  );
+                  console.log("Upload successful:", uploadResult.url);
+                  thumbnailUrl = uploadResult.url;
+                  setIsUploading(false);
+                } catch (uploadError) {
+                  setIsUploading(false);
+                  console.error("Thumbnail upload failed:", uploadError);
+                  push({
+                    type: "error",
+                    message:
+                      "Failed to upload thumbnail. Saving course without image.",
+                  });
+                  // Continue with course update even if upload fails
+                }
               }
 
-              await coursesService.updateCourse(courseId, {
+              const updatePayload: any = {
                 title,
                 description,
                 content: content || undefined,
@@ -195,13 +216,20 @@ function EditCourse({ courseId }: EditCourseProps) {
                 duration,
                 durationHours: duration,
                 maxStudents,
-                thumbnail: thumbnailUrl || undefined,
                 isPublished: status === "published",
                 tags,
                 categories: selectedCats.length ? selectedCats : undefined,
                 prerequisites,
                 learningObjectives,
-              });
+              };
+
+              // Only include thumbnail if it has a value
+              if (thumbnailUrl) {
+                updatePayload.thumbnail = thumbnailUrl;
+              }
+
+              console.log("Update payload:", updatePayload);
+              await coursesService.updateCourse(courseId, updatePayload);
 
               push({ type: "success", message: "Course updated successfully" });
               qc.invalidateQueries({ queryKey: ["courses"] });

@@ -138,22 +138,40 @@ export default function CreateCourse() {
 
               if (thumbnailFile) {
                 setIsUploading(true);
-                const uploadResult = await uploadService.uploadFile(
-                  thumbnailFile,
-                  {
-                    type: "image",
-                    description: "Course thumbnail",
-                    tags: ["course", "thumbnail"],
-                    onProgress: (progress) => {
-                      setUploadProgress(progress.percentage);
-                    },
-                  }
-                );
-                thumbnailUrl = uploadResult.url;
-                setIsUploading(false);
+                try {
+                  console.log(
+                    "Uploading thumbnail:",
+                    thumbnailFile.name,
+                    thumbnailFile.size,
+                    "bytes"
+                  );
+                  const uploadResult = await uploadService.uploadFile(
+                    thumbnailFile,
+                    {
+                      type: "image",
+                      description: "Course thumbnail",
+                      tags: ["course", "thumbnail"],
+                      onProgress: (progress) => {
+                        setUploadProgress(progress.percentage);
+                      },
+                    }
+                  );
+                  console.log("Upload successful:", uploadResult.url);
+                  thumbnailUrl = uploadResult.url;
+                  setIsUploading(false);
+                } catch (uploadError) {
+                  setIsUploading(false);
+                  console.error("Thumbnail upload failed:", uploadError);
+                  push({
+                    type: "error",
+                    message:
+                      "Failed to upload thumbnail. Saving course without image.",
+                  });
+                  // Continue with course creation even if upload fails
+                }
               }
 
-              await coursesService.createCourse({
+              const createPayload: any = {
                 title,
                 slug,
                 description,
@@ -164,13 +182,20 @@ export default function CreateCourse() {
                 duration,
                 durationHours: duration,
                 maxStudents,
-                thumbnail: thumbnailUrl || undefined,
                 isPublished: status === "published",
                 tags,
                 categories: selectedCats.length ? selectedCats : undefined,
                 prerequisites,
                 learningObjectives,
-              });
+              };
+
+              // Only include thumbnail if it has a value
+              if (thumbnailUrl) {
+                createPayload.thumbnail = thumbnailUrl;
+              }
+
+              console.log("Create payload:", createPayload);
+              await coursesService.createCourse(createPayload);
 
               push({ type: "success", message: "Course created successfully" });
               qc.invalidateQueries({ queryKey: ["courses"] });

@@ -259,7 +259,7 @@ export default function Assignments() {
     switch (status) {
       case "upcoming":
         return (
-          <span className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-blue-50 text-blue-700">
+          <span className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-primary/10 text-primary">
             <Clock className="w-3 h-3" />
             Upcoming
           </span>
@@ -291,7 +291,7 @@ export default function Assignments() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
+                <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shadow-lg">
                   <FileText className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -306,7 +306,7 @@ export default function Assignments() {
             </div>
             <Button
               onClick={() => setCreateOpen(true)}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200"
             >
               <Plus className="w-4 h-4 mr-2" />
               Create Assignment
@@ -325,13 +325,13 @@ export default function Assignments() {
                 <p className="text-3xl font-bold text-slate-900">
                   {stats.total}
                 </p>
-                <p className="text-blue-600 text-sm mt-2 flex items-center">
+                <p className="text-primary text-sm mt-2 flex items-center">
                   <TrendingUp className="w-3 h-3 mr-1" />
                   {stats.upcoming} upcoming
                 </p>
               </div>
-              <div className="w-14 h-14 bg-blue-50 rounded-xl flex items-center justify-center">
-                <FileText className="text-blue-600 w-7 h-7" />
+              <div className="w-14 h-14 bg-primary/10 rounded-xl flex items-center justify-center">
+                <FileText className="text-primary w-7 h-7" />
               </div>
             </div>
           </div>
@@ -433,14 +433,14 @@ export default function Assignments() {
                   placeholder="Search assignments..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                  className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 />
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
               </div>
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-slate-600 hover:text-blue-600 hover:bg-blue-50"
+                className="text-slate-600 hover:text-primary hover:bg-primary/10"
                 onClick={() =>
                   push({
                     type: "info",
@@ -485,13 +485,13 @@ export default function Assignments() {
             {filtered.map((assignment) => (
               <div
                 key={assignment.id}
-                className="group bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-xl hover:border-blue-300 transition-all duration-300 hover:-translate-y-1"
+                className="group bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-xl hover:border-primary/30 transition-all duration-300 hover:-translate-y-1"
               >
                 {/* Header */}
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-blue-100 transition-colors">
-                      <Plane className="text-blue-600 w-6 h-6" />
+                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                      <Plane className="text-primary w-6 h-6" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-bold text-slate-900 text-lg leading-tight line-clamp-2">
@@ -509,7 +509,7 @@ export default function Assignments() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 shrink-0"
+                        className="text-slate-400 hover:text-primary hover:bg-primary/10 shrink-0"
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
@@ -518,7 +518,7 @@ export default function Assignments() {
                       <DropdownMenuItem
                         onSelect={() => setPreviewAssignment(assignment)}
                       >
-                        <Eye className="w-4 h-4 mr-2 text-blue-600" />
+                        <Eye className="w-4 h-4 mr-2 text-primary" />
                         <span>View Details</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem
@@ -593,7 +593,7 @@ export default function Assignments() {
                 <div className="flex items-center justify-between mb-4">
                   {getStatusBadge(assignment.status)}
                   {assignment.completionRate && (
-                    <div className="text-sm font-semibold text-blue-600">
+                    <div className="text-sm font-semibold text-primary">
                       {assignment.completionRate}% complete
                     </div>
                   )}
@@ -610,7 +610,7 @@ export default function Assignments() {
                     </div>
                     <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
                       <div
-                        className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all duration-500"
+                        className="bg-primary h-2 rounded-full transition-all duration-500"
                         style={{ width: `${assignment.completionRate}%` }}
                       />
                     </div>
@@ -622,7 +622,7 @@ export default function Assignments() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1 border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300"
+                    className="flex-1 border-primary/30 text-primary hover:bg-primary/10 hover:border-primary"
                     onClick={() => setPreviewAssignment(assignment)}
                   >
                     <Eye className="w-3.5 h-3.5 mr-1.5" />
@@ -760,9 +760,9 @@ export default function Assignments() {
                 />
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+              <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 mt-4">
                 <div className="flex items-start gap-3">
-                  <FileText className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
+                  <FileText className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                   <div>
                     <p className="text-sm font-medium text-blue-900 mb-1">
                       Attachments & Resources
@@ -787,7 +787,7 @@ export default function Assignments() {
               <Button
                 onClick={handleCreateAssignment}
                 disabled={createMutation.isPending}
-                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 {createMutation.isPending ? (
                   <>
@@ -863,8 +863,8 @@ export default function Assignments() {
                 </div>
 
                 {previewAssignment.instructorName && (
-                  <div className="bg-blue-50 rounded-lg p-4">
-                    <p className="text-sm text-blue-600 font-medium mb-1">
+                  <div className="bg-primary/10 rounded-lg p-4">
+                    <p className="text-sm text-primary font-medium mb-1">
                       Instructor
                     </p>
                     <p className="text-lg font-semibold text-blue-900">

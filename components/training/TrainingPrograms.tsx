@@ -275,7 +275,7 @@ export default function TrainingProgramsNew() {
     switch (type) {
       case "theoretical":
         return (
-          <span className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-blue-50 text-blue-700">
+          <span className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-primary/10 text-primary">
             <BookOpen className="w-3 h-3" />
             Theoretical
           </span>
@@ -311,7 +311,7 @@ export default function TrainingProgramsNew() {
       case "beginner":
         return "text-green-600";
       case "intermediate":
-        return "text-blue-600";
+        return "text-primary";
       case "advanced":
         return "text-purple-600";
       case "expert":
@@ -329,7 +329,7 @@ export default function TrainingProgramsNew() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
+                <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shadow-lg">
                   <GraduationCap className="w-6 h-6 text-white" />
                 </div>
                 <div>
@@ -345,7 +345,7 @@ export default function TrainingProgramsNew() {
             </div>
             <Button
               onClick={() => setCreateOpen(true)}
-              className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg hover:shadow-xl transition-all duration-200"
             >
               <Plus className="w-4 h-4 mr-2" />
               Create Program
@@ -370,7 +370,7 @@ export default function TrainingProgramsNew() {
                 </p>
               </div>
               <div className="w-14 h-14 bg-blue-50 rounded-xl flex items-center justify-center">
-                <BookOpen className="text-blue-600 w-7 h-7" />
+                <BookOpen className="text-primary w-7 h-7" />
               </div>
             </div>
           </div>
@@ -448,7 +448,7 @@ export default function TrainingProgramsNew() {
                 </p>
               </div>
               <div className="w-14 h-14 bg-blue-50 rounded-xl flex items-center justify-center">
-                <Plane className="text-blue-600 w-7 h-7" />
+                <Plane className="text-primary w-7 h-7" />
               </div>
             </div>
           </div>
@@ -503,7 +503,7 @@ export default function TrainingProgramsNew() {
                 placeholder="Search programs..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
               />
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
             </div>
@@ -541,7 +541,7 @@ export default function TrainingProgramsNew() {
             {filtered.map((program) => (
               <div
                 key={program.id}
-                className="group bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-xl hover:border-blue-300 transition-all duration-300 hover:-translate-y-1"
+                className="group bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-xl hover:border-primary/30 transition-all duration-300 hover:-translate-y-1"
               >
                 {/* Header */}
                 <div className="flex items-start justify-between mb-4">
@@ -558,7 +558,7 @@ export default function TrainingProgramsNew() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="text-slate-400 hover:text-blue-600 hover:bg-blue-50 shrink-0"
+                        className="text-slate-400 hover:text-primary hover:bg-primary/10 shrink-0"
                       >
                         <Eye className="w-4 h-4" />
                       </Button>
@@ -567,7 +567,7 @@ export default function TrainingProgramsNew() {
                       <DropdownMenuItem
                         onSelect={() => setPreviewProgram(program)}
                       >
-                        <Eye className="w-4 h-4 mr-2 text-blue-600" />
+                        <Eye className="w-4 h-4 mr-2 text-primary" />
                         <span>View Details</span>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
@@ -689,7 +689,7 @@ export default function TrainingProgramsNew() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1 border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300"
+                    className="flex-1 border-primary/30 text-primary hover:bg-primary/10 hover:border-primary"
                     onClick={() => setPreviewProgram(program)}
                   >
                     <Eye className="w-3.5 h-3.5 mr-1.5" />
@@ -939,9 +939,9 @@ export default function TrainingProgramsNew() {
                 </label>
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+              <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 mt-4">
                 <div className="flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
+                  <AlertCircle className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                   <div>
                     <p className="text-sm font-medium text-blue-900 mb-1">
                       Program Configuration
@@ -966,7 +966,7 @@ export default function TrainingProgramsNew() {
               <Button
                 onClick={handleCreateProgram}
                 disabled={createMutation.isPending}
-                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground"
               >
                 {createMutation.isPending ? (
                   <>
@@ -1065,8 +1065,8 @@ export default function TrainingProgramsNew() {
                 </div>
 
                 {previewProgram.instructor && (
-                  <div className="bg-blue-50 rounded-lg p-4">
-                    <p className="text-sm text-blue-600 font-medium mb-1">
+                  <div className="bg-primary/10 rounded-lg p-4">
+                    <p className="text-sm text-primary font-medium mb-1">
                       Instructor
                     </p>
                     <p className="text-lg font-semibold text-blue-900">

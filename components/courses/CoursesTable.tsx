@@ -61,7 +61,7 @@ export default function CoursesTable({
       case "archived":
         return "bg-gray-100 text-gray-700";
       default:
-        return "bg-blue-100 text-blue-700";
+        return "bg-primary/10 text-primary";
     }
   };
 
@@ -70,7 +70,7 @@ export default function CoursesTable({
       case "beginner":
         return "bg-green-100 text-green-700";
       case "intermediate":
-        return "bg-blue-100 text-blue-700";
+        return "bg-primary/10 text-primary";
       case "advanced":
         return "bg-orange-100 text-orange-700";
       case "expert":
@@ -93,6 +93,7 @@ export default function CoursesTable({
           <TableRow>
             <TableHead className="w-20">Thumbnail</TableHead>
             <TableHead>Course Title</TableHead>
+            <TableHead>Instructor</TableHead>
             <TableHead>Categories</TableHead>
             <TableHead className="text-center">Students</TableHead>
             <TableHead className="text-center">Rating</TableHead>
@@ -105,7 +106,10 @@ export default function CoursesTable({
         <TableBody>
           {courses.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={9} className="text-center py-8 text-gray-500">
+              <TableCell
+                colSpan={10}
+                className="text-center py-8 text-gray-500"
+              >
                 No courses found
               </TableCell>
             </TableRow>
@@ -114,6 +118,10 @@ export default function CoursesTable({
               const salesProgress = calculateSalesProgress(course);
               const enrolled = course.enrollmentCount || 0;
               const maxStudents = course.maxStudents || 0;
+              const instructor =
+                typeof course.instructor === "object"
+                  ? course.instructor
+                  : null;
 
               return (
                 <TableRow key={course.id}>
@@ -157,13 +165,44 @@ export default function CoursesTable({
                   </TableCell>
 
                   <TableCell>
+                    {instructor ? (
+                      <div className="flex items-center gap-2">
+                        {instructor.avatar && (
+                          <div className="relative w-8 h-8 rounded-full overflow-hidden bg-gray-100">
+                            <Image
+                              src={instructor.avatar}
+                              alt={`${instructor.firstName || ""} ${
+                                instructor.lastName || ""
+                              }`}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-sm font-medium text-secondary">
+                            {instructor.firstName} {instructor.lastName}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {instructor.email}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-400">
+                        No instructor
+                      </span>
+                    )}
+                  </TableCell>
+
+                  <TableCell>
                     <div className="flex flex-wrap gap-1 max-w-xs">
                       {course.categories && course.categories.length > 0 ? (
                         course.categories.slice(0, 2).map((cat, idx) => (
                           <Badge
                             key={idx}
                             variant="outline"
-                            className="text-xs bg-blue-50 text-blue-700 border-blue-200"
+                            className="text-xs bg-primary/10 text-primary border-primary/30"
                           >
                             {cat}
                           </Badge>
@@ -214,7 +253,7 @@ export default function CoursesTable({
                             salesProgress >= 80
                               ? "bg-green-500"
                               : salesProgress >= 50
-                              ? "bg-blue-500"
+                              ? "bg-primary"
                               : "bg-yellow-500"
                           }`}
                           style={{ width: `${salesProgress}%` }}
