@@ -28,6 +28,7 @@ import {
   Tag,
   Plane,
   BarChart3,
+  Heart,
   GraduationCap,
   User,
 } from "lucide-react";
@@ -70,6 +71,8 @@ const navItems = {
     { icon: FileText, label: "CMS", href: "/cms" },
     { icon: ImageIcon, label: "Header", href: "/cms/header" },
     { icon: ImageIcon, label: "Footer", href: "/cms/footer" },
+    { icon: PlayCircle, label: "Home Banner", href: "/cms/home/banner" },
+    { icon: Heart, label: "About Section", href: "/cms/home/about-section" },
     { icon: ImageIcon, label: "Media Library", href: "/media-library" },
   ],
   business: [

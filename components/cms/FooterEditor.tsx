@@ -359,66 +359,131 @@ export function FooterEditor({
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <div className="w-full overflow-x-auto pb-2 h-full">
-          <TabsList className="inline-flex lg:grid lg:w-full lg:grid-cols-8 gap-1 sm:gap-2 p-1 bg-white/80 backdrop-blur-sm rounded-xl min-w-max lg:min-w-0 h-full">
-            <TabsTrigger
-              value="logo"
-              className="flex items-center justify-center gap-1.5 data-[state=active]:bg-blue-500 data-[state=active]:text-white px-3 sm:px-4 h-full text-sm whitespace-nowrap"
-            >
-              <ImageIcon className="w-4 h-4" />
-              <span>Logo</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="social"
-              className="flex items-center justify-center gap-1.5 data-[state=active]:bg-purple-500 data-[state=active]:text-white px-3 sm:px-4 py-2.5 text-sm whitespace-nowrap"
-            >
-              <Share2 className="w-4 h-4" />
-              <span>Social</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="sections"
-              className="flex items-center justify-center gap-1.5 data-[state=active]:bg-green-500 data-[state=active]:text-white px-3 sm:px-4 py-2.5 text-sm whitespace-nowrap"
-            >
-              <List className="w-4 h-4" />
-              <span>Sections</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="newsletter"
-              className="flex items-center justify-center gap-1.5 data-[state=active]:bg-orange-500 data-[state=active]:text-white px-3 sm:px-4 py-2.5 text-sm whitespace-nowrap"
-            >
-              <Mail className="w-4 h-4" />
-              <span>Newsletter</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="contact"
-              className="flex items-center justify-center gap-1.5 data-[state=active]:bg-indigo-600 data-[state=active]:text-white px-3 sm:px-4 py-2.5 text-sm whitespace-nowrap"
-            >
-              <Phone className="w-4 h-4" />
-              <span>Contact</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="company"
-              className="flex items-center justify-center gap-1.5 data-[state=active]:bg-teal-500 data-[state=active]:text-white px-3 sm:px-4 py-2.5 text-sm whitespace-nowrap"
-            >
-              <Building2 className="w-4 h-4" />
-              <span>Company</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="bottom"
-              className="flex items-center justify-center gap-1.5 data-[state=active]:bg-gray-600 data-[state=active]:text-white px-3 sm:px-4 py-2.5 text-sm whitespace-nowrap"
-            >
-              <LinkIcon className="w-4 h-4" />
-              <span className="hidden xs:inline sm:hidden">Bottom</span>
-              <span className="hidden sm:inline">Bottom Links</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="language"
-              className="flex items-center justify-center gap-1.5 data-[state=active]:bg-violet-500 data-[state=active]:text-white px-3 sm:px-4 py-2.5 text-sm whitespace-nowrap"
-            >
-              <Globe className="w-4 h-4" />
-              <span>Language</span>
-            </TabsTrigger>
-          </TabsList>
+        <div className="mb-6 sm:mb-8">
+          <div className="w-full overflow-x-auto pb-2">
+            <TabsList className="inline-flex gap-2 p-1 bg-white rounded-xl shadow-md border border-gray-200 min-w-max">
+              <TabsTrigger
+                value="logo"
+                className={`
+                  flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-medium text-sm sm:text-base
+                  transition-all duration-200 ease-in-out min-w-[120px] sm:min-w-[140px] whitespace-nowrap
+                  ${
+                    activeTab === "logo"
+                      ? "bg-linear-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                  }
+                `}
+              >
+                <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span>Logo</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="social"
+                className={`
+                  flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-medium text-sm sm:text-base
+                  transition-all duration-200 ease-in-out min-w-[120px] sm:min-w-[140px] whitespace-nowrap
+                  ${
+                    activeTab === "social"
+                      ? "bg-linear-to-r from-purple-500 to-pink-600 text-white shadow-lg shadow-purple-500/30"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                  }
+                `}
+              >
+                <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span>Social</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="sections"
+                className={`
+                  flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-medium text-sm sm:text-base
+                  transition-all duration-200 ease-in-out min-w-[120px] sm:min-w-[140px] whitespace-nowrap
+                  ${
+                    activeTab === "sections"
+                      ? "bg-linear-to-r from-green-500 to-emerald-600 text-white shadow-lg shadow-green-500/30"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                  }
+                `}
+              >
+                <List className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span>Sections</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="newsletter"
+                className={`
+                  flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-medium text-sm sm:text-base
+                  transition-all duration-200 ease-in-out min-w-[120px] sm:min-w-[140px] whitespace-nowrap
+                  ${
+                    activeTab === "newsletter"
+                      ? "bg-linear-to-r from-orange-500 to-red-600 text-white shadow-lg shadow-orange-500/30"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                  }
+                `}
+              >
+                <Mail className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span>Newsletter</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="contact"
+                className={`
+                  flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-medium text-sm sm:text-base
+                  transition-all duration-200 ease-in-out min-w-[120px] sm:min-w-[140px] whitespace-nowrap
+                  ${
+                    activeTab === "contact"
+                      ? "bg-linear-to-r from-indigo-500 to-blue-600 text-white shadow-lg shadow-indigo-500/30"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                  }
+                `}
+              >
+                <Phone className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span>Contact</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="company"
+                className={`
+                  flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-medium text-sm sm:text-base
+                  transition-all duration-200 ease-in-out min-w-[120px] sm:min-w-[140px] whitespace-nowrap
+                  ${
+                    activeTab === "company"
+                      ? "bg-linear-to-r from-teal-500 to-cyan-600 text-white shadow-lg shadow-teal-500/30"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                  }
+                `}
+              >
+                <Building2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span>Company</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="bottom"
+                className={`
+                  flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-medium text-sm sm:text-base
+                  transition-all duration-200 ease-in-out min-w-[120px] sm:min-w-40 whitespace-nowrap
+                  ${
+                    activeTab === "bottom"
+                      ? "bg-linear-to-r from-gray-600 to-gray-800 text-white shadow-lg shadow-gray-600/30"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                  }
+                `}
+              >
+                <LinkIcon className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span>Bottom Links</span>
+              </TabsTrigger>
+              <TabsTrigger
+                value="language"
+                className={`
+                  flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-medium text-sm sm:text-base
+                  transition-all duration-200 ease-in-out min-w-[120px] sm:min-w-[140px] whitespace-nowrap
+                  ${
+                    activeTab === "language"
+                      ? "bg-linear-to-r from-violet-500 to-purple-600 text-white shadow-lg shadow-violet-500/30"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                  }
+                `}
+              >
+                <Globe className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span>Language</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
         </div>
 
         {/* Logo Tab */}
