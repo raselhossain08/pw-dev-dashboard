@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Geist_Mono, Montserrat } from "next/font/google";
 import "./globals.css";
+import "./tiptap.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { ToastProvider } from "@/context/ToastContext";
 import Toaster from "@/components/Toaster";

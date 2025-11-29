@@ -17,15 +17,14 @@ import {
   Trash,
   Plus,
   Box,
+  Loader2,
+  LayoutGrid,
+  List,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { productsService } from "@/lib/services/products.service";
+import type { Product } from "@/lib/types/product";
+import ProductForm from "./ProductForm";
 import {
   Select,
   SelectContent,
@@ -64,84 +63,188 @@ type OrderItem = {
   status: OrderStatus;
 };
 
-const initialProducts: ProductItem[] = [
-  {
-    id: "p1",
-    title: "Advanced Python Programming",
-    description: "Master advanced Python concepts and applications",
-    price: 89.99,
-    category: "Course",
-    status: "active",
-    rating: 5,
-    sales: 1204,
-    imageUrl:
-      "https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&w=600&q=80",
-  },
-  {
-    id: "p2",
-    title: "JavaScript Patterns E-book",
-    description: "Common patterns and best practices for modern JS",
-    price: 24.99,
-    category: "E-book",
-    status: "draft",
-    rating: 4,
-    sales: 342,
-    imageUrl:
-      "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=600&q=80",
-  },
-  {
-    id: "p3",
-    title: "Personal Wings Hoodie",
-    description: "Comfortable hoodie with embroidered logo",
-    price: 49.99,
-    category: "Merchandise",
-    status: "low-stock",
-    rating: 4,
-    sales: 87,
-    imageUrl:
-      "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?auto=format&fit=crop&w=600&q=80",
-  },
-  {
-    id: "p4",
-    title: "Data Science Bootcamp",
-    description: "From fundamentals to real projects",
-    price: 199.0,
-    category: "Course",
-    status: "out-of-stock",
-    rating: 5,
-    sales: 980,
-    imageUrl:
-      "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=600&q=80",
-  },
-];
+// No initial mock data - will load from API
 
-const initialOrders: OrderItem[] = [
-  { id: "#ORD-7842", customer: "Sarah Johnson", date: "Nov 12, 2025", amount: "$299.00", status: "processing" },
-  { id: "#ORD-7841", customer: "Michael Chen", date: "Nov 12, 2025", amount: "$89.99", status: "completed" },
-  { id: "#ORD-7835", customer: "Emma Wilson", date: "Nov 11, 2025", amount: "$24.99", status: "pending" },
-  { id: "#ORD-7804", customer: "David Brown", date: "Nov 09, 2025", amount: "$49.99", status: "cancelled" },
-];
+// Orders will be loaded from API when implemented
 
 export default function Shop() {
-  const [products, setProducts] = React.useState<ProductItem[]>(initialProducts);
-  const [orders] = React.useState<OrderItem[]>(initialOrders);
+  const [products, setProducts] = React.useState<ProductItem[]>([]);
+  const [apiProducts, setApiProducts] = React.useState<Product[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [orders] = React.useState<OrderItem[]>([]);
   const [search, setSearch] = React.useState("");
   const [categoryFilter, setCategoryFilter] = React.useState("All Products");
   const [sortBy, setSortBy] = React.useState("Sort by: Newest");
   const [createOpen, setCreateOpen] = React.useState(false);
+  const [editOpen, setEditOpen] = React.useState(false);
+  const [viewOpen, setViewOpen] = React.useState(false);
+  const [selectedProduct, setSelectedProduct] = React.useState<Product | null>(
+    null
+  );
   const [activeTab, setActiveTab] = React.useState("Products");
+  const [viewMode, setViewMode] = React.useState<"grid" | "table">("table");
+
+  // Handle product created callback
+  const handleProductCreated = (newProduct: Product) => {
+    const mappedProduct: ProductItem = {
+      id: newProduct._id,
+      title: newProduct.title,
+      description: newProduct.description,
+      price: newProduct.price,
+      category: mapProductType(newProduct.type),
+      status: mapProductStatus(newProduct.status),
+      rating: newProduct.rating || 5,
+      sales: newProduct.soldCount || 0,
+      imageUrl:
+        newProduct.images && newProduct.images.length > 0
+          ? newProduct.images[0]
+          : undefined,
+    };
+    setProducts([mappedProduct, ...products]);
+  };
+
+  // Handle product updated callback
+  const handleProductUpdated = (updatedProduct: Product) => {
+    const mappedProduct: ProductItem = {
+      id: updatedProduct._id,
+      title: updatedProduct.title,
+      description: updatedProduct.description,
+      price: updatedProduct.price,
+      category: mapProductType(updatedProduct.type),
+      status: mapProductStatus(updatedProduct.status),
+      rating: updatedProduct.rating || 5,
+      sales: updatedProduct.soldCount || 0,
+      imageUrl:
+        updatedProduct.images && updatedProduct.images.length > 0
+          ? updatedProduct.images[0]
+          : undefined,
+    };
+    setProducts(
+      products.map((p) => (p.id === mappedProduct.id ? mappedProduct : p))
+    );
+    setEditOpen(false);
+    setSelectedProduct(null);
+  };
+
+  // Handle view product
+  const handleViewProduct = async (productId: string) => {
+    try {
+      const product = apiProducts.find((p) => p._id === productId);
+      if (product) {
+        setSelectedProduct(product);
+        setViewOpen(true);
+      }
+    } catch (error) {
+      console.error("Failed to view product:", error);
+    }
+  };
+
+  // Handle edit product
+  const handleEditProduct = async (productId: string) => {
+    try {
+      const product = apiProducts.find((p) => p._id === productId);
+      if (product) {
+        setSelectedProduct(product);
+        setEditOpen(true);
+      }
+    } catch (error) {
+      console.error("Failed to load product for editing:", error);
+    }
+  };
+
+  // Handle delete product
+  const handleDeleteProduct = async (productId: string) => {
+    if (!confirm("Are you sure you want to delete this product?")) return;
+
+    try {
+      await productsService.deleteProduct(productId);
+      setProducts(products.filter((p) => p.id !== productId));
+      setApiProducts(apiProducts.filter((p) => p._id !== productId));
+    } catch (error) {
+      console.error("Failed to delete product:", error);
+      alert("Failed to delete product. Please try again.");
+    }
+  };
+
+  // Fetch products from API
+  React.useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        const response = await productsService.getAllProducts({ limit: 100 });
+        console.log("API Response:", response);
+        console.log("Products from API:", response.products);
+
+        setApiProducts(response.products || []);
+
+        // Map API products to existing ProductItem format to preserve UI
+        const mappedProducts: ProductItem[] = (response.products || []).map(
+          (p) => ({
+            id: p._id,
+            title: p.title,
+            description: p.description,
+            price: p.price,
+            category: mapProductType(p.type),
+            status: mapProductStatus(p.status),
+            rating: p.rating || 5,
+            sales: p.soldCount || 0,
+            imageUrl: p.images && p.images.length > 0 ? p.images[0] : undefined,
+          })
+        );
+
+        console.log("Mapped products:", mappedProducts);
+
+        if (mappedProducts.length > 0) {
+          setProducts(mappedProducts);
+        } else {
+          console.warn(
+            "No products received from API, keeping initial products"
+          );
+          // Keep initialProducts as fallback
+        }
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+        console.error("Error details:", error);
+        // Keep initialProducts as fallback
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
 
   React.useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        const el = document.getElementById("shop-search") as HTMLInputElement | null;
+        const el = document.getElementById(
+          "shop-search"
+        ) as HTMLInputElement | null;
         el?.focus();
       }
     };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, []);
+
+  // Helper function to map API product type to UI category
+  const mapProductType = (
+    type: string
+  ): "Course" | "E-book" | "Merchandise" | "Bundle" => {
+    if (type === "aircraft" || type === "simulator") return "Course";
+    if (type === "equipment") return "Merchandise";
+    if (type === "service") return "E-book";
+    return "Course";
+  };
+
+  // Helper function to map API status to UI status
+  const mapProductStatus = (status: string): ProductStatus => {
+    if (status === "published") return "active";
+    if (status === "draft") return "draft";
+    if (status === "sold") return "out-of-stock";
+    return "active";
+  };
 
   const filtered = products
     .filter((p) => {
@@ -167,6 +270,14 @@ export default function Shop() {
       return 0;
     });
 
+  // Debug logging
+  React.useEffect(() => {
+    console.log("Total products:", products.length);
+    console.log("Filtered products:", filtered.length);
+    console.log("View mode:", viewMode);
+    console.log("Loading:", loading);
+  }, [products, filtered, viewMode, loading]);
+
   const statusBadge = (s: ProductStatus) =>
     s === "active"
       ? "bg-green-100 text-green-700"
@@ -190,7 +301,9 @@ export default function Shop() {
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8 gap-4">
         <div>
           <h2 className="text-3xl font-bold text-secondary mb-2">Products</h2>
-          <p className="text-gray-600">Manage your educational products, courses, and merchandise</p>
+          <p className="text-gray-600">
+            Manage your educational products, courses, and merchandise
+          </p>
         </div>
         <div className="flex space-x-3">
           <Button onClick={() => setCreateOpen(true)}>
@@ -199,26 +312,16 @@ export default function Shop() {
         </div>
       </div>
 
-      <div className="bg-card rounded-xl p-1 shadow-sm border border-gray-100 mb-8 inline-flex">
-        {["Products", "Categories", "Orders", "Discounts & Coupons"].map((t) => (
-          <button
-            key={t}
-            onClick={() => setActiveTab(t)}
-            className={`px-6 py-2 rounded-lg text-sm font-medium transition-colors ${
-              activeTab === t ? "bg-primary text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-600 text-sm font-medium">Active Products</p>
-              <p className="text-2xl font-bold text-secondary mt-1">{products.filter((p) => p.status === "active").length}</p>
+              <p className="text-gray-600 text-sm font-medium">
+                Active Products
+              </p>
+              <p className="text-2xl font-bold text-secondary mt-1">
+                {products.filter((p) => p.status === "active").length}
+              </p>
               <p className="text-accent text-sm mt-1">+5 this week</p>
             </div>
             <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -229,8 +332,12 @@ export default function Shop() {
         <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-600 text-sm font-medium">Draft Products</p>
-              <p className="text-2xl font-bold text-secondary mt-1">{products.filter((p) => p.status === "draft").length}</p>
+              <p className="text-gray-600 text-sm font-medium">
+                Draft Products
+              </p>
+              <p className="text-2xl font-bold text-secondary mt-1">
+                {products.filter((p) => p.status === "draft").length}
+              </p>
               <p className="text-gray-500 text-sm mt-1">Review pending</p>
             </div>
             <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
@@ -242,7 +349,9 @@ export default function Shop() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-600 text-sm font-medium">Out of Stock</p>
-              <p className="text-2xl font-bold text-secondary mt-1">{products.filter((p) => p.status === "out-of-stock").length}</p>
+              <p className="text-2xl font-bold text-secondary mt-1">
+                {products.filter((p) => p.status === "out-of-stock").length}
+              </p>
               <p className="text-red-500 text-sm mt-1">Restock needed</p>
             </div>
             <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
@@ -253,8 +362,12 @@ export default function Shop() {
         <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-gray-600 text-sm font-medium">Low Stock Items</p>
-              <p className="text-2xl font-bold text-secondary mt-1">{products.filter((p) => p.status === "low-stock").length}</p>
+              <p className="text-gray-600 text-sm font-medium">
+                Low Stock Items
+              </p>
+              <p className="text-2xl font-bold text-secondary mt-1">
+                {products.filter((p) => p.status === "low-stock").length}
+              </p>
               <p className="text-red-500 text-sm mt-1">Needs attention</p>
             </div>
             <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
@@ -265,18 +378,24 @@ export default function Shop() {
       </div>
 
       <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100 mb-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0 mb-4">
           <div className="flex flex-wrap gap-2">
-            {["All Products", "Courses", "E-books", "Merchandise"].map((label) => (
-              <Button
-                key={label}
-                variant={categoryFilter === label ? "default" : "secondary"}
-                className={categoryFilter === label ? "" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}
-                onClick={() => setCategoryFilter(label)}
-              >
-                {label}
-              </Button>
-            ))}
+            {["All Products", "Courses", "E-books", "Merchandise"].map(
+              (label) => (
+                <Button
+                  key={label}
+                  variant={categoryFilter === label ? "default" : "secondary"}
+                  className={
+                    categoryFilter === label
+                      ? ""
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }
+                  onClick={() => setCategoryFilter(label)}
+                >
+                  {label}
+                </Button>
+              )
+            )}
           </div>
           <div className="flex items-center space-x-2">
             <div className="relative">
@@ -286,13 +405,41 @@ export default function Shop() {
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Sort by: Newest">Sort by: Newest</SelectItem>
-                  <SelectItem value="Sort by: Oldest">Sort by: Oldest</SelectItem>
-                  <SelectItem value="Sort by: Price: High">Sort by: Price: High</SelectItem>
-                  <SelectItem value="Sort by: Price: Low">Sort by: Price: Low</SelectItem>
-                  <SelectItem value="Sort by: Rating">Sort by: Rating</SelectItem>
+                  <SelectItem value="Sort by: Newest">
+                    Sort by: Newest
+                  </SelectItem>
+                  <SelectItem value="Sort by: Oldest">
+                    Sort by: Oldest
+                  </SelectItem>
+                  <SelectItem value="Sort by: Price: High">
+                    Sort by: Price: High
+                  </SelectItem>
+                  <SelectItem value="Sort by: Price: Low">
+                    Sort by: Price: Low
+                  </SelectItem>
+                  <SelectItem value="Sort by: Rating">
+                    Sort by: Rating
+                  </SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="flex items-center gap-2 ml-2">
+              <Button
+                variant={viewMode === "grid" ? "default" : "secondary"}
+                size="sm"
+                onClick={() => setViewMode("grid")}
+                className="px-3"
+              >
+                <LayoutGrid className="w-4 h-4" />
+              </Button>
+              <Button
+                variant={viewMode === "table" ? "default" : "secondary"}
+                size="sm"
+                onClick={() => setViewMode("table")}
+                className="px-3"
+              >
+                <List className="w-4 h-4" />
+              </Button>
             </div>
           </div>
         </div>
@@ -311,236 +458,482 @@ export default function Shop() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
-        {filtered.map((p) => (
-          <div key={p.id} className="bg-card rounded-xl p-4 shadow-sm border border-gray-100">
-            <div className="relative mb-4">
-              {p.imageUrl && (
-                <Image
-                  src={p.imageUrl}
-                  alt={p.title}
-                  width={600}
-                  height={160}
-                  className="w-full h-40 object-cover rounded-lg"
-                  unoptimized
-                />
-              )}
-              <span className={`absolute top-2 left-2 px-3 py-1 rounded-full text-xs ${statusBadge(p.status)}`}>
-                {p.status === "out-of-stock" ? "Out of Stock" : p.status === "low-stock" ? "Low Stock" : p.status.charAt(0).toUpperCase() + p.status.slice(1)}
-              </span>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="icon" className="absolute top-2 right-2 bg-white/80">
-                    <EllipsisVertical className="w-5 h-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem>
-                    <Eye className="w-4 h-4 mr-2" /> View
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Edit className="w-4 h-4 mr-2" /> Edit
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Trash className="w-4 h-4 mr-2" /> Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-            <div className="mb-4">
-              <h4 className="font-semibold text-secondary mb-1">{p.title}</h4>
-              <p className="text-gray-600 text-sm mb-2">{p.description}</p>
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-secondary">${p.price.toFixed(2)}</span>
-                <div className="flex items-center">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star key={i} className={`w-4 h-4 ${i < p.rating ? "text-yellow-500" : "text-gray-300"}`} fill={i < p.rating ? "currentColor" : "none"} />
-                  ))}
+      {loading ? (
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+            <p className="text-gray-600">Loading products...</p>
+          </div>
+        </div>
+      ) : viewMode === "table" ? (
+        <div className="bg-white rounded-xl shadow-md border border-gray-200 mb-8 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-full border-collapse">
+              <thead className="bg-gray-50">
+                <tr className="text-left text-gray-600 text-sm border-b-2 border-gray-200">
+                  <th className="py-4 px-4 font-semibold">Image</th>
+                  <th className="py-4 px-4 font-semibold">Product</th>
+                  <th className="py-4 px-4 font-semibold">Category</th>
+                  <th className="py-4 px-4 font-semibold">Price</th>
+                  <th className="py-4 px-4 font-semibold">Status</th>
+                  <th className="py-4 px-4 font-semibold">Rating</th>
+                  <th className="py-4 px-4 font-semibold">Sales</th>
+                  <th className="py-4 px-4 font-semibold">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="text-sm bg-white">
+                {filtered.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="py-12 text-center text-gray-500">
+                      <Box className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                      <p className="text-lg font-medium">No products found</p>
+                      <p className="text-sm">
+                        Try adjusting your filters or add a new product
+                      </p>
+                    </td>
+                  </tr>
+                ) : (
+                  filtered.map((p) => (
+                    <tr
+                      key={p.id}
+                      className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
+                    >
+                      <td className="py-3 px-4">
+                        {p.imageUrl ? (
+                          <Image
+                            src={p.imageUrl}
+                            alt={p.title}
+                            width={80}
+                            height={60}
+                            className="w-20 h-14 object-cover rounded"
+                            unoptimized
+                          />
+                        ) : (
+                          <div className="w-20 h-14 bg-gray-200 rounded flex items-center justify-center">
+                            <Box className="w-6 h-6 text-gray-400" />
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="font-semibold text-gray-900">
+                          {p.title}
+                        </div>
+                        <div className="text-xs text-gray-500 max-w-xs truncate">
+                          {p.description}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                          {p.category}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 font-bold text-gray-900">
+                        ${p.price.toLocaleString()}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span
+                          className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${statusBadge(
+                            p.status
+                          )}`}
+                        >
+                          {p.status === "out-of-stock"
+                            ? "Out of Stock"
+                            : p.status === "low-stock"
+                            ? "Low Stock"
+                            : p.status.charAt(0).toUpperCase() +
+                              p.status.slice(1)}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-1">
+                          <Star
+                            className="w-4 h-4 text-yellow-500"
+                            fill="currentColor"
+                          />
+                          <span className="font-medium">{p.rating}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-gray-700">
+                        {p.sales || 0}
+                      </td>
+                      <td className="py-3 px-4">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0"
+                            >
+                              <EllipsisVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => handleViewProduct(p.id)}
+                            >
+                              <Eye className="w-4 h-4 mr-2" /> View
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleEditProduct(p.id)}
+                            >
+                              <Edit className="w-4 h-4 mr-2" /> Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-red-600"
+                              onClick={() => handleDeleteProduct(p.id)}
+                            >
+                              <Trash className="w-4 h-4 mr-2" /> Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+          <div className="p-4 border-t border-gray-200 bg-gray-50">
+            <Button onClick={() => setCreateOpen(true)} className="w-full">
+              <Plus className="w-4 h-4 mr-2" /> Add New Product
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
+          {filtered.map((p) => (
+            <div
+              key={p.id}
+              className="bg-card rounded-xl p-4 shadow-sm border border-gray-100"
+            >
+              <div className="relative mb-4">
+                {p.imageUrl && (
+                  <Image
+                    src={p.imageUrl}
+                    alt={p.title}
+                    width={600}
+                    height={160}
+                    className="w-full h-40 object-cover rounded-lg"
+                    unoptimized
+                  />
+                )}
+                <span
+                  className={`absolute top-2 left-2 px-3 py-1 rounded-full text-xs ${statusBadge(
+                    p.status
+                  )}`}
+                >
+                  {p.status === "out-of-stock"
+                    ? "Out of Stock"
+                    : p.status === "low-stock"
+                    ? "Low Stock"
+                    : p.status.charAt(0).toUpperCase() + p.status.slice(1)}
+                </span>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="absolute top-2 right-2 bg-white/80"
+                    >
+                      <EllipsisVertical className="w-5 h-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => handleViewProduct(p.id)}>
+                      <Eye className="w-4 h-4 mr-2" /> View
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleEditProduct(p.id)}>
+                      <Edit className="w-4 h-4 mr-2" /> Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-red-600"
+                      onClick={() => handleDeleteProduct(p.id)}
+                    >
+                      <Trash className="w-4 h-4 mr-2" /> Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              <div className="mb-4">
+                <h4 className="font-semibold text-secondary mb-1">{p.title}</h4>
+                <p className="text-gray-600 text-sm mb-2">{p.description}</p>
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-secondary">
+                    ${p.price.toFixed(2)}
+                  </span>
+                  <div className="flex items-center">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`w-4 h-4 ${
+                          i < p.rating ? "text-yellow-500" : "text-gray-300"
+                        }`}
+                        fill={i < p.rating ? "currentColor" : "none"}
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
+              <div className="flex items-center justify-between">
+                <Button
+                  variant="outline"
+                  className="border-gray-300"
+                  onClick={() => handleViewProduct(p.id)}
+                >
+                  Details
+                </Button>
+                <Button
+                  className="bg-primary text-white"
+                  onClick={() => handleEditProduct(p.id)}
+                >
+                  Edit
+                </Button>
+              </div>
             </div>
-            <div className="flex items-center justify-between">
-              <Button variant="outline" className="border-gray-300">Details</Button>
-              <Button className="bg-primary text-white">Add to Cart</Button>
+          ))}
+          <div
+            onClick={() => setCreateOpen(true)}
+            className="bg-linear-to-br from-primary/5 to-accent/5 rounded-xl p-4 shadow-sm border border-dashed border-primary/30 flex flex-col items-center justify-center text-center cursor-pointer hover:border-primary/50 hover:shadow-md transition-all"
+          >
+            <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mb-4">
+              <Plus className="text-primary text-xl" />
             </div>
+            <h4 className="font-semibold text-secondary mb-2">
+              Add New Product
+            </h4>
+            <p className="text-gray-600 text-sm">
+              Create a new course, e-book, or merchandise
+            </p>
           </div>
-        ))}
-        <div className="bg-gradient-to-br from-primary/5 to-accent/5 rounded-xl p-4 shadow-sm border border-dashed border-primary/30 flex flex-col items-center justify-center text-center cursor-pointer">
-          <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mb-4">
-            <Plus className="text-primary text-xl" />
-          </div>
-          <h4 className="font-semibold text-secondary mb-2">Add New Product</h4>
-          <p className="text-gray-600 text-sm">Create a new course, e-book, or merchandise</p>
         </div>
-      </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold text-secondary mb-4">Sales Performance</h3>
+          <h3 className="text-lg font-semibold text-secondary mb-4">
+            Sales Performance
+          </h3>
           <div className="h-48 bg-gray-50 border border-gray-100 rounded-lg" />
         </div>
         <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold text-secondary mb-4">Top Selling Products</h3>
+          <h3 className="text-lg font-semibold text-secondary mb-4">
+            Top Selling Products
+          </h3>
           <div className="h-48 bg-gray-50 border border-gray-100 rounded-lg" />
         </div>
       </div>
 
-      <div className="bg-card rounded-xl p-6 shadow-sm border border-gray-100">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-secondary">Recent Orders</h3>
-          <button className="text-primary hover:text-primary/80 text-sm font-medium">View All</button>
+      <div className="bg-white rounded-xl p-6 shadow-md border border-gray-200">
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-xl font-bold text-gray-900">Recent Orders</h3>
+          <button className="text-primary hover:text-primary/80 text-sm font-medium">
+            View All
+          </button>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="text-left text-gray-500 text-sm border-b">
-                <th className="pb-3 font-medium">Order ID</th>
-                <th className="pb-3 font-medium">Customer</th>
-                <th className="pb-3 font-medium">Date</th>
-                <th className="pb-3 font-medium">Amount</th>
-                <th className="pb-3 font-medium">Status</th>
-                <th className="pb-3 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="text-sm">
-              {orders.map((o) => (
-                <tr key={o.id} className="border-b border-gray-100">
-                  <td className="py-3 font-medium text-primary">{o.id}</td>
-                  <td className="py-3">{o.customer}</td>
-                  <td className="py-3">{o.date}</td>
-                  <td className="py-3">{o.amount}</td>
-                  <td className="py-3">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${orderBadge(o.status)}`}>
-                      {o.status.charAt(0).toUpperCase() + o.status.slice(1)}
-                    </span>
-                  </td>
-                  <td className="py-3">
-                    <button className="text-primary hover:text-primary/80">
-                      <Eye className="w-4 h-4" />
-                    </button>
-                  </td>
+        {orders.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            <p>No orders yet</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto -mx-6 px-6">
+            <table className="w-full min-w-full border-collapse">
+              <thead className="bg-gray-50">
+                <tr className="text-left text-gray-600 text-sm border-b-2 border-gray-200">
+                  <th className="py-4 px-4 font-semibold">Order ID</th>
+                  <th className="py-4 px-4 font-semibold">Customer</th>
+                  <th className="py-4 px-4 font-semibold">Date</th>
+                  <th className="py-4 px-4 font-semibold">Amount</th>
+                  <th className="py-4 px-4 font-semibold">Status</th>
+                  <th className="py-4 px-4 font-semibold">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="text-sm bg-white">
+                {orders.map((o) => (
+                  <tr
+                    key={o.id}
+                    className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
+                  >
+                    <td className="py-4 px-4 font-semibold text-blue-600">
+                      {o.id}
+                    </td>
+                    <td className="py-4 px-4 text-gray-800 font-medium">
+                      {o.customer}
+                    </td>
+                    <td className="py-4 px-4 text-gray-600">{o.date}</td>
+                    <td className="py-4 px-4 font-bold text-gray-900">
+                      {o.amount}
+                    </td>
+                    <td className="py-4 px-4">
+                      <span
+                        className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${orderBadge(
+                          o.status
+                        )}`}
+                      >
+                        {o.status.charAt(0).toUpperCase() + o.status.slice(1)}
+                      </span>
+                    </td>
+                    <td className="py-4 px-4">
+                      <button className="text-primary hover:text-primary/80 p-1 hover:bg-primary/10 rounded transition-colors">
+                        <Eye className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Add New Product</DialogTitle>
-            <DialogDescription>Enter product details</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
-              <input
-                id="product-name"
-                type="text"
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                placeholder="Enter product name"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-              <textarea
-                id="product-desc"
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                rows={3}
-                placeholder="Product description"
-              />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
-                <input
-                  id="product-price"
-                  type="number"
-                  step="0.01"
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
-                  placeholder="0.00"
-                />
+      <ProductForm
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onProductCreated={handleProductCreated}
+      />
+
+      <ProductForm
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        onProductCreated={handleProductUpdated}
+        initialData={selectedProduct || undefined}
+        mode="edit"
+      />
+
+      {/* Product View Dialog */}
+      {selectedProduct && (
+        <div
+          className={`fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 transition-opacity ${
+            viewOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
+          onClick={() => setViewOpen(false)}
+        >
+          <div
+            className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <div className="flex items-start justify-between mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    {selectedProduct.title}
+                  </h2>
+                  <p className="text-gray-600 mt-1">{selectedProduct.slug}</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setViewOpen(false)}
+                >
+                  ✕
+                </Button>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                <Select defaultValue="Course">
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Course">Online Course</SelectItem>
-                    <SelectItem value="E-book">E-book</SelectItem>
-                    <SelectItem value="Merchandise">Merchandise</SelectItem>
-                    <SelectItem value="Bundle">Bundle</SelectItem>
-                  </SelectContent>
-                </Select>
+
+              {selectedProduct.images && selectedProduct.images.length > 0 && (
+                <div className="mb-6">
+                  <Image
+                    src={selectedProduct.images[0]}
+                    alt={selectedProduct.title}
+                    width={800}
+                    height={400}
+                    className="w-full h-64 object-cover rounded-lg"
+                    unoptimized
+                  />
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div>
+                  <p className="text-sm text-gray-600">Price</p>
+                  <p className="text-xl font-bold text-gray-900">
+                    ${selectedProduct.price.toLocaleString()}{" "}
+                    {selectedProduct.currency}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Type</p>
+                  <p className="text-lg font-semibold text-gray-900 capitalize">
+                    {selectedProduct.type}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Status</p>
+                  <span
+                    className={`px-3 py-1 rounded-full text-sm font-medium ${statusBadge(
+                      mapProductStatus(selectedProduct.status)
+                    )}`}
+                  >
+                    {selectedProduct.status}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Rating</p>
+                  <div className="flex items-center gap-1">
+                    <Star
+                      className="w-5 h-5 text-yellow-500"
+                      fill="currentColor"
+                    />
+                    <span className="font-semibold">
+                      {selectedProduct.rating || 0} (
+                      {selectedProduct.reviewCount || 0} reviews)
+                    </span>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <Select defaultValue="active">
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="out-of-stock">Out of Stock</SelectItem>
-                    <SelectItem value="low-stock">Low Stock</SelectItem>
-                  </SelectContent>
-                </Select>
+
+              <div className="mb-6">
+                <p className="text-sm text-gray-600 mb-2">Description</p>
+                <p className="text-gray-900">{selectedProduct.description}</p>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Rating</label>
-                <Select defaultValue="5">
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="5">5</SelectItem>
-                    <SelectItem value="4">4</SelectItem>
-                    <SelectItem value="3">3</SelectItem>
-                    <SelectItem value="2">2</SelectItem>
-                    <SelectItem value="1">1</SelectItem>
-                  </SelectContent>
-                </Select>
+
+              {selectedProduct.manufacturer && (
+                <div className="mb-4">
+                  <p className="text-sm text-gray-600">Manufacturer</p>
+                  <p className="text-gray-900">
+                    {selectedProduct.manufacturer}{" "}
+                    {selectedProduct.productModel} ({selectedProduct.year})
+                  </p>
+                </div>
+              )}
+
+              {selectedProduct.features &&
+                selectedProduct.features.length > 0 && (
+                  <div className="mb-6">
+                    <p className="text-sm text-gray-600 mb-2">Features</p>
+                    <ul className="list-disc list-inside space-y-1">
+                      {selectedProduct.features.map((feature, idx) => (
+                        <li key={idx} className="text-gray-900">
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+              <div className="flex gap-3 mt-6">
+                <Button
+                  onClick={() => {
+                    setViewOpen(false);
+                    handleEditProduct(selectedProduct._id);
+                  }}
+                  className="flex-1"
+                >
+                  <Edit className="w-4 h-4 mr-2" /> Edit Product
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    setViewOpen(false);
+                    handleDeleteProduct(selectedProduct._id);
+                  }}
+                  className="flex-1"
+                >
+                  <Trash className="w-4 h-4 mr-2" /> Delete Product
+                </Button>
               </div>
-            </div>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
-              <p className="text-gray-500 text-sm">Drag and drop cover image here or click to upload</p>
-              <Button variant="outline" className="mt-2 border-gray-300">Select File</Button>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" className="border-gray-300" onClick={() => setCreateOpen(false)}>Cancel</Button>
-              <Button
-                onClick={() => {
-                  const nameEl = document.getElementById("product-name") as HTMLInputElement | null;
-                  const descEl = document.getElementById("product-desc") as HTMLTextAreaElement | null;
-                  const priceEl = document.getElementById("product-price") as HTMLInputElement | null;
-                  const name = nameEl?.value.trim() || "New Product";
-                  const desc = descEl?.value.trim() || "Draft product created";
-                  const price = parseFloat(priceEl?.value || "0");
-                  const newItem: ProductItem = {
-                    id: Math.random().toString(36).slice(2),
-                    title: name,
-                    description: desc,
-                    price: isNaN(price) ? 0 : price,
-                    category: "Course",
-                    status: "draft",
-                    rating: 4,
-                  };
-                  setProducts([newItem, ...products]);
-                  setCreateOpen(false);
-                }}
-              >
-                Create
-              </Button>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </div>
+      )}
     </main>
   );
 }

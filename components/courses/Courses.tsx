@@ -168,7 +168,16 @@ export default function Courses() {
         : 0;
     const published = courses.filter((c) => c.isPublished).length;
 
-    return { totalCourses, totalStudents, avgRating, published };
+    // Calculate discount impact
+    const discountImpact = coursesService.calculateDiscountImpact(courses);
+
+    return {
+      totalCourses,
+      totalStudents,
+      avgRating,
+      published,
+      discountImpact,
+    };
   }, [courses]);
 
   const handleDelete = async () => {
@@ -349,6 +358,57 @@ export default function Courses() {
           <p className="text-3xl font-bold">{stats.published}</p>
         </div>
       </div>
+
+      {/* Discount Impact Stats */}
+      {stats.discountImpact.coursesWithDiscount > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm text-gray-600">Courses with Discount</p>
+              <div className="bg-green-100 p-2 rounded-lg">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-secondary mb-1">
+              {stats.discountImpact.coursesWithDiscount}
+            </p>
+            <p className="text-xs text-gray-500">
+              {(
+                (stats.discountImpact.coursesWithDiscount /
+                  stats.totalCourses) *
+                100
+              ).toFixed(1)}
+              % of total courses
+            </p>
+          </div>
+
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm text-gray-600">Average Discount</p>
+              <div className="bg-blue-100 p-2 rounded-lg">
+                <ChartLine className="w-5 h-5 text-blue-600" />
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-secondary mb-1">
+              {stats.discountImpact.averageDiscount.toFixed(1)}%
+            </p>
+            <p className="text-xs text-gray-500">Across discounted courses</p>
+          </div>
+
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm text-gray-600">Total Savings Offered</p>
+              <div className="bg-red-100 p-2 rounded-lg">
+                <Star className="w-5 h-5 text-red-600" />
+              </div>
+            </div>
+            <p className="text-2xl font-bold text-secondary mb-1">
+              ${stats.discountImpact.totalDiscount.toFixed(2)}
+            </p>
+            <p className="text-xs text-gray-500">Potential revenue impact</p>
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-6">

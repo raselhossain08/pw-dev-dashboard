@@ -266,8 +266,30 @@ export default function CoursesTable({
                   </TableCell>
 
                   <TableCell className="text-center">
-                    <div className="font-bold text-primary">
-                      ${course.price.toFixed(2)}
+                    <div className="flex flex-col items-center gap-1">
+                      <div className="font-bold text-primary">
+                        ${course.price.toFixed(2)}
+                      </div>
+                      {course.originalPrice &&
+                        course.originalPrice > course.price && (
+                          <>
+                            <div className="text-xs text-gray-400 line-through">
+                              ${course.originalPrice.toFixed(2)}
+                            </div>
+                            <Badge
+                              variant="outline"
+                              className="text-xs bg-green-50 text-green-600 border-green-200"
+                            >
+                              -
+                              {Math.round(
+                                ((course.originalPrice - course.price) /
+                                  course.originalPrice) *
+                                  100
+                              )}
+                              % OFF
+                            </Badge>
+                          </>
+                        )}
                     </div>
                   </TableCell>
 

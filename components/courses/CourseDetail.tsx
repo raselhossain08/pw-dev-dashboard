@@ -211,9 +211,27 @@ export default function CourseDetail({ courseId }: CourseDetailProps) {
                   <DollarSign className="w-5 h-5" />
                   <span>Price</span>
                 </div>
-                <span className="text-2xl font-bold text-primary">
-                  ${course.price.toFixed(2)}
-                </span>
+                <div className="text-right">
+                  <span className="text-2xl font-bold text-primary block">
+                    ${course.price.toFixed(2)}
+                  </span>
+                  {course.originalPrice &&
+                    course.originalPrice > course.price && (
+                      <>
+                        <span className="text-sm text-gray-400 line-through block">
+                          ${course.originalPrice.toFixed(2)}
+                        </span>
+                        <Badge className="mt-1 bg-green-500 text-white text-xs">
+                          {Math.round(
+                            ((course.originalPrice - course.price) /
+                              course.originalPrice) *
+                              100
+                          )}
+                          % OFF
+                        </Badge>
+                      </>
+                    )}
+                </div>
               </div>
 
               <div className="flex items-center justify-between">

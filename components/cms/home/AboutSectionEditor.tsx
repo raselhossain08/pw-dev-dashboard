@@ -28,6 +28,7 @@ import {
   TrendingUp,
   Eye,
   EyeOff,
+  Search,
 } from "lucide-react";
 import { useAboutSection } from "@/hooks/useAboutSection";
 import type {
@@ -280,24 +281,49 @@ export function AboutSectionEditor() {
 
   return (
     <div className="w-full">
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 lg:w-auto">
-          <TabsTrigger value="content">Content</TabsTrigger>
-          <TabsTrigger value="highlights">Highlights & Stats</TabsTrigger>
-          <TabsTrigger value="seo">SEO</TabsTrigger>
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="w-full space-y-6"
+      >
+        <TabsList className="w-full h-auto flex lg:grid lg:grid-cols-3 gap-1 sm:gap-2 p-1 bg-white/80 backdrop-blur-sm rounded-xl overflow-x-auto">
+          <TabsTrigger
+            value="content"
+            className="flex items-center justify-center gap-1 sm:gap-2 data-[state=active]:bg-blue-500 data-[state=active]:text-white min-w-[80px] sm:min-w-0 px-2 sm:px-4 py-2 text-xs sm:text-sm whitespace-nowrap"
+          >
+            <Heart className="w-4 h-4" />
+            <span className="hidden sm:inline">Content</span>
+            <span className="sm:hidden">Content</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="highlights"
+            className="flex items-center justify-center gap-1 sm:gap-2 data-[state=active]:bg-yellow-500 data-[state=active]:text-white min-w-[80px] sm:min-w-0 px-2 sm:px-4 py-2 text-xs sm:text-sm whitespace-nowrap"
+          >
+            <Award className="w-4 h-4" />
+            <span className="hidden sm:inline">Highlights & Stats</span>
+            <span className="sm:hidden">Highlights</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="seo"
+            className="flex items-center justify-center gap-1 sm:gap-2 data-[state=active]:bg-indigo-500 data-[state=active]:text-white min-w-[80px] sm:min-w-0 px-2 sm:px-4 py-2 text-xs sm:text-sm whitespace-nowrap"
+          >
+            <Search className="w-4 h-4" />
+            <span className="hidden sm:inline">SEO</span>
+            <span className="sm:hidden">SEO</span>
+          </TabsTrigger>
         </TabsList>
 
         {/* Content Tab */}
         <TabsContent value="content" className="space-y-6">
-          <Card>
-            <CardHeader>
+          <Card className="border-0 shadow-lg pt-0">
+            <CardHeader className="bg-gradient-to-r from-rose-500 to-pink-600 text-white rounded-t-lg py-4">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <Heart className="w-5 h-5" />
                     About Section Content
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-pink-100">
                     Manage main about section content and image
                   </CardDescription>
                 </div>
@@ -321,50 +347,86 @@ export function AboutSectionEditor() {
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-3 sm:p-6 space-y-6">
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Image Upload */}
                 <div className="space-y-2">
-                  <Label htmlFor="image">Featured Image</Label>
-                  <div className="flex flex-col gap-4">
-                    {imagePreview && (
-                      <div className="relative w-full h-64 rounded-lg overflow-hidden border">
-                        <img
-                          src={imagePreview}
-                          alt="Preview"
-                          className="w-full h-full object-cover"
+                  <Label htmlFor="image" className="text-sm font-semibold">
+                    Featured Image
+                  </Label>
+                  <div
+                    className={`relative border-2 border-dashed rounded-xl p-6 text-center transition-colors ${
+                      uploadProgress > 0 && uploadProgress < 100
+                        ? "border-blue-400 bg-blue-50"
+                        : "border-blue-200 hover:border-blue-400 cursor-pointer bg-white"
+                    }`}
+                  >
+                    {uploadProgress > 0 && uploadProgress < 100 ? (
+                      <div className="space-y-3">
+                        <RefreshCw className="mx-auto h-12 w-12 text-blue-500 animate-spin" />
+                        <div>
+                          <p className="text-base font-semibold text-blue-700">
+                            Uploading Image...
+                          </p>
+                          <p className="text-sm text-blue-600 mt-1 font-medium">
+                            {uploadProgress}% Complete
+                          </p>
+                        </div>
+                        <Progress
+                          value={uploadProgress}
+                          className="w-full h-3 bg-blue-100"
                         />
+                        <p className="text-xs text-blue-500">
+                          Please wait while we upload your image
+                        </p>
+                      </div>
+                    ) : imagePreview ? (
+                      <div className="space-y-3">
+                        <div className="relative w-full h-48 rounded-lg overflow-hidden border-2 border-blue-100 shadow-sm mx-auto max-w-md">
+                          <img
+                            src={imagePreview}
+                            alt="Preview"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <p className="text-sm text-gray-600 font-medium">
+                          Image Ready
+                        </p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setImageFile(null);
+                            setImagePreview(formData.image || "");
+                          }}
+                          className="border-2 hover:border-blue-400 hover:bg-blue-50"
+                        >
+                          <RefreshCw className="w-4 h-4 mr-2" />
+                          Change Image
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <Upload className="mx-auto h-12 w-12 text-gray-400 mb-3" />
+                        <p className="text-sm font-medium text-gray-700 mb-1">
+                          Click to upload or drag and drop
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          PNG, JPG, GIF up to 10MB
+                        </p>
                       </div>
                     )}
-                    <div className="flex gap-2">
+                    {uploadProgress === 0 && (
                       <Input
                         id="image"
                         type="file"
                         accept="image/*"
                         onChange={handleImageChange}
-                        className="flex-1"
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                       />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          setImageFile(null);
-                          setImagePreview(formData.image || "");
-                        }}
-                      >
-                        <RefreshCw className="w-4 h-4 mr-2" />
-                        Reset
-                      </Button>
-                    </div>
+                    )}
                   </div>
-                  {uploadProgress > 0 && uploadProgress < 100 && (
-                    <div className="space-y-2">
-                      <Progress value={uploadProgress} className="w-full" />
-                      <p className="text-sm text-gray-500 text-center">
-                        Uploading: {uploadProgress}%
-                      </p>
-                    </div>
-                  )}
                 </div>
 
                 {/* Title */}
@@ -464,18 +526,17 @@ export function AboutSectionEditor() {
 
         {/* Highlights & Stats Tab */}
         <TabsContent value="highlights" className="space-y-6">
-          {/* Highlights Card */}
-          <Card>
-            <CardHeader>
+          <Card className="border-0 shadow-lg pt-0">
+            <CardHeader className="bg-gradient-to-r from-yellow-500 to-orange-600 text-white rounded-t-lg py-4">
               <CardTitle className="flex items-center gap-2">
                 <Award className="w-5 h-5" />
                 Highlights
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-yellow-100">
                 Manage key highlights and features
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="p-3 sm:p-6 space-y-4">
               {formData.highlights?.map((highlight, index) => (
                 <div key={index} className="p-4 border rounded-lg space-y-3">
                   <div className="flex items-center justify-between">
@@ -535,16 +596,17 @@ export function AboutSectionEditor() {
             </CardContent>
           </Card>
 
-          {/* Stats Card */}
-          <Card>
-            <CardHeader>
+          <Card className="border-0 shadow-lg pt-0">
+            <CardHeader className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white rounded-t-lg py-4">
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="w-5 h-5" />
                 Statistics
               </CardTitle>
-              <CardDescription>Manage achievement statistics</CardDescription>
+              <CardDescription className="text-emerald-100">
+                Manage achievement statistics
+              </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="p-3 sm:p-6 space-y-4">
               {formData.stats?.map((stat, index) => (
                 <div key={index} className="p-4 border rounded-lg space-y-3">
                   <div className="flex items-center justify-between">
@@ -618,14 +680,17 @@ export function AboutSectionEditor() {
 
         {/* SEO Tab */}
         <TabsContent value="seo" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>SEO Optimization</CardTitle>
-              <CardDescription>
+          <Card className="border-0 shadow-lg pt-0">
+            <CardHeader className="bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded-t-lg py-4">
+              <CardTitle className="flex items-center gap-2">
+                <Search className="w-5 h-5" />
+                SEO Optimization
+              </CardTitle>
+              <CardDescription className="text-indigo-100">
                 Configure SEO metadata for better search engine visibility
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="p-3 sm:p-6 space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="seoTitle">SEO Title</Label>

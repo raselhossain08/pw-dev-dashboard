@@ -7,6 +7,8 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -17,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Award,
   Download,
@@ -49,6 +52,7 @@ import {
   Plus,
   Palette,
   MousePointer2,
+  Sparkles,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Slider } from "@/components/ui/slider";
@@ -60,6 +64,7 @@ interface CertificateEditorProps {
 
 type ElementType = "text" | "image" | "shape" | "background";
 type ShapeType = "rectangle" | "circle" | "star" | "line";
+type CertificateTemplate = "classic" | "modern" | "elegant" | "minimal";
 
 interface CanvasElement {
   id: string;
@@ -182,7 +187,11 @@ export default function CertificateEditor({
       accent: "text-emerald-700",
       seal: "bg-emerald-500",
     },
-  };
+  } as const;
+
+  type ColorSchemeKey = keyof typeof colorSchemes;
+  const [template, setTemplate] = React.useState<CertificateTemplate>("classic");
+  const [colorScheme, setColorScheme] = React.useState<ColorSchemeKey>("gold");
 
   const handleInputChange = (field: string, value: string) => {
     setCertificateData((prev) => ({
@@ -200,10 +209,10 @@ export default function CertificateEditor({
           className={`w-full h-full ${scheme.bg} border-8 ${scheme.border} rounded-lg shadow-2xl p-8 sm:p-12 flex flex-col justify-between`}
         >
           {/* Decorative Corner Elements */}
-          <div className="absolute top-4 left-4 w-16 h-16 border-t-4 border-l-4 ${scheme.border} rounded-tl-lg"></div>
-          <div className="absolute top-4 right-4 w-16 h-16 border-t-4 border-r-4 ${scheme.border} rounded-tr-lg"></div>
-          <div className="absolute bottom-4 left-4 w-16 h-16 border-b-4 border-l-4 ${scheme.border} rounded-bl-lg"></div>
-          <div className="absolute bottom-4 right-4 w-16 h-16 border-b-4 border-r-4 ${scheme.border} rounded-br-lg"></div>
+          <div className={`absolute top-4 left-4 w-16 h-16 border-t-4 border-l-4 ${scheme.border} rounded-tl-lg`}></div>
+          <div className={`absolute top-4 right-4 w-16 h-16 border-t-4 border-r-4 ${scheme.border} rounded-tr-lg`}></div>
+          <div className={`absolute bottom-4 left-4 w-16 h-16 border-b-4 border-l-4 ${scheme.border} rounded-bl-lg`}></div>
+          <div className={`absolute bottom-4 right-4 w-16 h-16 border-b-4 border-r-4 ${scheme.border} rounded-br-lg`}></div>
 
           {/* Header */}
           <div className="text-center space-y-2">

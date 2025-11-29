@@ -118,6 +118,16 @@ class UsersService {
             throw error;
         }
     }
+
+    async getAllInstructors() {
+        try {
+            const { data } = await apiClient.get("/users/instructors");
+            return data;
+        } catch (error) {
+            console.error("Failed to fetch instructors:", error);
+            throw error;
+        }
+    }
 }
 
 export const usersService = new UsersService();

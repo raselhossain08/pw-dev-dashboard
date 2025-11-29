@@ -25,6 +25,24 @@ export default function CreateCourse() {
   const [uploadProgress, setUploadProgress] = React.useState<number>(0);
   const [isUploading, setIsUploading] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [instructors, setInstructors] = React.useState<any[]>([]);
+  const [selectedInstructor, setSelectedInstructor] =
+    React.useState<string>("");
+
+  React.useEffect(() => {
+    const fetchInstructors = async () => {
+      try {
+        const response = await fetch(
+          "http://localhost:5000/api/users/instructors"
+        );
+        const data = await response.json();
+        setInstructors(data.data || []);
+      } catch (error) {
+        console.error("Failed to fetch instructors:", error);
+      }
+    };
+    fetchInstructors();
+  }, []);
 
   const personalWingsCategories = [
     "Citation Jet Training",
@@ -105,9 +123,15 @@ export default function CreateCourse() {
             const level = String(fd.get("level") || "beginner");
             const type = String(fd.get("type") || "theoretical");
             const price = Number(fd.get("price") || 0);
+            const originalPriceRaw = fd.get("originalPrice");
+            const originalPrice =
+              originalPriceRaw && Number(originalPriceRaw) > 0
+                ? Number(originalPriceRaw)
+                : undefined;
             const duration = Number(fd.get("duration") || 0);
             const maxStudents = Number(fd.get("maxStudents") || 1);
             const status = String(fd.get("status") || "draft");
+            const instructor = String(fd.get("instructor") || "").trim();
             const prerequisitesInput = String(fd.get("prerequisites") || "");
             const learningObjectivesInput = String(
               fd.get("learningObjectives") || ""
@@ -179,6 +203,7 @@ export default function CreateCourse() {
                 level: level as any,
                 type: type as any,
                 price,
+                originalPrice,
                 duration,
                 durationHours: duration,
                 maxStudents,
@@ -187,6 +212,7 @@ export default function CreateCourse() {
                 categories: selectedCats.length ? selectedCats : undefined,
                 prerequisites,
                 learningObjectives,
+                instructor: instructor || undefined,
               };
 
               // Only include thumbnail if it has a value
@@ -280,10 +306,10 @@ export default function CreateCourse() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="text-sm font-medium text-secondary block mb-2">
-                    Price ($) *
+                    Sale Price ($) *
                   </label>
                   <input
                     name="price"
@@ -293,6 +319,21 @@ export default function CreateCourse() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
                     required
                   />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-secondary block mb-2">
+                    Original Price ($)
+                  </label>
+                  <input
+                    name="originalPrice"
+                    type="number"
+                    step="0.01"
+                    placeholder="Optional"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    For discount display
+                  </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-secondary block mb-2">
@@ -336,6 +377,30 @@ export default function CreateCourse() {
                     <option value="published">Published</option>
                   </select>
                 </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-secondary block mb-2">
+                  Instructor *
+                </label>
+                <select
+                  name="instructor"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  value={selectedInstructor}
+                  onChange={(e) => setSelectedInstructor(e.target.value)}
+                  required
+                >
+                  <option value="">Select an instructor</option>
+                  {instructors.map((instructor) => (
+                    <option key={instructor._id} value={instructor._id}>
+                      {instructor.firstName} {instructor.lastName} (
+                      {instructor.email})
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  Select the instructor who will teach this course
+                </p>
               </div>
 
               <div>

@@ -28,9 +28,11 @@ import {
   Tag,
   Plane,
   BarChart3,
+  Calendar,
   Heart,
   GraduationCap,
   User,
+  Newspaper,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -73,6 +75,15 @@ const navItems = {
     { icon: ImageIcon, label: "Footer", href: "/cms/footer" },
     { icon: PlayCircle, label: "Home Banner", href: "/cms/home/banner" },
     { icon: Heart, label: "About Section", href: "/cms/home/about-section" },
+    { icon: Calendar, label: "Events", href: "/cms/home/events" },
+    {
+      icon: MessageSquare,
+      label: "Testimonials",
+      href: "/cms/home/testimonials",
+    },
+    { icon: Newspaper, label: "Blog", href: "/cms/home/blog" },
+    { icon: MessageSquare, label: "Contact Page", href: "/cms/contact" },
+    { icon: CircleHelp, label: "FAQs", href: "/cms/faqs" },
     { icon: ImageIcon, label: "Media Library", href: "/media-library" },
   ],
   business: [
