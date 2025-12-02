@@ -90,12 +90,13 @@ export function ContactEditor() {
           location: "",
           phone: "",
         },
-        contactFormSection: contact.contactFormSection || {
-          badge: "",
-          title: "",
-          image: "",
-          imageAlt: "",
-        },
+        contactFormSection: contact.contactFormSection ||
+          (contact as any).formSection || {
+            badge: "",
+            title: "",
+            image: "",
+            imageAlt: "",
+          },
         mapSection: contact.mapSection || {
           embedUrl: "",
           showMap: true,
@@ -111,7 +112,11 @@ export function ContactEditor() {
         },
         isActive: contact.isActive ?? true,
       });
-      setImagePreview(contact.contactFormSection?.image || "");
+      setImagePreview(
+        contact.contactFormSection?.image ||
+          (contact as any).formSection?.image ||
+          ""
+      );
     }
   }, [contact]);
 
@@ -149,21 +154,25 @@ export function ContactEditor() {
     formData.append("type", "image");
     formData.append("description", "Contact page image");
 
-    const response = await axios.post("/uploads/upload", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-      onUploadProgress: (progressEvent) => {
-        if (progressEvent.total) {
-          const progress = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total
-          );
-          setUploadProgress(progress);
-        }
-      },
-    });
+    const response = await axios.post<{ data: { url: string } }>(
+      "/uploads/upload",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            const progress = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total
+            );
+            setUploadProgress(progress);
+          }
+        },
+      }
+    );
 
-    return response.data.data.url;
+    return (response.data as any).data.url;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -171,6 +180,11 @@ export function ContactEditor() {
 
     if (!contact) {
       push({ message: "Contact data not loaded", type: "error" });
+      return;
+    }
+
+    if (!contact._id) {
+      push({ message: "Missing contact ID", type: "error" });
       return;
     }
 
@@ -256,7 +270,7 @@ export function ContactEditor() {
         submitFormData.append("isActive", String(formData.isActive ?? true));
 
         // Use upload endpoint with FormData
-        const response = await axios.put(
+        const response = await axios.put<{ data: Contact }>(
           `/cms/contact/${contact._id}/upload`,
           submitFormData,
           {
@@ -274,7 +288,7 @@ export function ContactEditor() {
           }
         );
 
-        setContact(response.data.data);
+        setContact((response.data as any).data);
         setImageFile(null);
         push({
           message: "Contact page updated successfully with image",
@@ -345,7 +359,7 @@ export function ContactEditor() {
             </TabsTrigger>
             <TabsTrigger
               value="seo"
-              className="flex items-center justify-center gap-1 sm:gap-2 data-[state=active]:bg-purple-500 data-[state=active]:text-white min-w-[80px] sm:min-w-0 px-2 sm:px-4 py-2 text-xs sm:text-sm whitespace-nowrap"
+              className="flex items-center justify-center gap-1 sm:gap-2 data-[state=active]:bg-purple-500 data-[state=active]:text-white min-w-20 sm:min-w-0 px-2 sm:px-4 py-2 text-xs sm:text-sm whitespace-nowrap"
             >
               <Search className="w-4 h-4" />
               <span>SEO</span>
@@ -561,7 +575,7 @@ export function ContactEditor() {
                           {imageFile ? "New Image Preview" : "Current Image"}
                         </Label>
                         <div className="relative w-full max-w-md mx-auto">
-                          <div className="relative w-full h-64 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-lg overflow-hidden border-2 border-dashed border-gray-300 dark:border-gray-600">
+                          <div className="relative w-full h-64 bg-linear-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-lg overflow-hidden border-2 border-dashed border-gray-300 dark:border-gray-600">
                             <Image
                               src={imagePreview}
                               alt="Contact illustration preview"
@@ -921,3 +935,5 @@ export function ContactEditor() {
     </div>
   );
 }
+
+

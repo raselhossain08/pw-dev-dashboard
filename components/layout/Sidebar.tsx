@@ -84,6 +84,13 @@ const navItems = {
     { icon: Newspaper, label: "Blog", href: "/cms/home/blog" },
     { icon: MessageSquare, label: "Contact Page", href: "/cms/contact" },
     { icon: CircleHelp, label: "FAQs", href: "/cms/faqs" },
+    { icon: ShieldCheck, label: "Refund Policy", href: "/cms/refund-policy" },
+    { icon: ShieldCheck, label: "Privacy Policy", href: "/cms/privacy-policy" },
+    {
+      icon: ShieldCheck,
+      label: "Terms & Conditions",
+      href: "/cms/terms-conditions",
+    },
     { icon: ImageIcon, label: "Media Library", href: "/media-library" },
   ],
   business: [

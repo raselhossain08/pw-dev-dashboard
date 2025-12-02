@@ -38,9 +38,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 interface CategoryItem {
+  _id?: string;
   name: string;
   slug: string;
   count?: number;
+  isActive?: boolean;
 }
 
 export default function CourseCategories() {
@@ -59,11 +61,13 @@ export default function CourseCategories() {
   });
 
   const categories: CategoryItem[] = React.useMemo(() => {
-    const names = Array.isArray(data) ? data : [];
-    return names.map((name) => ({
-      name,
-      slug: name.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-      count: Math.floor(Math.random() * 20) + 1, // This would come from backend in production
+    // Handle API response structure: data.data.categories
+    const categoryList = data?.data?.categories ?? [];
+
+    return categoryList.map((cat: any) => ({
+      name: cat.name,
+      slug: cat.slug,
+      count: cat.courseCount || 0,
     }));
   }, [data]);
 
